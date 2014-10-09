@@ -1,5 +1,7 @@
 # Object files
 *.o
+*.cmi
+*.cmx
 *.ko
 *.obj
 *.elf
