@@ -23,16 +23,17 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if we = '1' then
+      if we = '1' and addr1 /= "0000" then
         RAM(conv_integer(addr1)) <= wi;
       end if;
     end if;
   end process;
 
-  wo1 <= RAM(conv_integer(addr1)) when addr1 /= "0000" else
-         x"00000000";
-  wo2 <= RAM(conv_integer(addr2)) when addr2 /= "0000" else
-         x"00000000";
+  wo1 <= x"00000000" when addr1 = "0000" else
+         RAM(conv_integer(addr1));
+
+  wo2 <= x"00000000" when addr2 = "0000" else
+         RAM(conv_integer(addr2));
 
 end arch_registers;
   
