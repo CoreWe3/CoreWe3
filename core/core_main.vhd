@@ -15,9 +15,10 @@ entity core_main is
 end core_main;
 
 architecture arch_core_main of core_main is
+  
 
 begin  -- arch_core_main
-
+  
   
 
 end arch_core_main;
