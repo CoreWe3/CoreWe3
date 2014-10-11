@@ -13,3 +13,4 @@ src/emit.ml
 src/regAlloc.ml
 src/simm.ml
 src/virtual.ml
+setup.data
