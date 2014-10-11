@@ -9,3 +9,8 @@
 
 #View Binary File
 ./hex.sh [Binary File]
+
+
+#Convert little endian file to big endian file
+#Convert big endian file to little endian file
+./lbconvertor [Input File] [Output File]
