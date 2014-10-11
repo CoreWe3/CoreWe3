@@ -50,7 +50,7 @@ char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11",
 #define REGNUM 16
 #define RAMSIZE 0x100000
 #define ROMSIZE 0x100000
-unsigned int reg[REGNUM];
+unsigned int reg[REGNUM]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned int pc;
 unsigned int pcflag;
 unsigned int lr;

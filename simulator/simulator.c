@@ -107,6 +107,7 @@ int main(int argc, char* argv[])
 				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
 				break;
 		}
+		reg[0] = 0;
 		pc+=pcflag;
 
 
