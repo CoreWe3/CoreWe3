@@ -1,0 +1,11 @@
+#Assemble
+./assembler [Binary File] < [Input Assembly]
+
+#Disassemble
+./disassembler [Binary File] > [Output File]
+
+#Simulate
+./simulator [Binary File]
+
+#View Binary File
+./hex.sh [Binary File]
