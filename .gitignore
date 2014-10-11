@@ -32,3 +32,7 @@
 
 # Emacs backup files
 *~
+
+# Vim Backup File
+*.swp
+
