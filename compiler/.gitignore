@@ -1,0 +1,16 @@
+_build/
+*.native
+*.log
+*.cmp
+*.ans
+*.res
+*.out
+test/*.s
+test/*.bc
+src/asm.ml
+src/asm.mli
+src/emit.ml
+src/regAlloc.ml
+src/simm.ml
+src/virtual.ml
+setup.data
