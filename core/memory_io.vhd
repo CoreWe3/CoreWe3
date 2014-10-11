@@ -57,6 +57,7 @@ architecture blackbox of memory_io is
   signal owari : std_logic;
   signal cansend : std_logic := '0';
   signal temp : std_logic := '1';
+  signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
 begin  -- blackbox
   nr232c : memory_io_r232c generic map (wtime => x"1adb")
     port map (clk,temp,owari,rdata);
@@ -75,7 +76,7 @@ begin  -- blackbox
             if go = '1' then
               if addr = x"0ffff" then     --io
                 if load_store = '1' then --store_wordをrs_txに
-                  udate <= store_word(31 downto 24);
+                  udata <= store_word(31 downto 24);
                   cansend <= '1';
                   state <= "01000";
                 else  --rs_rx をload_wordに
@@ -83,7 +84,7 @@ begin  -- blackbox
                 end if;
               else                      --sram
                 if load_store = '1' then  --store
-                  ZD <= date_in;
+                  ZD <= store_word;
                   XWA <= '0';
                 else
                   ZD <= (others => 'Z');
@@ -100,7 +101,7 @@ begin  -- blackbox
           else
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
-              udate <= store_word(23 downto 16);
+              udata <= store_word(23 downto 16);
               state <= "01001";
             end if;
             uart_go <= '0';
@@ -112,7 +113,7 @@ begin  -- blackbox
           else
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
-              udate <= store_word(15 downto 8);
+              udata <= store_word(15 downto 8);
               state <= "01010";
             end if;
             uart_go <= '0';
@@ -124,12 +125,12 @@ begin  -- blackbox
           else
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
-              udate <= store_word(7 downto 0);
-              state <= "01010";
+              udata <= store_word(7 downto 0);
+              state <= "01011";
             end if;
             uart_go <= '0';
           end if;
-        when "01010" =>
+        when "01011" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
             uart_go <= '1';
             cansend <= '0';
@@ -143,27 +144,30 @@ begin  -- blackbox
         when "10000" => 
           temp <= RS_RX;
           if owari = '1' then
-            load_word <= x"000000" & rdata;
-            state <= "10001"
+            load_word_temp <= x"000000" & rdata;
+            state <= "10001";
           end if;
         when "10001" =>
           temp <= RS_RX;
           if owari = '1' then
-            load_word <= load_word(32 downto 24) & rdata;
-            state <= "10010"
+            load_word_temp <= load_word_temp(23 downto 0) & rdata;
+            state <= "10010";
           end if;
         when "10010" =>
           temp <= RS_RX;
           if owari = '1' then
-            load_word <= load_word(32 downto 24) & rdata;
-            state <= "10011"
+            load_word_temp <= load_word_temp(23 downto 0) & rdata;
+            state <= "10011";
           end if;
         when "10011" =>
           temp <= RS_RX;
           if owari = '1' then
-            load_word <= load_word(32 downto 24) & rdata;
-            state <= "11111"
+            load_word_temp <= load_word_temp(23 downto 0) & rdata;
+            state <= "11100";
           end if;
+        when "11100" =>
+          load_word <= load_word_temp;
+          state <= "00000";
         when "11110" =>
           load_word <= ZD;
           state <= "00000";
@@ -172,5 +176,5 @@ begin  -- blackbox
       end case;
     end if;
   end process;
-  busy <= '0' when state "00000" else '1';
+  busy <= '0' when state = "00000" else '1';
 end blackbox;

@@ -33,6 +33,7 @@ end memory_io_debug;
 architecture example of memory_io_debug is
   signal clk,iclk : std_logic;
   component memory_io
+    port(
     clk        : in    std_logic;
     RS_RX      : in    std_logic;
     RS_TX      : out   std_logic;
@@ -95,7 +96,7 @@ begin  -- example
             go <= '0';
           end if;
         when "010" =>
-          if go ='0' and busy '0' then
+          if go ='0' and busy = '0' then
             state <= "000";
           else
               go <= '0';
