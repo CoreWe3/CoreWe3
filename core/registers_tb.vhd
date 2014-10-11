@@ -12,9 +12,9 @@ architecture arch_registers_tb of registers_tb is
       we : in std_logic;
       addr1 : in std_logic_vector(3 downto 0);
       addr2 : in std_logic_vector(3 downto 0);
-      wi : in std_logic_vector(31 downto 0);
-      wo1 : out std_logic_vector(31 downto 0);
-      wo2 : out std_logic_vector(31 downto 0));
+      in_word : in std_logic_vector(31 downto 0);
+      out_word1 : out std_logic_vector(31 downto 0);
+      out_word2 : out std_logic_vector(31 downto 0));
   end component;
 
   signal clk : std_logic;
@@ -32,21 +32,22 @@ begin
     we => '1',
     addr1 => a1,
     addr2 => a2,
-    wi => input,
-    wo1 => output1,
-    wo2 => output2);
+    in_word => input,
+    out_word1 => output1,
+    out_word2 => output2);
 
   process(clk)
   begin
     if rising_edge(clk) then
-      input <= state &
-               state & 
-               state & 
-               state & 
-               state & 
-               state & 
-               state & 
-               state ;
+      --input <= state &
+      --         state & 
+      --         state & 
+      --         state & 
+      --         state & 
+      --         state & 
+      --         state & 
+      --         state ;
+      input <= x"11111111";
       a1 <= state;
       a2 <= state+1;
       state <= state+1;
