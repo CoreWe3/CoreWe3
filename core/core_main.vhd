@@ -61,6 +61,7 @@ architecture arch_core_main of core_main is
   signal reg_ow2 : std_logic_vector(31 downto 0);
   signal pc : std_logic_vector(15 downto 0) := x"0000";
   signal next_pc : std_logic_vector(15 downto 0);
+  
 begin
 
   process(clk)
@@ -110,7 +111,7 @@ begin
 
         when x"4" => --memory
           state <= state+1;
-
+          
         when x"5" => --write
           case instr(31 downto 24) is
             when x"02" | x"03" =>
@@ -134,7 +135,7 @@ begin
       end case;
     end if;
   end process;
-    
+
   rom : code_rom port map (
     clk => clk,
     en => '1',
