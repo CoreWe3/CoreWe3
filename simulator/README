@@ -14,3 +14,12 @@
 #Convert little endian file to big endian file
 #Convert big endian file to little endian file
 ./lbconvertor [Input File] [Output File]
+
+# コンパイルにはclangが必要です。aptからインストールすると
+# ライブラリのパスがうまく通らないようなので、
+# 環境変数の設定が必要かもしれません。
+
+# $ sudo apt-get update
+# $ sudo apt-get install clang
+# $ export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:`echo $LD_LIBRARY_PATH`
+
