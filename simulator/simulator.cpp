@@ -8,8 +8,8 @@ void st(unsigned int ra, unsigned int rb, int cx);
 void add(unsigned int ra, unsigned int rb, unsigned int rc);
 void sub(unsigned int ra, unsigned int rb, unsigned int rc);
 void addi(unsigned int ra, unsigned int rb, int cx);
-void and(unsigned int ra, unsigned int rb, unsigned int rc);
-void or(unsigned int ra, unsigned int rb, unsigned int rc);
+void _and(unsigned int ra, unsigned int rb, unsigned int rc);
+void _or(unsigned int ra, unsigned int rb, unsigned int rc);
 void shl(unsigned int ra, unsigned int rb, unsigned int rc);
 void shr(unsigned int ra, unsigned int rb, unsigned int rc);
 void beq(unsigned int ra, unsigned int rb, int cx);
@@ -20,8 +20,8 @@ void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
 
-char* op2name(unsigned int op);
-char* reg2name(unsigned int reg);
+const char* op2name(unsigned int op);
+const char* reg2name(unsigned int reg);
 
 
 //Debugger
@@ -71,10 +71,10 @@ int main(int argc, char* argv[])
 				addi(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case AND:
-				add(ins.A.ra,ins.A.rb,ins.A.rc);
+				_and(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
 			case OR:
-				sub(ins.A.ra,ins.A.rb,ins.A.rc);
+				_or(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
 			case SHL:
 				shl(ins.A.ra,ins.A.rb,ins.A.rc);
@@ -123,10 +123,10 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-char* op2name(unsigned int op){
+const char* op2name(unsigned int op){
 	return names[op];
 }
-char* reg2name(unsigned int reg){
+const char* reg2name(unsigned int reg){
 	return rnames[reg];
 }
 
@@ -145,10 +145,10 @@ void sub(unsigned int ra, unsigned int rb, unsigned int rc){
 void addi(unsigned int ra, unsigned int rb, int cx){
 	reg[ra] = reg[rb] + cx;
 }
-void and(unsigned int ra, unsigned int rb, unsigned int rc){
+void _and(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra] = reg[rb] & reg[rc];
 }
-void or(unsigned int ra, unsigned int rb, unsigned int rc){
+void _or(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra] = reg[rb] | reg[rc];
 }
 void shl(unsigned int ra, unsigned int rb, unsigned int rc){
