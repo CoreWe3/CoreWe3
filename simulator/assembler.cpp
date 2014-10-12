@@ -26,6 +26,17 @@ unsigned int pop(unsigned int ra);
 unsigned int name2op(char* op);
 unsigned int name2reg(char* reg);
 
+void print_L(unsigned int x) {
+    int i;
+    for (i = 31; i >= 0; --i) {
+        printf("%d", (x >> i) & 1);
+        if (i == 24  || i == 20  || i== 16) printf(" ");
+    }
+    printf("\n");
+}
+
+
+
 int main(int argc, char* argv[])
 {
 	if(argc < 2){
@@ -107,6 +118,7 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						code = addi(name2reg(ra),name2reg(rb),atoi(cx));
+						//print_L(code);
 						break;
 					case AND:
 						ra = strtok(NULL,tokens);

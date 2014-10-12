@@ -2,22 +2,22 @@
 typedef union{
 	unsigned int data;
 	struct {
-		unsigned int op:8;
-		unsigned int ra:4;
-		unsigned int rb:4;
-		unsigned int rc:4;
 		int cx:12;
+		unsigned int rc:4;
+		unsigned int rb:4;
+		unsigned int ra:4;
+		unsigned int op:8;
 	} A;
 	struct {
-		unsigned int op:8;
-		unsigned int ra:4;
-		unsigned int rb:4;
 		int cx:16;
+		unsigned int rb:4;
+		unsigned int ra:4;
+		unsigned int op:8;
 	} L;
 	struct {
-		unsigned int op:8;
-		unsigned int ra:4;
 		int cx:24;
+		unsigned int ra:4;
+		unsigned int op:8;
 	} J;
 } INS;
 
