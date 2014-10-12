@@ -44,11 +44,32 @@ architecture arch_core_main of core_main is
       out_word2 : out std_logic_vector(31 downto 0));
   end component;
 
+  component memory_io
+    port (
+      clk        : in    std_logic;
+      RS_RX      : in    std_logic;
+      RS_TX      : out   std_logic;
+      ZD         : inout std_logic_vector(31 downto 0);
+      ZA         : out   std_logic_vector(19 downto 0);
+      XWA        : out   std_logic;
+      --バーストとか使うならピン追加可
+      store_word : in    std_logic_vector(31 downto 0);
+      load_word  : out   std_logic_vector(31 downto 0);
+      addr       : in   std_logic_vector(19 downto 0);
+      load_store : in   std_logic;
+      go         : in    std_logic;
+      busy       : out   std_logic);
+  end component;
+
+  signal pc : std_logic_vector(15 downto 0) := x"0000";
+  signal next_pc : std_logic_vector(15 downto 0);
+  
   signal instr_addr : std_logic_vector(15 downto 0);
   signal sram_addr : std_logic_vector(19 downto 0);
   signal instr : std_logic_vector(31 downto 0);
   signal state : std_logic_vector(3 downto 0) :=
     (others => '0');
+
   signal alu_iw1 : std_logic_vector(31 downto 0);
   signal alu_iw2 : std_logic_vector(31 downto 0);
   signal alu_ow : std_logic_vector(31 downto 0);
@@ -59,9 +80,14 @@ architecture arch_core_main of core_main is
   signal reg_iw : std_logic_vector(31 downto 0);
   signal reg_ow1 : std_logic_vector(31 downto 0);
   signal reg_ow2 : std_logic_vector(31 downto 0);
-  signal pc : std_logic_vector(15 downto 0) := x"0000";
-  signal next_pc : std_logic_vector(15 downto 0);
-  
+  signal buf : std_logic_vector(31 downto 0);
+  signal mem_store : std_logic_vector(31 downto 0);
+  signal mem_load : std_logic_vector(31 downto 0);
+  signal mem_addr : std_logic_vector(19 downto 0);
+  signal mem_we : std_logic;
+  signal mem_go : std_logic;
+  signal mem_busy : std_logic;
+    
 begin
 
   process(clk)
@@ -79,7 +105,12 @@ begin
           
           case instr(31 downto 24) is
             when x"00" => --load
+              ctrl <= "000";
+              reg_addr1 <= instr(19 downto 16);
             when x"01" => --store
+              ctrl <= "000";
+              reg_addr1 <= instr(19 downto 16);
+              reg_addr2 <= instr(23 downto 20);
             when x"02" => --add
               ctrl <= "000";
               reg_addr1 <= instr(19 downto 16);
@@ -97,23 +128,91 @@ begin
 
         when x"3" => --exec
           case instr(31 downto 24) is
+            when x"00" => --load
+              alu_iw1 <= reg_ow1;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+                end if;
+              next_pc <= pc+1;
+            when x"01" => --store
+              alu_iw1 <= reg_ow1;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              next_pc <= pc+1;
+              buf <= reg_ow2;
             when x"02" | x"03" =>
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
               next_pc <= pc+1;
             when x"04" =>
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= x"0000" & instr(15 downto 0);
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
               next_pc <= pc+1;
             when others =>  
           end case;
           state <= state+1;
 
-        when x"4" => --memory
-          state <= state+1;
-          
-        when x"5" => --write
+        when x"4" => --memory request
           case instr(31 downto 24) is
+            when x"00" =>
+              if mem_busy = '0' and mem_go = '0' then
+                mem_we <= '0';
+                mem_go <= '1';
+                mem_addr <= alu_ow(19 downto 0);
+                state <= state + 1;
+              else
+                mem_go <= '0';
+              end if;
+            when x"01" =>
+              if mem_busy = '0' and mem_busy = '0' then
+                mem_we <= '1';
+                mem_go <= '1';
+                mem_addr <= alu_ow(19 downto 0);
+                mem_store <= buf;
+                state <= state + 1;
+              else
+                mem_go <= '0';
+              end if;
+            when others =>
+              state <= state+2;
+          end case;
+
+        when x"5" => -- memory complete
+          case instr(31 downto 24) is
+            when x"00" => --load
+              if mem_busy = '0' and mem_go = '0' then
+                buf <= mem_load;
+                state <= state+1;
+              else
+                mem_go <= '0';
+              end if;
+            when x"01" =>
+              if mem_busy = '0' and mem_go = '0' then
+                state <= state+1;
+              else
+                mem_go <= '0';
+              end if;
+            when others =>
+          end case;
+                       
+        when x"6" => --write
+          case instr(31 downto 24) is
+            when x"00" => --load
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= buf;
+              reg_we <= '1';
+              pc <= next_pc;
+            when x"01" =>
+              pc <= next_pc;
             when x"02" | x"03" =>
               reg_addr1 <= instr(23 downto 20);
               reg_iw <= alu_ow;
@@ -127,7 +226,7 @@ begin
             when others =>
           end case;
           state <= state+1;
-        when x"6" =>
+        when x"7" =>
           state <= x"0";
           reg_we <= '0';
         when others =>
@@ -156,5 +255,19 @@ begin
     in_word => reg_iw,
     out_word1 => reg_ow1,
     out_word2 => reg_ow2);
+
+  mem : memory_io port map (
+    clk => clk,
+    RS_RX => RS_RX,
+    RS_TX => RS_TX,
+    ZD => ZD,
+    ZA => ZA,
+    XWA => XWA,
+    store_word => mem_store,
+    load_word => mem_load,
+    addr => mem_addr,
+    load_store => mem_we,
+    go => mem_go,
+    busy => mem_busy);
 
 end arch_core_main;
