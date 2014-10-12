@@ -74,7 +74,7 @@ begin  -- blackbox
       case state is 
         when "00000" => 
             if go = '1' then
-              if addr = x"0ffff" then     --io
+              if addr = x"fffff" then     --io
                 if load_store = '1' then --store_wordをrs_txに
                   udata <= store_word(31 downto 24);
                   cansend <= '1';
