@@ -57,6 +57,7 @@ architecture example of memory_io_debug is
   signal state : std_logic_vector(2 downto 0) := "000";
   signal count : std_logic_vector(7 downto 0) := x"30";
   signal allbit : std_logic_vector(31 downto 0) := (others => '0');
+  signal temp  : std_logic_vector(15 downto 0) := (others => '0');
 begin  -- example
   XE1		<='0';
   E2A		<='1';
@@ -107,9 +108,25 @@ begin  -- example
         count <= x"30";
         if go <= '0' and busy = '0' then
           load_store <= '1';
-          addr <= x"00000";
+          temp <= temp + 1;
+          if temp(1 downto 0) = "00"  then
+            addr <= x"00000";
+            store_word <= x"30303030";
+          else
+            if temp(1 downto 0) = "01" then
+              addr <= x"00001";
+              store_word <= x"31313131";
+            else
+              if temp( 1 downto 0) = "10" then
+                addr <= x"00002";
+                store_word <= x"32323232";
+              else
+                addr <= x"00003";
+                store_word <= x"33333333";
+              end if;
+            end if;
+          end if;
           go <= '1';
-          store_word <= x"33353738";
         else
           go <= '0';
           state <= "001";
