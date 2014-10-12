@@ -64,6 +64,8 @@ architecture arch_core_main of core_main is
   signal pc : std_logic_vector(13 downto 0) :=
     "00000000000000";
   signal next_pc : std_logic_vector(13 downto 0);
+  signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
+  signal lr : std_logic_vector(13 downto 0);
   
   signal instr_addr : std_logic_vector(13 downto 0);
   signal sram_addr : std_logic_vector(19 downto 0);
@@ -75,12 +77,14 @@ architecture arch_core_main of core_main is
   signal alu_iw2 : std_logic_vector(31 downto 0);
   signal alu_ow : std_logic_vector(31 downto 0);
   signal ctrl : std_logic_vector(2 downto 0);
+
   signal reg_addr1 : std_logic_vector(3 downto 0);
   signal reg_addr2 : std_logic_vector(3 downto 0);
   signal reg_we : std_logic;
   signal reg_iw : std_logic_vector(31 downto 0);
   signal reg_ow1 : std_logic_vector(31 downto 0);
   signal reg_ow2 : std_logic_vector(31 downto 0);
+
   signal buf : std_logic_vector(31 downto 0);
   signal mem_store : std_logic_vector(31 downto 0);
   signal mem_load : std_logic_vector(31 downto 0);
@@ -88,6 +92,7 @@ architecture arch_core_main of core_main is
   signal mem_we : std_logic;
   signal mem_go : std_logic;
   signal mem_busy : std_logic;
+
   signal branch_f : std_logic;
     
 begin
@@ -99,7 +104,7 @@ begin
         when x"0" => --fetch
           instr_addr <= pc;
           state <= state+1;
-
+          reg_we <= '0';
         when x"1" => --
           state <= state+1;
 
@@ -122,6 +127,8 @@ begin
             when x"09" => -- branch eq
               reg_addr1 <= instr(23 downto 20);
               reg_addr2 <= instr(19 downto 16);
+            when x"0C" => --jump subroutine
+            when x"0D" => --return
             when others =>
           end case;
           state <= state+1;
@@ -169,6 +176,14 @@ begin
                 branch_f <= '1';
               else
                 branch_f <= '0';
+              end if;
+            when x"0C" =>
+              ctrl <= "000";
+              alu_iw1 <= x"0000" & "00" & pc;
+              if instr(23) = '0' then
+                alu_iw2 <= x"00" & instr(23 downto 0);
+              else
+                alu_iw2 <= x"FF" & instr(23 downto 0);
               end if;
             when others =>  
           end case;
@@ -243,14 +258,17 @@ begin
               else
                 pc <= next_pc;
               end if;
+            when x"0C" =>
+              lr <= pc;
+              pc <= alu_ow(13 downto 0);
+            when x"0D" =>
+              pc <= lr;
             when others =>
           end case;
-          state <= state+1;
-        when x"7" =>
           state <= x"0";
-          reg_we <= '0';
         when others =>
           state <= x"0";
+          pc <= (others => '0');
       end case;
     end if;
   end process;
