@@ -130,15 +130,19 @@ begin
           case instr(31 downto 24) is
             when x"00" => --load
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= x"0000" & instr(15 downto 0)
-                         when instr(15) = '0' else
-                         x"FFFF" & instr(15 downto 0);
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+                end if;
               next_pc <= pc+1;
             when x"01" => --store
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= x"0000" & instr(15 downto 0)
-                         when instr(15) = '1' else
-                         x"FFFF" & instr(15 downto 0);
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
               next_pc <= pc+1;
               buf <= reg_ow2;
             when x"02" | x"03" =>
@@ -147,9 +151,11 @@ begin
               next_pc <= pc+1;
             when x"04" =>
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= x"0000" & instr(15 downto 0)
-                         when instr(15) = '0' else
-                         x"FFFF"  & instr(15 downto 0);
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
               next_pc <= pc+1;
             when others =>  
           end case;
@@ -161,7 +167,7 @@ begin
               if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '0';
                 mem_go <= '1';
-                mem_addr <= alu_ow;
+                mem_addr <= alu_ow(19 downto 0);
                 state <= state + 1;
               else
                 mem_go <= '0';
@@ -170,8 +176,8 @@ begin
               if mem_busy = '0' and mem_busy = '0' then
                 mem_we <= '1';
                 mem_go <= '1';
-                mem_addr <= alu_ow;
-                mem_data <= buf;
+                mem_addr <= alu_ow(19 downto 0);
+                mem_store <= buf;
                 state <= state + 1;
               else
                 mem_go <= '0';
@@ -184,7 +190,7 @@ begin
           case instr(31 downto 24) is
             when x"00" => --load
               if mem_busy = '0' and mem_go = '0' then
-                buf <= mem_data;
+                buf <= mem_load;
                 state <= state+1;
               else
                 mem_go <= '0';
@@ -198,7 +204,7 @@ begin
             when others =>
           end case;
                        
-        when x"5" => --write
+        when x"6" => --write
           case instr(31 downto 24) is
             when x"00" => --load
               reg_addr1 <= instr(23 downto 20);
@@ -220,7 +226,7 @@ begin
             when others =>
           end case;
           state <= state+1;
-        when x"6" =>
+        when x"7" =>
           state <= x"0";
           reg_we <= '0';
         when others =>
@@ -252,16 +258,16 @@ begin
 
   mem : memory_io port map (
     clk => clk,
-    RS_RX => RX_RX,
+    RS_RX => RS_RX,
     RS_TX => RS_TX,
     ZD => ZD,
     ZA => ZA,
     XWA => XWA,
     store_word => mem_store,
-    load_store => mem_load,
+    load_word => mem_load,
     addr => mem_addr,
     load_store => mem_we,
     go => mem_go,
-    busyy => mem_busy);
+    busy => mem_busy);
 
 end arch_core_main;
