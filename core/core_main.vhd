@@ -87,6 +87,7 @@ architecture arch_core_main of core_main is
   signal mem_we : std_logic;
   signal mem_go : std_logic;
   signal mem_busy : std_logic;
+  signal branch_f : std_logic;
     
 begin
 
@@ -101,27 +102,25 @@ begin
         when x"1" => --
           state <= state+1;
 
-        when x"2" => --decode
+        when x"2" => --decode 
           
           case instr(31 downto 24) is
             when x"00" => --load
-              ctrl <= "000";
               reg_addr1 <= instr(19 downto 16);
             when x"01" => --store
-              ctrl <= "000";
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(23 downto 20);
             when x"02" => --add
-              ctrl <= "000";
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"03" => --subtract
-              ctrl <= "001";
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"04" => --addi
-              ctrl <= "000";
               reg_addr1 <= instr(19 downto 16);
+            when x"09" => -- branch eq
+              reg_addr1 <= instr(23 downto 20);
+              reg_addr2 <= instr(19 downto 16);
             when others =>
           end case;
           state <= state+1;
@@ -129,6 +128,7 @@ begin
         when x"3" => --exec
           case instr(31 downto 24) is
             when x"00" => --load
+              ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
@@ -137,6 +137,7 @@ begin
                 end if;
               next_pc <= pc+1;
             when x"01" => --store
+              ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
@@ -146,10 +147,12 @@ begin
               next_pc <= pc+1;
               buf <= reg_ow2;
             when x"02" | x"03" =>
+              ctrl <= "000";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
               next_pc <= pc+1;
             when x"04" =>
+              ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
@@ -157,6 +160,19 @@ begin
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
               next_pc <= pc+1;
+            when x"09" =>
+              ctrl <= "000";
+              alu_iw1 <= x"0000" & pc;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              if reg_ow1 = reg_ow2 then
+                branch_f <= '1';
+              else
+                branch_f <= '0';
+              end if;
             when others =>  
           end case;
           state <= state+1;
@@ -223,6 +239,8 @@ begin
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
+            when x"09" =>
+              pc <= alu_ow(15 downto 0);
             when others =>
           end case;
           state <= state+1;
