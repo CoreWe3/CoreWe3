@@ -1,7 +1,7 @@
-CFLAGS = -O2 -g -Wall -std=gnu99
-TARGET = $(basename $(wildcard *c))
-SRCS = $(wildcard *.c)
-CC = clang
+CFLAGS = -O2 -g -Wall
+TARGET = $(basename $(wildcard *cpp))
+SRCS = $(wildcard *.cpp)
+CC = clang++
 
 
 .PHONY: all

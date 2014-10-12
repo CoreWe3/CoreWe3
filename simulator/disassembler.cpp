@@ -3,8 +3,8 @@
 #include <string.h>
 #include "isa.h"
 
-char* op2name(unsigned int op);
-char* reg2name(unsigned int reg);
+const char* op2name(unsigned int op);
+const char* reg2name(unsigned int reg);
 
 int main(int argc, char* argv[])
 {
@@ -62,9 +62,9 @@ int main(int argc, char* argv[])
 
 
 
-char* op2name(unsigned int op){
+const char* op2name(unsigned int op){
 	return names[op];
 }
-char* reg2name(unsigned  int reg){
+const char* reg2name(unsigned  int reg){
 	return rnames[reg];
 }
