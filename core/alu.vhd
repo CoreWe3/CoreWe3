@@ -14,7 +14,7 @@ end alu;
 architecture arch_alu of alu is
   signal shiftl : std_logic_vector(31 downto 0);
   signal shiftr : std_logic_vector(31 downto 0);
-  signal zero : std_logic_vector(31 downto 0) := (others => '0');
+  constant zero : std_logic_vector(31 downto 0) := (others => '0');
 begin
   
   out_word <= in_word1 + in_word2 when ctrl = "000" else
