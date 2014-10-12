@@ -5,16 +5,16 @@ use std.textio.all;
 use ieee.std_logic_textio.all;
 
 entity code_rom is
-  generic(CODE : string := "code.foo");
+  generic(CODE : string := "code.bin");
   
   port (clk : in std_logic;
         en : in std_logic;
-        addr : in std_logic_vector(15 downto 0);
+        addr : in std_logic_vector(13 downto 0);
         instr : out std_logic_vector(31 downto 0));
 end code_rom;
 
 architecture arch_code_rom of code_rom is
-  type rom_t is array (0 to 65536) of bit_vector(31 downto 0);
+  type rom_t is array (0 to 16384) of bit_vector(31 downto 0);
 
   impure function init_rom (file_name : in string) return rom_t is
     --file rom_file : text is in file_name;

@@ -6,9 +6,9 @@ while(<>) {
     print;
 }
 
-my $s = "02000000\n";
+my $s = "0110FFFF\n";
 $s =~ s/([0-9A-F])/bin($1)/eg;
-for(my $i = 0; $i < 70000; $i++){
+for(my $i = 0; $i < 30000; $i++){
     print $s;
 }
 
