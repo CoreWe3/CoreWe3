@@ -131,10 +131,10 @@ char* reg2name(unsigned int reg){
 }
 
 void ld(unsigned int ra, unsigned int rb, int cx){
-	ra = ram[reg[rb]+cx];
+	reg[ra] = ram[reg[rb]+cx];
 }
 void st(unsigned int ra, unsigned int rb, int cx){
-	ram[reg[rb]+cx] = ra;
+	ram[reg[rb]+cx] = reg[ra];
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra] = reg[rb] + reg[rc];

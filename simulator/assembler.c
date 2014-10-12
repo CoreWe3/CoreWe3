@@ -160,7 +160,7 @@ unsigned int ld(unsigned int ra, unsigned int rb, int cx){
 unsigned int st(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = LD;
+	ins.L.op = ST;
 	ins.L.ra = ra;
 	ins.L.rb = rb;
 	ins.L.cx = cx;
