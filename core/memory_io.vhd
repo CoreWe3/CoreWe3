@@ -5,7 +5,7 @@
 --loadの場合load_wordにデータが入っているものとする。
 --インターフェースは以下、実装よろ
 
---addrが0x0ffffのときio
+--addrが0xfffffのときio
 --load_store=1でstore_wordを出力　rs_txに
 --load_store=0でrs_rxをload_wordに
 library ieee;
@@ -71,10 +71,10 @@ begin  -- blackbox
   mio: process(clk)
   begin
     if rising_edge(clk) then
-      case state is
-        when "00000"  => 
+      case state is 
+        when "00000" => 
             if go = '1' then
-              if addr = x"0ffff" then     --io
+              if addr = x"fffff" then     --io
                 if load_store = '1' then --store_wordをrs_txに
                   udata <= store_word(31 downto 24);
                   cansend <= '1';
@@ -83,17 +83,21 @@ begin  -- blackbox
                   state <= "10000";
                 end if;
               else                      --sram
-                if load_store = '1' then  --store
-                  ZD <= store_word;
-                  XWA <= '0';
-                else
-                  ZD <= (others => 'Z');
-                  XWA <= '1';
-                end if;
-                ZA <= addr;
-                state <= "11110";
+                state <= "00001";
               end if;
             end if;
+        when "00001" =>
+          if load_store = '1' then  --store
+            ZD <= store_word;
+            XWA <= '0';
+            ZA <=addr;
+            state <= "11111";           --others
+          else
+            ZD <= (others => 'Z');
+            XWA <= '1';
+          end if;
+          ZA <= addr;
+          state <= "11110";
         when "01000" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
             uart_go <= '1';
