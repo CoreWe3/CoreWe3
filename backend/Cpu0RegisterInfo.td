@@ -29,24 +29,26 @@ class Cpu0GPRReg<bits<4> num, string n> : Cpu0Reg<n> {
 // The register string, such as "9" or "gp" will show on "llvm-objdump -d"
 let Namespace = "Cpu0" in {
   // General Purpose Registers
-  def ZERO : Cpu0GPRReg<0,  "zero">, DwarfRegNum<[0]>;
-  def AT   : Cpu0GPRReg<1,  "1">,    DwarfRegNum<[1]>;
-  def V0   : Cpu0GPRReg<2,  "2">,    DwarfRegNum<[2]>;
-  def V1   : Cpu0GPRReg<3,  "3">,    DwarfRegNum<[3]>;
-  def A0   : Cpu0GPRReg<4,  "4">,    DwarfRegNum<[4]>;
-  def A1   : Cpu0GPRReg<5,  "5">,    DwarfRegNum<[5]>;
-  def T9   : Cpu0GPRReg<6,  "t9">,   DwarfRegNum<[6]>;
-  def T0   : Cpu0GPRReg<7,  "7">,    DwarfRegNum<[7]>;
-  def S0   : Cpu0GPRReg<8,  "8">,    DwarfRegNum<[8]>;
-  def S1   : Cpu0GPRReg<9,  "9">,    DwarfRegNum<[9]>;
-  def SW   : Cpu0GPRReg<10, "sw">,   DwarfRegNum<[10]>;
-  def GP   : Cpu0GPRReg<11, "gp">,   DwarfRegNum<[11]>;
-  def FP   : Cpu0GPRReg<12, "fp">,   DwarfRegNum<[12]>;
-  def SP   : Cpu0GPRReg<13, "sp">,   DwarfRegNum<[13]>;
-  def LR   : Cpu0GPRReg<14, "lr">,   DwarfRegNum<[14]>;
-  def PC   : Cpu0GPRReg<15, "pc">,   DwarfRegNum<[15]>;
-//  def MAR  : Register< 16, "mar">,  DwarfRegNum<[16]>;
-//  def MDR  : Register< 17, "mdr">,  DwarfRegNum<[17]>;
+  def R0   : Cpu0GPRReg<0,  "r0">,  DwarfRegNum<[0]>;
+  def R1   : Cpu0GPRReg<1,  "r1">,  DwarfRegNum<[1]>;
+  def R2   : Cpu0GPRReg<2,  "r2">,  DwarfRegNum<[2]>;
+  def R3   : Cpu0GPRReg<3,  "r3">,  DwarfRegNum<[3]>;
+  def R4   : Cpu0GPRReg<4,  "r4">,  DwarfRegNum<[4]>;
+  def R5   : Cpu0GPRReg<5,  "r5">,  DwarfRegNum<[5]>;
+  def R6   : Cpu0GPRReg<6,  "r6">,  DwarfRegNum<[6]>;
+  def R7   : Cpu0GPRReg<7,  "r7">,  DwarfRegNum<[7]>;
+  def R8   : Cpu0GPRReg<8,  "r8">,  DwarfRegNum<[8]>;
+  def R9   : Cpu0GPRReg<9,  "r9">,  DwarfRegNum<[9]>;
+  def R10  : Cpu0GPRReg<10, "r10">, DwarfRegNum<[10]>;
+  def R11  : Cpu0GPRReg<11, "r11">, DwarfRegNum<[11]>;
+  def R12  : Cpu0GPRReg<12, "r12">, DwarfRegNum<[12]>;
+  def R13  : Cpu0GPRReg<13, "r13">, DwarfRegNum<[13]>;
+  def R14  : Cpu0GPRReg<14, "r14">, DwarfRegNum<[14]>;
+  def R15  : Cpu0GPRReg<15, "r15">, DwarfRegNum<[15]>;
+  //別のクラスにしたほうが良い?
+  def SP   : Cpu0GPRReg<16, "sp">,  DwarfRegNum<[16]>;
+  def LR   : Cpu0GPRReg<17, "lr">,  DwarfRegNum<[17]>;
+  def PC   : Cpu0GPRReg<18, "pc">,  DwarfRegNum<[18]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -54,17 +56,8 @@ let Namespace = "Cpu0" in {
 //===----------------------------------------------------------------------===//
 
 def CPURegs : RegisterClass<"Cpu0", [i32], 32, (add
-  // Reserved
-  ZERO, AT, 
-  // Return Values and Arguments
-  V0, V1, A0, A1, 
-  // Not preserved across procedure calls
-  T9, T0,
-  // Callee save
-  S0, S1, SW, 
-  // Reserved
-  GP, FP, 
+  R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15
   SP, LR, PC)>;
 
 // Status Registers class
-def SR   : RegisterClass<"Cpu0", [i32], 32, (add SW)>;
+//def SR   : RegisterClass<"Cpu0", [i32], 32, (add SW)>;
