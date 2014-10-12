@@ -71,8 +71,8 @@ begin  -- blackbox
   mio: process(clk)
   begin
     if rising_edge(clk) then
-      case state is
-        when "00000"  => 
+      case state is 
+        when "00000" => 
             if go = '1' then
               if addr = x"0ffff" then     --io
                 if load_store = '1' then --store_wordをrs_txに
@@ -83,17 +83,21 @@ begin  -- blackbox
                   state <= "10000";
                 end if;
               else                      --sram
-                if load_store = '1' then  --store
-                  ZD <= store_word;
-                  XWA <= '0';
-                else
-                  ZD <= (others => 'Z');
-                  XWA <= '1';
-                end if;
-                ZA <= addr;
-                state <= "11110";
+                state <= "00001";
               end if;
             end if;
+        when "00001" =>
+          if load_store = '1' then  --store
+            ZD <= store_word;
+            XWA <= '0';
+            ZA <=addr;
+            state <= "11111";           --others
+          else
+            ZD <= (others => 'Z');
+            XWA <= '1';
+          end if;
+          ZA <= addr;
+          state <= "11110";
         when "01000" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
             uart_go <= '1';
