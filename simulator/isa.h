@@ -24,7 +24,7 @@ typedef union{
 
 #define ISANUM 16
 
-char* names[] = {"LD","ST","ADD","SUB","ADDI","AND","OR","SHL","SHR","BEQ","BLE","BLT","JSUB","RET","PUSH","POP"};
+const char* names[] = {"LD","ST","ADD","SUB","ADDI","AND","OR","SHL","SHR","BEQ","BLE","BLT","JSUB","RET","PUSH","POP"};
 
 
 #define LD   0x0
@@ -45,7 +45,7 @@ char* names[] = {"LD","ST","ADD","SUB","ADDI","AND","OR","SHL","SHR","BEQ","BLE"
 #define POP  0x15
 
 
-char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15"};
+const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15"};
 
 #define REGNUM 16
 #define RAMSIZE 0x100000
