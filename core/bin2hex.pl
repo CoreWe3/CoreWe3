@@ -13,4 +13,8 @@ while(read(STDIN, $instr, 4)){
     }
     print "\n";
 }
+
+for(my $i=0; $i<20000; $i++){
+    print "02000000\n";
+}
 	
