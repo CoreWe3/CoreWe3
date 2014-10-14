@@ -115,15 +115,15 @@ begin
             when x"01" => --store
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(23 downto 20);
-            when x"02" => --add
-              reg_addr1 <= instr(19 downto 16);
-              reg_addr2 <= instr(15 downto 12);
-            when x"03" => --subtract
+            when x"02" | x"03" => --add
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"04" => --addi
               reg_addr1 <= instr(19 downto 16);
-            when x"09" => -- branch eq
+            when x"05" | x"06" | x"07" | x"08" => --and or shl shr
+              reg_addr1 <= instr(19 downto 16);
+              reg_addr2 <= instr(15 downto 12);
+            when x"09" | x"0A" | x"0B" => -- branch
               reg_addr1 <= instr(23 downto 20);
               reg_addr2 <= instr(19 downto 16);
             when x"0C" => --jump subroutine
@@ -154,11 +154,15 @@ begin
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
               buf <= reg_ow2;
-            when x"02" | x"03" =>
+            when x"02" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
-            when x"04" =>
+            when x"03" => --sub
+              ctrl <= "001";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"04" => --addi
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(15) = '0' then
@@ -166,6 +170,22 @@ begin
               else
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
+            when x"05" => --and
+              ctrl <= "010";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"06" => --or
+              ctrl <= "011";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"07" => --shl
+              ctrl <= "101";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"08" => --shr
+              ctrl <= "110";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
             when x"09" => --branch eq
               ctrl <= "000";
               alu_iw1 <= x"0000" & "00" & pc;
@@ -179,6 +199,32 @@ begin
               else
                 branch_f <= '0';
               end if;
+            when x"0A" => --ble
+              ctrl <= "000";
+              alu_iw <= x"0000" & "00" & pc;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              if reg_ow1 <= reg_ow2 then
+                branch_f <= '1';
+              else
+                branch_f <= '0';
+              end if;
+            when x"0B" => --blt
+              ctrl <= "000";
+              alu_iw <= x"0000" & "00" & pc;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              if reg_ow1 < reg_ow2 then
+                branch_f <= '1';
+              else
+                branch_f <= '0';
+              end if;
             when x"0C" => --jump subroutine
               ctrl <= "000";
               alu_iw1 <= x"0000" & "00" & pc;
@@ -188,6 +234,10 @@ begin
                 alu_iw2 <= x"FF" & instr(23 downto 0);
               end if;
               sp <= sp-1;
+            when x"0D" => --ret
+              ctrl <= "000";
+              alu_iw1 <= x"000" & sp;
+              alu_iw2 <= x"00000001";
             when x"0E" => --push
               ctrl <= "001";
               alu_iw1 <= x"000" & sp;
@@ -317,7 +367,12 @@ begin
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
-            when x"09" => --beq
+            when x"05" | x"06" | x"07" | x"08" =>
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= alu_ow;
+              reg_we <= '1';
+              pc <= next_pc;
+            when x"09" | x"0A" | x"0B" => --beq
               if branch_f = '1' then
                 pc <= alu_ow(13 downto 0);
               else
@@ -326,7 +381,7 @@ begin
             when x"0C" => --jsub
               pc <= alu_ow(13 downto 0);
             when x"0D" => --ret
-              sp <= sp+1;
+              sp <= alu_ow(19 downto 0);
             when x"0E" => --push
               pc <= next_pc;
             when x"0F" => --pop
