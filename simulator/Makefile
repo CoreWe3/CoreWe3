@@ -5,11 +5,11 @@ CC = clang++
 
 
 .PHONY: all
-	
+
 all: $(TARGET)
 
-%:%.c
-	$(CC) $(addsuffix .c, $(basename $<)) $(CFLAGS) -o $@
+%:%.cpp
+	$(CC) $(addsuffix .cpp, $(basename $<)) $(CFLAGS) -o $@
 
 clean:
 	$(RM) $(TARGET)
