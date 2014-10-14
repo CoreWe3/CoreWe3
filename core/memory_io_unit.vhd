@@ -125,6 +125,9 @@ begin  -- example
           ustate <= "0001";
         when "0001" =>
           if umemory_size > 1 and then
+            if rmemory_busy = '1' then
+              ustate <= "0001";
+            end if;
             ZD <= (others => '1');
             ZA <= uaddr;
             umemory_busy <= '1';
@@ -133,6 +136,11 @@ begin  -- example
         when "0010" =>
           uminibuffer <= ZD;
           umemory_busy <= '0';
+          if uaddr = uhead + usize then
+            uaddr <= uhead;
+          else
+            uaddr <= uaddr + 1;
+          end if;
           ustate <= "0011";
         when "0011" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
@@ -146,6 +154,44 @@ begin  -- example
             end if;
             uart_go <= '0';
           end if;
+        when "0100" =>
+          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
+            uart_go <= '1';
+            cansend <= '0';
+          else
+            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
+              cansend <= '1';
+              udata <= uminibuffer(23 downto 16);
+              state <= "0101";
+            end if;
+            uart_go <= '0';
+          end if;
+        when "0101" =>
+          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
+            uart_go <= '1';
+            cansend <= '0';
+          else
+            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
+              cansend <= '1';
+              udata <= uminibuffer(15 downto 8);
+              state <= "0110";
+            end if;
+            uart_go <= '0';
+          end if;
+        when "0110" =>
+          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
+            uart_go <= '1';
+            cansend <= '0';
+          else
+            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
+              cansend <= '1';
+              udata <= uminibuffer(7 downto 0);
+              state <= "0111";
+            end if;
+            uart_go <= '0';
+          end if;
+        when "0111" =>
+          ustate <= "0001";
         when others => null;
       end case;
     end if;
