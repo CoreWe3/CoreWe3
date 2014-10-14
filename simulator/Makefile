@@ -8,8 +8,9 @@ CC = clang++
 
 all: $(TARGET)
 
-%:%.cpp
+%:%.cpp isa.h
 	$(CC) $(addsuffix .cpp, $(basename $<)) $(CFLAGS) -o $@
+
 
 clean:
 	$(RM) $(TARGET)
