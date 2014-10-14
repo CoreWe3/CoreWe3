@@ -37,12 +37,12 @@ const char* names[] = {"LD","ST","ADD","SUB","ADDI","AND","OR","SHL","SHR","BEQ"
 #define SHL  0x7
 #define SHR  0x8
 #define BEQ  0x9
-#define BLE  0x10
-#define BLT  0x11
-#define JSUB  0x12
-#define RET  0x13
-#define PUSH  0x14
-#define POP  0x15
+#define BLE  0xa
+#define BLT  0xb
+#define JSUB  0xc
+#define RET  0xd
+#define PUSH  0xe
+#define POP  0xf
 
 
 const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15"};

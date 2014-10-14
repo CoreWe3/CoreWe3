@@ -8,7 +8,7 @@ CC = clang++
 	
 all: $(TARGET)
 
-%:%.c
+%:%.c	isa.h
 	$(CC) $(addsuffix .c, $(basename $<)) $(CFLAGS) -o $@
 
 clean:
