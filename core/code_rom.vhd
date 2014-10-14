@@ -14,8 +14,8 @@ entity code_rom is
 end code_rom;
 
 architecture arch_code_rom of code_rom is
-  --type rom_t is array (0 to 16384) of bit_vector(31 downto 0);
-  type rom_t is array (0 to 16384) of std_logic_vector(31 downto 0);
+  type rom_t is array (0 to 16384) of bit_vector(31 downto 0);
+  --type rom_t is array (0 to 16384) of std_logic_vector(31 downto 0);
   impure function init_rom (file_name : in string) return rom_t is
     --file rom_file : text is in file_name;
     file rom_file : text open read_mode is file_name;
@@ -24,7 +24,7 @@ architecture arch_code_rom of code_rom is
   begin
     for i in rom_t'range loop
       readline (rom_file, file_line);
-      hread (file_line, ROM(i));
+      read (file_line, ROM(i));
     end loop;
     return ROM;
   end function;
@@ -39,7 +39,8 @@ begin
   begin
     if rising_edge(clk) then
       if en = '1' then
-        instr <= ROM(conv_integer(addr));
+        --instr <= ROM(conv_integer(addr));
+        instr <= to_stdLogicVector(ROM(conv_integer(addr)));
       end if;
     end if;
   end process;

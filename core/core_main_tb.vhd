@@ -8,7 +8,7 @@ end core_main_tb;
 architecture arch_core_main_tb of core_main_tb is
   component core_main
     generic (
-      CODE : string := "sample.bin");
+      CODE : string := "fib.bin");
     port (
       clk   : in    std_logic;
       RS_TX : out   std_logic;
