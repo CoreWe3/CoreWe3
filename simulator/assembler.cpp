@@ -35,8 +35,6 @@ void print_L(unsigned int x) {
     printf("\n");
 }
 
-
-
 int main(int argc, char* argv[])
 {
 	if(argc < 2){
@@ -93,13 +91,13 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = ld(name2reg(ra),name2reg(rb),atoi(cx));
+						code = ld(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						break;
 					case ST:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = st(name2reg(ra),name2reg(rb),atoi(cx));
+						code = st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						break;
 					case ADD:
 						ra = strtok(NULL,tokens);
@@ -117,7 +115,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = addi(name2reg(ra),name2reg(rb),atoi(cx));
+						code = addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						//print_L(code);
 						break;
 					case AND:
@@ -151,7 +149,7 @@ int main(int argc, char* argv[])
 						if(cx[0] == ':') {
 							code = beq(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = beq(name2reg(ra),name2reg(rb),atoi(cx));
+							code = beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case BLE:
@@ -161,7 +159,7 @@ int main(int argc, char* argv[])
 						if(cx[0] == ':') {
 							code = ble(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = ble(name2reg(ra),name2reg(rb),atoi(cx));
+							code = ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case BLT:
@@ -171,7 +169,7 @@ int main(int argc, char* argv[])
 						if(cx[0] == ':') {
 							code = blt(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = blt(name2reg(ra),name2reg(rb),atoi(cx));
+							code = blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case JSUB:
@@ -179,7 +177,7 @@ int main(int argc, char* argv[])
 						if(cx[0] == ':') {
 							code = jsub(label[cx]-line);
 						}else{
-							code = jsub(atoi(cx));
+							code = jsub(strtol(cx,NULL,0));
 						}
 						break;
 					case RET:

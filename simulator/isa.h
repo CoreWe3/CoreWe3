@@ -58,3 +58,4 @@ unsigned int sp;
 unsigned int ram[RAMSIZE];
 unsigned int rom[ROMSIZE];
 
+#define IOADDR 0xfffff
