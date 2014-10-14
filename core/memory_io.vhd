@@ -5,9 +5,12 @@
 --loadの場合load_wordにデータが入っているものとする。
 --インターフェースは以下、実装よろ
 
---addrが0x0ffffのときio
+--addrが0x0ffffのときio ->0xfffffに変更
 --load_store=1でstore_wordを出力　rs_txに
 --load_store=0でrs_rxをload_wordに
+
+--receive用bufferは0xf8000から0xf9fffまで(仮)
+--send用bufferは0xfa000から0xfafffまで(仮)
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;

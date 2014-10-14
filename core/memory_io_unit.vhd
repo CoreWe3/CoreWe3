@@ -14,11 +14,9 @@ entity memory_io_unit is
     ZA          : out   std_logic_vector(19 downto 0);
     XWA         : out   std_logic;
     --cpu_raddr   : in    std_logic_vector(19 downto 0);
-    raddr       : out   std_logic_vector(19 downto 0);
-    cpu_uaddr   : in    std_logic_vector(19 downto 0);
-    uaddr       : out   std_logic_vector(19 downto 0);
-    rcomp       : out   std_logic;
-    ucomp       : in    std_logic;
+    raddr       : out   std_logic_vector(19 downto 0); --まだ空
+    cpu_uaddr   : in    std_logic_vector(19 downto 0);  
+    uaddr       : out   std_logic_vector(19 downto 0); 
     rmemory_busy : out   std_logic;
     umemory_busy : out   std_logic;
     umemory_size : in    std_logic_vector(19 downto 0));
