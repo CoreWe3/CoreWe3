@@ -174,15 +174,6 @@ void st(unsigned int ra, unsigned int rb, int cx){
 			exit(1);
 		}
 	}
-
-
-	//}else{
-	//	int tmp = reg[ra];
-	//	if(fwrite(&tmp,sizeof(int),1,iofpw) < 0){
-	//		printf("File Write Error");
-	//		exit(1);
-	//	}
-	//}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra] = reg[rb] + reg[rc];
@@ -224,12 +215,13 @@ void blt(unsigned int ra, unsigned int rb, int cx){
 	}
 }
 void jsub(int cx){
-	lr = pc;
+	ram[sp] = pc + 1;
+	sp--;
 	pc = pc + cx;
-	pcflag = 0;
 }
 void ret(){
-	pc = lr;
+	pc = ram[sp];
+	sp++;
 }
 void push(unsigned int ra){
 	sp--;
