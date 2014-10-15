@@ -23,6 +23,8 @@ void pop(unsigned int ra);
 const char* op2name(unsigned int op);
 const char* reg2name(unsigned int reg);
 
+FILE* iofpr;
+FILE* iofpw;
 
 //Debugger
 unsigned int d_insnum = 0;
@@ -30,8 +32,20 @@ unsigned int d_insnum = 0;
 
 int main(int argc, char* argv[])
 {
-	if(argc < 2){
-		printf("Need Binary filename\n");
+	if(argc < 4){
+		printf("Need Binary filenames\n");
+		return 1;
+	}
+	
+	//Initilaize IO
+	iofpr = fopen(argv[2],"rb");
+	if (iofpr == NULL){
+		printf("Can't open %s\n",argv[2]);
+		return 1;
+	}
+	iofpw = fopen(argv[3],"wb");
+	if (iofpr == NULL){
+		printf("Can't open %s\n",argv[3]);
 		return 1;
 	}
 
@@ -41,6 +55,8 @@ int main(int argc, char* argv[])
 		printf("Can't open %s\n",argv[1]);
 		return 1;
 	}
+
+
 	unsigned int tmp;
 	unsigned int num = 0;
 	while(fread(&tmp,sizeof(unsigned int),1,fpr) > 0){
@@ -120,6 +136,10 @@ int main(int argc, char* argv[])
 	}
 	printf("Number of Instruction : %d\n",d_insnum);
 
+	fclose(iofpr);
+	fclose(iofpw);
+
+
 	return 0;
 }
 
@@ -131,10 +151,29 @@ const char* reg2name(unsigned int reg){
 }
 
 void ld(unsigned int ra, unsigned int rb, int cx){
-	reg[ra] = ram[reg[rb]+cx];
+	unsigned int tmp = (reg[rb] + cx) & 0xFFFFF;
+	if(tmp != IOADDR ){
+		reg[ra] = ram[tmp];
+	}else{
+		int iotmp;
+		if(fread(&iotmp,sizeof(int),1,iofpr) > 0){
+			reg[ra] = iotmp;
+		}else{
+			printf("File Read Error");
+			exit(1);
+		}
+	}
 }
 void st(unsigned int ra, unsigned int rb, int cx){
-	ram[reg[rb]+cx] = reg[ra];
+	unsigned int tmp = (reg[rb] + cx) & 0xFFFFF;
+	if(tmp != IOADDR ){
+		ram[tmp] = reg[ra];
+	}else{
+		if(fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
+			printf("File Write Error");
+			exit(1);
+		}
+	}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra] = reg[rb] + reg[rc];
@@ -176,12 +215,13 @@ void blt(unsigned int ra, unsigned int rb, int cx){
 	}
 }
 void jsub(int cx){
-	lr = pc;
+	ram[sp] = pc + 1;
+	sp--;
 	pc = pc + cx;
-	pcflag = 0;
 }
 void ret(){
-	pc = lr;
+	pc = ram[sp];
+	sp++;
 }
 void push(unsigned int ra){
 	sp--;
