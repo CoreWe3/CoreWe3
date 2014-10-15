@@ -28,6 +28,7 @@ and pp_t_list ts =
   Format.sprintf "(%s)" (pp_t_list' ts)
 and pp_t_tup ts = 
   let rec pp_t_tup' = function
+    | [] -> ""
     | [s] -> Format.sprintf "%s" (pp_t s)
     | s::ss -> Format.sprintf "%s * %s" (pp_t s) (pp_t_tup' ss)
   in
