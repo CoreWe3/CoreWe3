@@ -6,6 +6,8 @@ let rec pp_list = function
   | [x] -> x
   | x :: xs -> x ^ " " ^ pp_list xs
 
+let pp_t t = t
+
 let counter = ref 0
 let genid s =
   incr counter;
