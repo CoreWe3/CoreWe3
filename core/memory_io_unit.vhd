@@ -19,7 +19,8 @@ entity memory_io_unit is
     uaddr       : out   std_logic_vector(19 downto 0); 
     rmemory_busy : out   std_logic;
     umemory_busy : out   std_logic;
-    umemory_size : in    std_logic_vector(19 downto 0));
+    memory_busy  : in    std_logic);
+    --umemory_size : in    std_logic_vector(19 downto 0));
 
 end memory_io_unit;
 
@@ -98,7 +99,7 @@ begin  -- example
             rstate <= "101";
           end if;
         when "101" =>
-          if umemory_busy = '1' then
+          if umemory_busy = '1' or memory_busy = '1' then
             rstate <= "101";
           end if;
           ZD <= rminibuffer;
@@ -110,11 +111,12 @@ begin  -- example
           if raddr = rhead + rsize then
             raddr <= rhead;
           else
-            raddr <= radd + 1;
+            raddr <= raddr + 1;
           end if;
           rmemory_busy <= '0';
           rstate <= "001";
-        when others => null;
+        when others =>
+          rstate <= "000";
       end case;
       case ustate is
         when "0000" =>
@@ -122,11 +124,12 @@ begin  -- example
           umemory_busy <= '0';
           ustate <= "0001";
         when "0001" =>
-          if umemory_size > 1 and then
-            if rmemory_busy = '1' then
+          if uaddr /= cpu_uaddr and then
+            if rmemory_busy = '1' or memory_busy = '1' then
               ustate <= "0001";
             end if;
-            ZD <= (others => '1');
+            ZD <= (others => 'Z');
+            XWA <= '1';
             ZA <= uaddr;
             umemory_busy <= '1';
             ustate <= "0010";
@@ -190,7 +193,8 @@ begin  -- example
           end if;
         when "0111" =>
           ustate <= "0001";
-        when others => null;
+        when others =>
+          ustate <= "0000";
       end case;
     end if;
   end process mio;
