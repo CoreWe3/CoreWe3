@@ -10,15 +10,18 @@ entity memory_io_unit is
     clk         : in    std_logic;
     rs_rx       : in    std_logic;
     rs_tx       : out   std_logic;
-    ZD          : inout std_logic_vector(31 downto 0);
-    ZA          : out   std_logic_vector(19 downto 0);
-    XWA         : out   std_logic;
-    --cpu_raddr   : in    std_logic_vector(19 downto 0);
-    raddr       : out   std_logic_vector(19 downto 0); --まだ空
-    cpu_uaddr   : in    std_logic_vector(19 downto 0);  
-    uaddr       : out   std_logic_vector(19 downto 0); 
-    rumemory_busy : out   std_logic;
-    memory_busy  : in    std_logic);
+    --ZD          : inout std_logic_vector(31 downto 0);
+    --ZA          : out   std_logic_vector(19 downto 0);
+    --XWA         : out   std_logic;
+    cpu_raddr   : in    std_logic_vector(15 downto 0);
+    raddr       : out   std_logic_vector(15 downto 0); --まだ空
+    cpu_uaddr   : in    std_logic_vector(15 downto 0);  
+    --uaddr       : out   std_logic_vector(19 downto 0);
+    flag        : in    std_logic_vector(1 downto 0);
+    data_from_r : out   std_logic_vector(31 downto 0);  --flag "01"
+    data_to_u : in   std_logic_vector(31 downto 0));  --flag "11"
+    --rumemory_busy : out   std_logic;
+    --memory_busy  : in    std_logic);
     --umemory_size : in    std_logic_vector(19 downto 0));
 
 end memory_io_unit;
@@ -53,14 +56,10 @@ architecture example of memory_io_unit is
   signal owari : std_logic;
   signal cansend : std_logic := '0';
   signal temp : std_logic := '1';       -- rs_rx
-  signal rsize : std_logic_vector(19 downto 0) := x"1ffff";
-  signal usize : std_logic_vector(19 downto 0) := x"1ffff";
-  signal rhead : std_logic_vector(19 downto 0) := x"f8000";
-  signal uhead : std_logic_vector(19 downto 0) := x"fa000";
-  signal rmemory_busy : std_logic := '0';
-  signal umemory_busy : std_logic := '0';
-  signal raddrtemp : std_logic_vector(19 downto 0);
-  signal uaddrtemp : std_logic_vector(19 downto 0);
+  type ram_type is array (0 to 65535) of std_logic_vector(31 downto 0);
+  signal rRAM : ram_type;
+  signal uRAM : ram_type;
+  signal uaddr : std_logic_vector(15 downto 0);
 begin  -- example
   nr232c : memory_io_r232c generic map (wtime => x"1adb")
     port map (clk,temp,owari,rdata);
@@ -75,11 +74,17 @@ begin  -- example
   begin  -- process mio
     if rising_edge(clk) then
       temp <= rs_rx;
+      if flag = "01" then               --r
+        data_from_r <= rRAM(conv_integer(cpu_raddr));
+      else
+        if flag = "11" then             --u
+          uRAM(conv_integer(cpu_uaddr)) <= data_to_u;
+        end if;        
+      end if;
       case rstate is
-        when "000" =>
+        when "000" =>     
           rmemory_busy <= '0';
-          raddr <= rhead;
-          raddrtemp <= rhead;
+          raddr <= x"0000";
           rstate <= "001";
         when "001" =>
           if owari = '1' then
@@ -102,55 +107,24 @@ begin  -- example
             rstate <= "101";
           end if;
         when "101" =>
-          if umemory_busy = '1' or memory_busy = '1' then
-            rstate <= "101";
-          end if;
-          ZD <= rminibuffer;
-          XWA <= '0';
-          ZA <= raddrtemp;
+          rRAM(conv_integer(raddr)) <= rminibuffer;
           rstate <= "110";
-          rmemory_busy <= '1';
+          raddr <= raddr + 1;
         when "110" =>
-          if raddrtemp = rhead + rsize then
-            raddr <= rhead;
-            raddrtemp <= rhead;
-          else
-            raddrtemp <= raddrtemp + 1;
-            raddr <= raddrtemp + 1;
-          end if;
-          rmemory_busy <= '0';
           rstate <= "001";
         when others =>
           rstate <= "000";
       end case;
       case ustate is
         when "0000" =>
-          uaddr <= uhead;
-          uaddrtemp <= uhead;
-          umemory_busy <= '0';
+          uaddr <= x"0000";
           ustate <= "0001";
         when "0001" =>
-          if uaddrtemp /= cpu_uaddr then
-            if rmemory_busy = '1' or memory_busy = '1' then
-              ustate <= "0001";
-            end if;
-            ZD <= (others => 'Z');
-            XWA <= '1';
-            ZA <= uaddrtemp;
-            umemory_busy <= '1';
-            ustate <= "0010";
+          if uaddr /= cpu_uaddr then
+            uminibuffer <= uRAM(conv_integer(uaddr));
+            ustate <= "0011";
+            uaddr <= uaddr + 1;
           end if;
-        when "0010" =>
-          uminibuffer <= ZD;
-          umemory_busy <= '0';
-          if uaddrtemp = uhead + usize then
-            uaddr <= uhead;
-            uaddrtemp <= uhead;
-          else
-            uaddrtemp <= uaddrtemp + 1;
-            uaddr <= uaddrtemp + 1;
-          end if;
-          ustate <= "0011";
         when "0011" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
             uart_go <= '1';

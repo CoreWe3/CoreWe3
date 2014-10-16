@@ -9,8 +9,6 @@
 --load_store=1でstore_wordを出力　rs_txに
 --load_store=0でrs_rxをload_wordに
 
---receive用bufferは0xf8000から0xf9fffまで(仮)
---send用bufferは0xfa000から0xfafffまで(仮)
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -39,15 +37,18 @@ architecture blackbox of memory_io is
       clk          : in    std_logic;
       rs_rx        : in    std_logic;
       rs_tx        : out   std_logic;
-      ZD           : inout std_logic_vector(31 downto 0);
-      ZA           : out   std_logic_vector(19 downto 0);
-      XWA          : out   std_logic;
-      --cpu_raddr    : in    std_logic_vector(19 downto 0);
-      raddr        : out   std_logic_vector(19 downto 0);
-      cpu_uaddr    : in    std_logic_vector(19 downto 0);
-      uaddr        : out   std_logic_vector(19 downto 0);
-      rumemory_busy : out   std_logic;
-      memory_busy  : in    std_logic);
+      --ZD           : inout std_logic_vector(31 downto 0);
+      --ZA           : out   std_logic_vector(19 downto 0);
+      --XWA          : out   std_logic;
+      cpu_raddr    : in    std_logic_vector(15 downto 0);
+      raddr        : out   std_logic_vector(15 downto 0);
+      cpu_uaddr    : in    std_logic_vector(15 downto 0);
+      --uaddr        : out   std_logic_vector(19 downto 0);
+      flag         : in    std_logic_vector(1 downto 0);
+      data_from_r  : out   std_logic_vector(31 downto 0);  --flag "01"
+      data_to_u    : in   std_logic_vector(31 downto 0));  --flag "11"
+      --rumemory_busy : out   std_logic;
+      --memory_busy  : in    std_logic);
       --umemory_size : in    std_logic_vector(19 downto 0);
       --rflag        : out   std_logic);
   end component;
@@ -61,29 +62,31 @@ architecture blackbox of memory_io is
   --signal cansend : std_logic := '0';
   --signal temp : std_logic := '1';
   --signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
-  signal cpu_raddr : std_logic_vector(19 downto 0) := x"f8000";
+  signal cpu_raddr : std_logic_vector(15 downto 0) := x"0000";
+  signal rsize : std_logic_vector(19 downto 0);
   signal raddr : std_logic_vector(19 downto 0);
-  signal cpu_uaddr : std_logic_vector(19 downto 0) := x"fa000";
-  signal uaddr : std_logic_vector(19 downto 0);
+  signal cpu_uaddr : std_logic_vector(15 downto 0) := x"0000";
+  signal usize : std_logic_vector(19 downto 0);
+  --signal uaddr : std_logic_vector(19 downto 0);
   signal umemory_size : std_logic_vector(19 downto 0) := (others => '0');
   signal rumemory_busy : std_logic := '0';
-  signal uflag : std_logic := '0';      -- cpu_uaddr と uaddr の位置が逆転しているかどうか
-  signal rsize : std_logic_vector(19 downto 0) := x"1ffff";
-  signal usize : std_logic_vector(19 downto 0) := x"1ffff";
-  signal rhead : std_logic_vector(19 downto 0) := x"f8000";
-  signal uhead : std_logic_vector(19 downto 0) := x"fa000";
-  signal rflag : std_logic;
-  signal memory_busy : std_logic := '0';
+  signal flag : std_logic_vector(1 downto 0) := "00";
+  signal data_from_r : std_logic_vector(31 downto 0);
+  signal data_to_u : std_logic_vector(31 downto 0);
+  signal load_store_tmp : std_logic;
 begin  -- blackbox
   io_unit : memory_io_unit
-    port map(clk,rs_rx,rs_tx,ZD,ZA,XWA,raddr,cpu_uaddr,uaddr,rumemory_busy,memory_busy);
+    port map(clk,rs_rx,rs_tx,cpu_raddr,raddr,cpu_uaddr,flag,data_from_r,data_to_u);
   mio: process(clk)
   begin
     if rising_edge(clk) then
       case state is 
         when "00000" =>
+          XWA <= '1';
+          flag <= "00";
           memory_busy <= '0';
             if go = '1' then
+              load_store_tmp <= load_store;
               if addr = x"fffff" then     --io
                 if load_store = '1' then --store_wordをrs_txに
                   state <= "01000";
@@ -95,48 +98,42 @@ begin  -- blackbox
               end if;
             end if;
         when "00001" =>
-          if load_store = '1' and rumemory_busy = '0' then  --store
+          if load_store_tmp = '1' then  --store
             ZD <= store_word;
             XWA <= '0';
             ZA <=addr;
-            state <= "11111";           --others
+            state <= "11100";           --others
           else
-            if rumemory_busy = '0' then
             ZD <= (others => 'Z');
             XWA <= '1';
             ZA <= addr;
-            state <= "11110";
-            end if;
+            state <= "11101";
           end if;
         when "01000" => 
-          if rumemory_busy = '0' then
-            ZD <= store_word;
-            XWA <= '0';
-            ZA <= cpu_uaddr;
-            if cpu_uaddr = uhead + usize then
-              cpu_uaddr <= uhead;
-              uflag <= '1';
-            else
-              cpu_uaddr <= cpu_uaddr + 1;
-            end if;
-          end if;
+          data_to_u <= store_word;
+          flag <= "11";  
+          state <= "01001";
+        when "01001" =>
+          flag <= "00";
+          cpu_uaddr <= cpu_uaddr + 1;
           state <= "00000";
         when "10000" =>
           if raddr = cpu_raddr then
-            state <= "10000";           --loop
+            state <= "10000";--loop
+          else
+            flag <= "01";
+            state <= "10001";
           end if;
-          if rumemory_busy = '0' then
-            ZD <= (others => 'Z');
-            XWA <= '1';
-            memory_busy <= '1';
-            ZA <= cpu_raddr;
-            if cpu_raddr = rhead + rsize then
-              cpu_raddr <= rhead;
-            else
-              cpu_raddr <= cpu_raddr + 1;
-            end if;
-            state <= "11110";
-          end if;
+        when "10001" =>
+          flag <= "00";
+          load_word <= data_from_r;
+          cpu_raddr <= cpu_raddr + 1;
+          state <= "00000";
+        when "11100" =>
+          XWA <= '1';
+          state <= "11111";
+        when "11101" =>
+          state <= "11110";
         when "11110" =>
           load_word <= ZD;    
           state <= "00000";
