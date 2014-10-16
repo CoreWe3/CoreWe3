@@ -4,8 +4,8 @@ open Parser
 open Type
 let line_no = ref 1
 let end_of_previousline = ref 0
-let get_range lexbuf = ((!line_no, (Lexing.lexeme_start lexbuf) - (!end_of_previousline))
-		       ,(!line_no, (Lexing.lexeme_end lexbuf) - (!end_of_previousline)))
+let get_range lexbuf = ((!line_no, (Lexing.lexeme_start lexbuf) - (!end_of_previousline) + 1)
+		       ,(!line_no, (Lexing.lexeme_end lexbuf) - (!end_of_previousline) + 1))
 }
 
 (* 正規表現の略記 *)
@@ -87,7 +87,7 @@ rule token = parse
     { COMMA(get_range lexbuf) }
 | '_'
     { IDENT(get_range lexbuf, Id.gentmp Type.Unit) }
-| "Array.create" (* [XX] ad hoc *)
+| "create_array" (* [XX] ad hoc *)
     { ARRAY_CREATE(get_range lexbuf)}
 | '.'
     { DOT(get_range lexbuf) }
@@ -106,6 +106,10 @@ rule token = parse
 	   (Lexing.lexeme_start lexbuf)
 	   (Lexing.lexeme_end lexbuf)) }
 and comment = parse
+| newline
+    { end_of_previousline := (Lexing.lexeme_end lexbuf);
+      line_no := !line_no+1;
+      comment lexbuf}
 | "*)"
     { () }
 | "(*"

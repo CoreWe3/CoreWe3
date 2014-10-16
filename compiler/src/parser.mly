@@ -50,7 +50,8 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %left COMMA
 %left EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left PLUS MINUS PLUS_DOT MINUS_DOT
-%left AST_DOT SLASH_DOT
+%left AST SLASH AST_DOT SLASH_DOT
+%left LSL LSR
 %right prec_unary_minus
 %left prec_app
 %left DOT
@@ -160,7 +161,7 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
 | simple_exp DOT LPAREN exp RPAREN LESS_MINUS exp
     { ex_range (get_range $1) (get_range $7) (Put($1, $4, $7)) }
 | exp SEMICOLON exp
-    { ex_range (get_range $1) (get_range $3) (Let((Id.gentmp Type.Unit, Type.Unit), $1, $3)) }
+    { ex_range (get_range $1) (get_range $1) (Let((Id.gentmp Type.Unit, Type.Unit), $1, $3)) }
 | ARRAY_CREATE simple_exp simple_exp
     %prec prec_app
     { ex_range $1 (get_range $3) (Array($2, $3)) }
