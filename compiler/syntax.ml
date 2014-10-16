@@ -31,7 +31,8 @@ let rec pp_t t =
   let rec pp_t' d t = 
     let sps = indent d in
     match t with
-    | Unit -> "()"
+    | Unit ->
+       Format.sprintf "%sUnit ()\n" sps
     | Bool b -> 
        Format.sprintf "%sBool %b\n" sps b
     | Int i -> 
@@ -74,7 +75,7 @@ let rec pp_t t =
        Format.sprintf "%sTuple\n%s" sps (pp_t_list (d + 1) ts)
     | LetTuple (xs, t1, t2) ->
        let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
-       Format.sprintf "%sLet\n%s(%s)\n%s%sIN\n%s" sps (indent (d + 1)) names (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+       Format.sprintf "%sLetTuple\n%s(%s)\n%s%sIN\n%s" sps (indent (d + 1)) names (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
     | Array (t1, t2) ->
        Format.sprintf "%sArray\n%s%s" sps (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
     | Get (t1, t2) ->
