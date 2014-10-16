@@ -9,22 +9,22 @@ let addtyp x = (x, Type.gentyp ())
 %token <int> INT
 %token <float> FLOAT
 %token NOT
-%token MINUS
-%token PLUS
-%token MINUS_DOT
-%token PLUS_DOT
-%token AST_DOT
-%token SLASH_DOT
-%token EQUAL
-%token LESS_GREATER
-%token LESS_EQUAL
-%token GREATER_EQUAL
-%token LESS
-%token GREATER
+%token <Absyn.pos> MINUS
+%token <Absyn.pos> PLUS
+%token <Absyn.pos> MINUS_DOT
+%token <Absyn.pos> PLUS_DOT
+%token <Absyn.pos> AST_DOT
+%token <Absyn.pos> SLASH_DOT
+%token <Absyn.pos> EQUAL
+%token <Absyn.pos> LESS_GREATER
+%token <Absyn.pos> LESS_EQUAL
+%token <Absyn.pos> GREATER_EQUAL
+%token <Absyn.pos> LESS
+%token <Absyn.pos> GREATER
 %token IF
 %token THEN
 %token ELSE
-%token <Id.t> IDENT
+%token <Id.t*Absyn.pos> IDENT
 %token LET
 %token IN
 %token REC

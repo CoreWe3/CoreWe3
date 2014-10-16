@@ -2,10 +2,14 @@
 (* lexerが利用する変数、関数、型などの定義 *)
 open Parser
 open Type
+let line_no = ref 1
+let end_of_previousline = ref 0
+let get_pos lexbuf = (!line_no, (Lexing.lexeme_start lexbuf)-(!end_of_previousline))
 }
 
 (* 正規表現の略記 *)
-let space = [' ' '\t' '\n' '\r']
+let space = [' ' '\t' '\r']
+let newline = ['\n']
 let digit = ['0'-'9']
 let lower = ['a'-'z']
 let upper = ['A'-'Z']
@@ -13,6 +17,10 @@ let upper = ['A'-'Z']
 rule token = parse
 | space+
     { token lexbuf }
+| newline
+    { end_of_previousline := (Lexing.lexeme_end lexbuf);
+      line_no := !line_no+1;
+      token lexbuf}
 | "(*"
     { comment lexbuf; (* ネストしたコメントのためのトリック *)
       token lexbuf }
@@ -31,29 +39,29 @@ rule token = parse
 | digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
     { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
 | '-' (* -.より後回しにしなくても良い? 最長一致? *)
-    { MINUS }
+    { MINUS(get_pos lexbuf) }
 | '+' (* +.より後回しにしなくても良い? 最長一致? *)
-    { PLUS }
+    { PLUS(get_pos lexbuf) }
 | "-."
-    { MINUS_DOT }
+    { MINUS_DOT(get_pos lexbuf) }
 | "+."
-    { PLUS_DOT }
+    { PLUS_DOT(get_pos lexbuf) }
 | "*."
-    { AST_DOT }
+    { AST_DOT(get_pos lexbuf) }
 | "/."
-    { SLASH_DOT }
+    { SLASH_DOT(get_pos lexbuf) }
 | '='
-    { EQUAL }
+    { EQUAL(get_pos lexbuf) }
 | "<>"
-    { LESS_GREATER }
+    { LESS_GREATER(get_pos lexbuf) }
 | "<="
-    { LESS_EQUAL }
+    { LESS_EQUAL(get_pos lexbuf) }
 | ">="
-    { GREATER_EQUAL }
+    { GREATER_EQUAL(get_pos lexbuf) }
 | '<'
-    { LESS }
+    { LESS(get_pos lexbuf) }
 | '>'
-    { GREATER }
+    { GREATER(get_pos lexbuf) }
 | "if"
     { IF }
 | "then"
@@ -81,10 +89,11 @@ rule token = parse
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)
-    { IDENT(Lexing.lexeme lexbuf) }
+    { IDENT(Lexing.lexeme lexbuf, get_pos lexbuf) }
 | _
     { failwith
-	(Printf.sprintf "unknown token %s near characters %d-%d"
+	(Printf.sprintf "unknown token %s in line %d, colmun %d-%d"
+	   (!line_no)
 	   (Lexing.lexeme lexbuf)
 	   (Lexing.lexeme_start lexbuf)
 	   (Lexing.lexeme_end lexbuf)) }
