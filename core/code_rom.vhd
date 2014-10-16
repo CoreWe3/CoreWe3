@@ -30,7 +30,8 @@ architecture arch_code_rom of code_rom is
     return ROM;
   end function;
 
-  signal ROM : rom_t := init_rom(CODE);
+  --signal ROM : rom_t := init_rom(CODE);
+  constant ROM : rom_t := init_rom(CODE);
 
   attribute rom_style : string;
   attribute rom_style of ROM : signal is "block";

@@ -5,9 +5,10 @@
 --loadの場合load_wordにデータが入っているものとする。
 --インターフェースは以下、実装よろ
 
---addrが0xfffffのときio
+--addrが0x0ffffのときio ->0xfffffに変更
 --load_store=1でstore_wordを出力　rs_txに
 --load_store=0でrs_rxをload_wordに
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -30,158 +31,127 @@ entity memory_io is
 end memory_io;
 
 architecture blackbox of memory_io is
-  component memory_io_u232c
-    generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
-    Port ( clk  : in  STD_LOGIC;
-           data : in  STD_LOGIC_VECTOR (7 downto 0);
-           go   : in  STD_LOGIC;
-           busy : out STD_LOGIC;
-           tx   : out STD_LOGIC);
-  end component;
 
-  component memory_io_r232c
-    generic (
-      wtime : std_logic_vector(15 downto 0) := x"1ADB");
+  component memory_io_unit
     port (
-      clk  : in  std_logic;
-      rx   : in  std_logic;
-      owari: out std_logic;
-      data : out std_logic_vector(7 downto 0));
+      clk          : in    std_logic;
+      rs_rx        : in    std_logic;
+      rs_tx        : out   std_logic;
+      --ZD           : inout std_logic_vector(31 downto 0);
+      --ZA           : out   std_logic_vector(19 downto 0);
+      --XWA          : out   std_logic;
+      cpu_raddr    : in    std_logic_vector(15 downto 0);
+      raddr        : out   std_logic_vector(15 downto 0);
+      cpu_uaddr    : in    std_logic_vector(15 downto 0);
+      --uaddr        : out   std_logic_vector(19 downto 0);
+      flag         : in    std_logic_vector(1 downto 0);
+      data_from_r  : out   std_logic_vector(31 downto 0);  --flag "01"
+      data_to_u    : in   std_logic_vector(31 downto 0));  --flag "11"
+      --rumemory_busy : out   std_logic;
+      --memory_busy  : in    std_logic);
+      --umemory_size : in    std_logic_vector(19 downto 0);
+      --rflag        : out   std_logic);
   end component;
-
+  
   signal state : std_logic_vector(4 downto 0) := (others => '0');
-  signal rdata : std_logic_vector(7 downto 0);
-  signal udata : std_logic_vector(7 downto 0);
-  signal uart_go: std_logic := '0';
-  signal uart_busy: std_logic := '0';
-  signal owari : std_logic;
-  signal cansend : std_logic := '0';
-  signal temp : std_logic := '1';
-  signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
+  --signal rdata : std_logic_vector(7 downto 0);
+  --signal udata : std_logic_vector(7 downto 0);
+  --signal uart_go: std_logic := '0';
+  --signal uart_busy: std_logic := '0';
+  --signal owari : std_logic;
+  --signal cansend : std_logic := '0';
+  --signal temp : std_logic := '1';
+  --signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
+  signal cpu_raddr : std_logic_vector(15 downto 0) := x"0000";
+  signal rsize : std_logic_vector(19 downto 0);
+  signal raddr : std_logic_vector(15 downto 0);
+  signal cpu_uaddr : std_logic_vector(15 downto 0) := x"0000";
+  signal usize : std_logic_vector(19 downto 0);
+  --signal uaddr : std_logic_vector(19 downto 0);
+  signal umemory_size : std_logic_vector(19 downto 0) := (others => '0');
+  signal rumemory_busy : std_logic := '0';
+  signal flag : std_logic_vector(1 downto 0) := "00";
+  signal data_from_r : std_logic_vector(31 downto 0);
+  signal data_to_u : std_logic_vector(31 downto 0);
   signal load_store_tmp : std_logic;
+  signal store_word_tmp : std_logic_vector(31 downto 0);
 begin  -- blackbox
-  nr232c : memory_io_r232c generic map (wtime => x"1adb")
-    port map (clk,temp,owari,rdata);
-  nu232c: memory_io_u232c generic map (wtime=>x"1b16")
-    port map (
-      clk=>clk,
-      data=>udata,
-      go=>uart_go,
-      busy=>uart_busy,
-      tx=>rs_tx);
+  io_unit : memory_io_unit port map(
+    clk => clk,
+    rs_rx => rs_rx,
+    rs_tx => rs_tx,
+    cpu_raddr => cpu_raddr,
+    raddr => raddr,
+    cpu_uaddr => cpu_uaddr,
+    flag => flag,
+    data_to_r => data_from_r,
+    data_from_r => data_to_u);
+
   mio: process(clk)
   begin
     if rising_edge(clk) then
       case state is 
         when "00000" =>
           XWA <= '1';
+          flag <= "00";
           if go = '1' then
             load_store_tmp <= load_store;
+            store_word_tmp <= store_word;
             if addr = x"fffff" then     --io
-              if load_store = '1' then --store_wordをrs_txに
-                udata <= store_word(31 downto 24);
-                cansend <= '1';
+              if load_store = '1' then -- store
                 state <= "01000";
-              else  --rs_rx をload_wordに
+              else  --load
                 state <= "10000";
               end if;
             else                      --sram
               state <= "00001";
             end if;
           end if;
+
         when "00001" => --sram
           if load_store_tmp = '1' then  --store
-            ZD <= store_word;
+            ZD <= store_word_tmp;
             XWA <= '0';
             ZA <=addr;
-            state <= "11101";           --others
-          else -- load
+            state <= "11100";
+          else --load
             ZD <= (others => 'Z');
             XWA <= '1';
             ZA <= addr;
-            state <= "11110";
-          end if;
-        when "01000" =>
-          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
-            uart_go <= '1';
-            cansend <= '0';
-          else
-            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
-              cansend <= '1';
-              udata <= store_word(23 downto 16);
-              state <= "01001";
-            end if;
-            uart_go <= '0';
-          end if;
-        when "01001" =>
-          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
-            uart_go <= '1';
-            cansend <= '0';
-          else
-            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
-              cansend <= '1';
-              udata <= store_word(15 downto 8);
-              state <= "01010";
-            end if;
-            uart_go <= '0';
-          end if;
-        when "01010" =>
-          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
-            uart_go <= '1';
-            cansend <= '0';
-          else
-            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
-              cansend <= '1';
-              udata <= store_word(7 downto 0);
-              state <= "01011";
-            end if;
-            uart_go <= '0';
-          end if;
-        when "01011" =>
-          if cansend = '1' and uart_go = '0' and uart_busy = '0'then
-            uart_go <= '1';
-            cansend <= '0';
-          else
-            if cansend = '0' and uart_go = '0' and uart_busy = '0' then
-              state <= "11111";         --when others
-            end if;
-            uart_go <= '0';
+            state <= "11101";
           end if;
 
-        when "10000" => 
-          temp <= RS_RX;
-          if owari = '1' then
-            load_word_temp <= x"000000" & rdata;
+        when "01000" =>  --io store 
+          data_to_u <= store_word_tmp;
+          flag <= "11";  
+          state <= "01001";
+        when "01001" => --io store
+          flag <= "00";
+          cpu_uaddr <= cpu_uaddr + 1;
+          state <= "00000";
+
+        when "10000" => --io load
+          if raddr = cpu_raddr then
+            state <= "10000";
+          else
+            flag <= "01";
             state <= "10001";
           end if;
-        when "10001" =>
-          temp <= RS_RX;
-          if owari = '1' then
-            load_word_temp <= load_word_temp(23 downto 0) & rdata;
-            state <= "10010";
-          end if;
-        when "10010" =>
-          temp <= RS_RX;
-          if owari = '1' then
-            load_word_temp <= load_word_temp(23 downto 0) & rdata;
-            state <= "10011";
-          end if;
-        when "10011" =>
-          temp <= RS_RX;
-          if owari = '1' then
-            load_word_temp <= load_word_temp(23 downto 0) & rdata;
-            state <= "11100";
-          end if;
-        when "11100" =>
-          load_word <= load_word_temp;
+        when "10001" => --io load
+          flag <= "00";
+          load_word <= data_from_r;
+          cpu_raddr <= cpu_raddr + 1;
           state <= "00000";
 
-        when "11110" =>
-          hogehoge;
-        
-        when "11110" =>
+        when "11100" => --sram store
+          XWA <= '1';
+          state <= "11111";
+        when "11101" => --sram load
+          state <= "11110";
+        when "11110" => --sram load
           load_word <= ZD;
           state <= "00000";
+
         when others =>
           state <= "00000";
       end case;
