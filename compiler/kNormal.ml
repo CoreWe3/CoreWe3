@@ -176,4 +176,68 @@ let rec g env = function (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 	    (fun y -> insert_let (g env e3)
 		(fun z -> Put(x, y, z), Type.Unit)))
 
-let f e = fst (g M.empty e)
+let rec pp_t t =
+  let indent d = String.make (2 * d) ' ' in
+  let rec pp_t' d t =
+    let sps = indent d in
+    match t with
+    | Unit ->
+       Format.sprintf "%sUnit ()\n" sps
+    | Int i ->
+       Format.sprintf "%sInt %d\n" sps i
+    | Float f ->
+       Format.sprintf "%sFloat %f\n" sps f
+    | Neg n ->
+       Format.sprintf "%sNeg %s\n" sps (Id.pp_t n)
+    | Add (n1, n2) ->
+       Format.sprintf "%sAdd %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | Sub (n1, n2) ->
+       Format.sprintf "%sSub %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | FNeg n ->
+       Format.sprintf "%sFNeg %s\n" sps (Id.pp_t n)
+    | FAdd (n1, n2) ->
+       Format.sprintf "%sFAdd %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | FSub (n1, n2) ->
+       Format.sprintf "%sFSub %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | FMul (n1, n2) ->
+       Format.sprintf "%sFMul %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | FDiv (n1, n2) ->
+       Format.sprintf "%sFDiv %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | IfEq (n1, n2, t1, t2) ->
+       Format.sprintf "%sIfEq %s %s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+    | IfLE (n1, n2, t1, t2) ->
+       Format.sprintf "%sIfLE %s %s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+    | Let ((name, _), t1, t2) ->
+       Format.sprintf "%sLet\n%s%s\n%s%sIN\n%s" sps (indent (d + 1)) (Id.pp_t name) (pp_t' (d + 1) t1) sps (pp_t' d t2)
+    | Var n ->
+       Format.sprintf "%sVar %s\n" sps (Id.pp_t n)
+    | LetRec (fdef, t) ->
+       Format.sprintf "%sLetRec\n%s%sIN\n%s" sps (pp_fundef (d + 1) fdef) sps (pp_t' d t)
+    | App (n, ns) ->
+       Format.sprintf "%sApp %s (%s)\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
+    | Tuple ns ->
+       Format.sprintf "%sTuple(%s)\n" sps (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
+    | LetTuple (xs, n, t) ->
+       let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
+       Format.sprintf "%sLetTuple (%s) %s\n%sIN\n%s" sps names (Id.pp_t n) sps (pp_t' d t)
+    | Get (n1, n2) ->
+       Format.sprintf "%sGet %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2)
+    | Put (n1, n2, n3) ->
+       Format.sprintf "%sGet %s %s %s\n" sps (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
+    | ExtArray n ->
+       Format.sprintf "%sExtArray %s\n" sps (Id.pp_t n)
+    | ExtFunApp (n, ns) ->
+       Format.sprintf "%sExtFunApp %s (%s)\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
+  and pp_fundef d fdef =
+    let sps = indent d in
+    let args = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in
+    let (fname, _) = fdef.name in
+    Format.sprintf "%s%s (%s)\n%s" sps (Id.pp_t fname) args (pp_t' d fdef.body)
+  in
+  pp_t' 0 t
+
+let f e = 
+  let s = fst (g M.empty e) in
+  print_string "KNormalized =======================-\n"; 
+  print_string (pp_t s); 
+  s
