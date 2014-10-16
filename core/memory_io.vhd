@@ -46,8 +46,7 @@ architecture blackbox of memory_io is
       raddr        : out   std_logic_vector(19 downto 0);
       cpu_uaddr    : in    std_logic_vector(19 downto 0);
       uaddr        : out   std_logic_vector(19 downto 0);
-      rmemory_busy : out   std_logic;
-      umemory_busy : out   std_logic;
+      rumemory_busy : out   std_logic;
       memory_busy  : in    std_logic);
       --umemory_size : in    std_logic_vector(19 downto 0);
       --rflag        : out   std_logic);
@@ -67,8 +66,7 @@ architecture blackbox of memory_io is
   signal cpu_uaddr : std_logic_vector(19 downto 0) := x"fa000";
   signal uaddr : std_logic_vector(19 downto 0);
   signal umemory_size : std_logic_vector(19 downto 0) := (others => '0');
-  signal rmemory_busy : std_logic := '0';
-  signal umemory_busy : std_logic := '0';
+  signal rumemory_busy : std_logic := '0';
   signal uflag : std_logic := '0';      -- cpu_uaddr と uaddr の位置が逆転しているかどうか
   signal rsize : std_logic_vector(19 downto 0) := x"1ffff";
   signal usize : std_logic_vector(19 downto 0) := x"1ffff";
@@ -78,7 +76,7 @@ architecture blackbox of memory_io is
   signal memory_busy : std_logic := '0';
 begin  -- blackbox
   io_unit : memory_io_unit
-    port map(clk,rs_rx,rs_tx,ZD,ZA,XWA,raddr,cpu_uaddr,uaddr,rmemory_busy,umemory_busy,memory_busy);
+    port map(clk,rs_rx,rs_tx,ZD,ZA,XWA,raddr,cpu_uaddr,uaddr,rumemory_busy,memory_busy);
   mio: process(clk)
   begin
     if rising_edge(clk) then
@@ -97,13 +95,13 @@ begin  -- blackbox
               end if;
             end if;
         when "00001" =>
-          if load_store = '1' and umemory_busy = '0' and rmemory_busy = '0' then  --store
+          if load_store = '1' and rumemory_busy = '0' then  --store
             ZD <= store_word;
             XWA <= '0';
             ZA <=addr;
             state <= "11111";           --others
           else
-            if umemory_busy = '0' and rmemory_busy = '0' then
+            if rumemory_busy = '0' then
             ZD <= (others => 'Z');
             XWA <= '1';
             ZA <= addr;
@@ -111,7 +109,7 @@ begin  -- blackbox
             end if;
           end if;
         when "01000" => 
-          if umemory_busy = '0' and rmemory_busy = '0' then
+          if rumemory_busy = '0' then
             ZD <= store_word;
             XWA <= '0';
             ZA <= cpu_uaddr;
@@ -127,7 +125,7 @@ begin  -- blackbox
           if raddr = cpu_raddr then
             state <= "10000";           --loop
           end if;
-          if umemory_busy = '0' and rmemory_busy = '0' then
+          if rumemory_busy = '0' then
             ZD <= (others => 'Z');
             XWA <= '1';
             memory_busy <= '1';

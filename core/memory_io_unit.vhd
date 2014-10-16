@@ -17,8 +17,7 @@ entity memory_io_unit is
     raddr       : out   std_logic_vector(19 downto 0); --まだ空
     cpu_uaddr   : in    std_logic_vector(19 downto 0);  
     uaddr       : out   std_logic_vector(19 downto 0); 
-    rmemory_busy : out   std_logic;
-    umemory_busy : out   std_logic;
+    rumemory_busy : out   std_logic;
     memory_busy  : in    std_logic);
     --umemory_size : in    std_logic_vector(19 downto 0));
 
@@ -58,7 +57,10 @@ architecture example of memory_io_unit is
   signal usize : std_logic_vector(19 downto 0) := x"1ffff";
   signal rhead : std_logic_vector(19 downto 0) := x"f8000";
   signal uhead : std_logic_vector(19 downto 0) := x"fa000";
-  
+  signal rmemory_busy : std_logic := '0';
+  signal umemory_busy : std_logic := '0';
+  signal raddrtemp : std_logic_vector(19 downto 0);
+  signal uaddrtemp : std_logic_vector(19 downto 0);
 begin  -- example
   nr232c : memory_io_r232c generic map (wtime => x"1adb")
     port map (clk,temp,owari,rdata);
@@ -77,12 +79,13 @@ begin  -- example
         when "000" =>
           rmemory_busy <= '0';
           raddr <= rhead;
+          raddrtemp <= rhead;
           rstate <= "001";
         when "001" =>
           if owari = '1' then
             rminibuffer(31 downto 24) <= rdata;
             rstate <= "010";
-          end if;;
+          end if;
         when "010" =>
           if owari = '1' then
             rminibuffer(23 downto 16) <= rdata;
@@ -104,14 +107,16 @@ begin  -- example
           end if;
           ZD <= rminibuffer;
           XWA <= '0';
-          ZA <= raddr;
+          ZA <= raddrtemp;
           rstate <= "110";
           rmemory_busy <= '1';
         when "110" =>
-          if raddr = rhead + rsize then
+          if raddrtemp = rhead + rsize then
             raddr <= rhead;
+            raddrtemp <= rhead;
           else
-            raddr <= raddr + 1;
+            raddrtemp <= raddrtemp + 1;
+            raddr <= raddrtemp + 1;
           end if;
           rmemory_busy <= '0';
           rstate <= "001";
@@ -121,26 +126,29 @@ begin  -- example
       case ustate is
         when "0000" =>
           uaddr <= uhead;
+          uaddrtemp <= uhead;
           umemory_busy <= '0';
           ustate <= "0001";
         when "0001" =>
-          if uaddr /= cpu_uaddr and then
+          if uaddrtemp /= cpu_uaddr then
             if rmemory_busy = '1' or memory_busy = '1' then
               ustate <= "0001";
             end if;
             ZD <= (others => 'Z');
             XWA <= '1';
-            ZA <= uaddr;
+            ZA <= uaddrtemp;
             umemory_busy <= '1';
             ustate <= "0010";
           end if;
         when "0010" =>
           uminibuffer <= ZD;
           umemory_busy <= '0';
-          if uaddr = uhead + usize then
+          if uaddrtemp = uhead + usize then
             uaddr <= uhead;
+            uaddrtemp <= uhead;
           else
-            uaddr <= uaddr + 1;
+            uaddrtemp <= uaddrtemp + 1;
+            uaddr <= uaddrtemp + 1;
           end if;
           ustate <= "0011";
         when "0011" =>
@@ -151,7 +159,7 @@ begin  -- example
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
               udata <= uminibuffer(31 downto 24);
-              state <= "0100";
+              ustate <= "0100";
             end if;
             uart_go <= '0';
           end if;
@@ -163,7 +171,7 @@ begin  -- example
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
               udata <= uminibuffer(23 downto 16);
-              state <= "0101";
+              ustate <= "0101";
             end if;
             uart_go <= '0';
           end if;
@@ -175,7 +183,7 @@ begin  -- example
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
               udata <= uminibuffer(15 downto 8);
-              state <= "0110";
+              ustate <= "0110";
             end if;
             uart_go <= '0';
           end if;
@@ -187,7 +195,7 @@ begin  -- example
             if cansend = '0' and uart_go = '0' and uart_busy = '0' then
               cansend <= '1';
               udata <= uminibuffer(7 downto 0);
-              state <= "0111";
+              ustate <= "0111";
             end if;
             uart_go <= '0';
           end if;
@@ -198,4 +206,5 @@ begin  -- example
       end case;
     end if;
   end process mio;
+  rumemory_busy <= '0' when rmemory_busy = '0' and umemory_busy = '0' else '1';
 end example;
