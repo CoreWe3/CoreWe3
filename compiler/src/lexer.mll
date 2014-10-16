@@ -38,6 +38,10 @@ rule token = parse
     { AST }
 | '/'
     { SLASH }
+| "lsl"
+    { LSL }
+| "lsr"
+    { LSR }
 | "-."
     { MINUS_DOT }
 | "+."
