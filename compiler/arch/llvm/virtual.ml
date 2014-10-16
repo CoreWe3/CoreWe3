@@ -218,6 +218,12 @@ module IR = struct
   let sub { builder; _} x y =
     build_sub x y (Id.gentmp Type.Int) builder
 
+  let mul { builder; _} x y =
+    build_mul x y (Id.gentmp Type.Int) builder
+
+  let div { builder; _} x y =
+    build_sdiv x y (Id.gentmp Type.Int) builder
+
   let neg { builder; _ } x =
     build_neg x (Id.gentmp Type.Int) builder
 
@@ -327,6 +333,10 @@ module GenValue = struct
         IR.add ir (Env.varref x env) (Env.varref y env)
     | Sub (x, y) ->
         IR.sub ir (Env.varref x env) (Env.varref y env)
+    | Mul (x, y) ->
+        IR.mul ir (Env.varref x env) (Env.varref y env)
+    | Div (x, y) ->
+        IR.div ir (Env.varref x env) (Env.varref y env)
     | FNeg x ->
         IR.fneg ir (Env.varref x env)
     | FAdd (x, y) ->
