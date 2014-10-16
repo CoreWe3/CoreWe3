@@ -85,7 +85,7 @@ begin  -- example
     if rising_edge(clk) then
       case state is
         when "0000" =>
-          addr <= x"0ffff";
+          addr <= x"fffff";
           load_store <= '0';
           go <= '1';
           state <= "0001";

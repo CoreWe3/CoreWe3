@@ -40,9 +40,9 @@ architecture blackbox of memory_io is
       --ZD           : inout std_logic_vector(31 downto 0);
       --ZA           : out   std_logic_vector(19 downto 0);
       --XWA          : out   std_logic;
-      cpu_raddr    : in    std_logic_vector(15 downto 0);
-      raddr        : out   std_logic_vector(15 downto 0);
-      cpu_uaddr    : in    std_logic_vector(15 downto 0);
+      cpu_raddr    : in    std_logic_vector(7 downto 0);
+      raddr        : out   std_logic_vector(7 downto 0);
+      cpu_uaddr    : in    std_logic_vector(7 downto 0);
       --uaddr        : out   std_logic_vector(19 downto 0);
       flag         : in    std_logic_vector(1 downto 0);
       data_from_r  : out   std_logic_vector(31 downto 0);  --flag "01"
@@ -62,10 +62,11 @@ architecture blackbox of memory_io is
   --signal cansend : std_logic := '0';
   --signal temp : std_logic := '1';
   --signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
-  signal cpu_raddr : std_logic_vector(15 downto 0) := x"0000";
+  signal store_word_tmp : std_logic_vector(31 downto 0);
+  signal cpu_raddr : std_logic_vector(7 downto 0) := (others => '0');
   signal rsize : std_logic_vector(19 downto 0);
-  signal raddr : std_logic_vector(15 downto 0);
-  signal cpu_uaddr : std_logic_vector(15 downto 0) := x"0000";
+  signal raddr : std_logic_vector(7 downto 0);
+  signal cpu_uaddr : std_logic_vector(7 downto 0) := (others => '0');
   signal usize : std_logic_vector(19 downto 0);
   --signal uaddr : std_logic_vector(19 downto 0);
   signal umemory_size : std_logic_vector(19 downto 0) := (others => '0');
@@ -98,7 +99,7 @@ begin  -- blackbox
             load_store_tmp <= load_store;
             store_word_tmp <= store_word;
             if addr = x"fffff" then     --io
-              if load_store = '1' then -- store
+              if load_store = '1' then --store
                 state <= "01000";
               else  --load
                 state <= "10000";
@@ -122,6 +123,7 @@ begin  -- blackbox
           end if;
 
         when "01000" =>  --io store 
+        when "01000" => 
           data_to_u <= store_word_tmp;
           flag <= "11";  
           state <= "01001";

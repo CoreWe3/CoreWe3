@@ -13,9 +13,9 @@ entity memory_io_unit is
     --ZD          : inout std_logic_vector(31 downto 0);
     --ZA          : out   std_logic_vector(19 downto 0);
     --XWA         : out   std_logic;
-    cpu_raddr   : in    std_logic_vector(15 downto 0);
-    raddr       : out   std_logic_vector(15 downto 0); --まだ空
-    cpu_uaddr   : in    std_logic_vector(15 downto 0);  
+    cpu_raddr   : in    std_logic_vector(7 downto 0);
+    raddr       : out   std_logic_vector(7 downto 0); --まだ空
+    cpu_uaddr   : in    std_logic_vector(7 downto 0);  
     --uaddr       : out   std_logic_vector(19 downto 0);
     flag        : in    std_logic_vector(1 downto 0);
     data_from_r : out   std_logic_vector(31 downto 0);  --flag "01"
@@ -59,8 +59,8 @@ architecture example of memory_io_unit is
   type ram_type is array (0 to 65535) of std_logic_vector(31 downto 0);
   signal rRAM : ram_type;
   signal uRAM : ram_type;
-  signal uaddr : std_logic_vector(15 downto 0);
-  signal raddr_in : std_logic_vector(15 downto 0);
+  signal uaddr : std_logic_vector(7 downto 0);
+  signal raddr_in : std_logic_vector(7 downto 0);
 begin  -- example
   nr232c : memory_io_r232c generic map (wtime => x"1adb")
     port map (clk,temp,owari,rdata);
@@ -86,7 +86,7 @@ begin  -- example
       end if;
       case rstate is
         when "000" =>     
-          raddr_in <= x"0000";
+          raddr_in <= (others => '0');
           rstate <= "001";
         when "001" =>
           if owari = '1' then
@@ -119,7 +119,7 @@ begin  -- example
       end case;
       case ustate is
         when "0000" =>
-          uaddr <= x"0000";
+          uaddr <= (others => '0');
           ustate <= "0001";
         when "0001" =>
           if uaddr /= cpu_uaddr then
