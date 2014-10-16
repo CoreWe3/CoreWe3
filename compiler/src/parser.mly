@@ -126,7 +126,7 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
 | exp LESS_EQUAL exp
     { ex_range (get_range $1) (get_range $3) (LE ($1, $3)) }
 | exp GREATER_EQUAL exp
-    { ex_range (get_range $1) (get_range $3) (LE ($1, $1)) }
+    { ex_range (get_range $1) (get_range $3) (LE ($3, $1)) }
 | IF exp THEN exp ELSE exp
     %prec prec_if
     { ex_range $1 (get_range $6) (If ($2, $4, $6)) }
