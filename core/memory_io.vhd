@@ -58,6 +58,7 @@ architecture blackbox of memory_io is
   signal cansend : std_logic := '0';
   signal temp : std_logic := '1';
   signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
+  signal load_store_tmp : std_logic;
 begin  -- blackbox
   nr232c : memory_io_r232c generic map (wtime => x"1adb")
     port map (clk,temp,owari,rdata);
@@ -72,32 +73,34 @@ begin  -- blackbox
   begin
     if rising_edge(clk) then
       case state is 
-        when "00000" => 
-            if go = '1' then
-              if addr = x"fffff" then     --io
-                if load_store = '1' then --store_wordをrs_txに
-                  udata <= store_word(31 downto 24);
-                  cansend <= '1';
-                  state <= "01000";
-                else  --rs_rx をload_wordに
-                  state <= "10000";
-                end if;
-              else                      --sram
-                state <= "00001";
+        when "00000" =>
+          XWA <= '1';
+          if go = '1' then
+            load_store_tmp <= load_store;
+            if addr = x"fffff" then     --io
+              if load_store = '1' then --store_wordをrs_txに
+                udata <= store_word(31 downto 24);
+                cansend <= '1';
+                state <= "01000";
+              else  --rs_rx をload_wordに
+                state <= "10000";
               end if;
+            else                      --sram
+              state <= "00001";
             end if;
-        when "00001" =>
-          if load_store = '1' then  --store
+          end if;
+        when "00001" => --sram
+          if load_store_tmp = '1' then  --store
             ZD <= store_word;
             XWA <= '0';
             ZA <=addr;
-            state <= "11111";           --others
-          else
+            state <= "11101";           --others
+          else -- load
             ZD <= (others => 'Z');
             XWA <= '1';
+            ZA <= addr;
+            state <= "11110";
           end if;
-          ZA <= addr;
-          state <= "11110";
         when "01000" =>
           if cansend = '1' and uart_go = '0' and uart_busy = '0'then
             uart_go <= '1';
@@ -172,6 +175,10 @@ begin  -- blackbox
         when "11100" =>
           load_word <= load_word_temp;
           state <= "00000";
+
+        when "11110" =>
+          hogehoge;
+        
         when "11110" =>
           load_word <= ZD;
           state <= "00000";

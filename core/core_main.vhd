@@ -67,7 +67,6 @@ architecture arch_core_main of core_main is
   signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
   
   signal instr_addr : std_logic_vector(13 downto 0);
-  signal sram_addr : std_logic_vector(19 downto 0);
   signal instr : std_logic_vector(31 downto 0);
   signal state : std_logic_vector(3 downto 0) :=
     (others => '0');
@@ -89,7 +88,7 @@ architecture arch_core_main of core_main is
   signal mem_load : std_logic_vector(31 downto 0);
   signal mem_addr : std_logic_vector(19 downto 0);
   signal mem_we : std_logic;
-  signal mem_go : std_logic;
+  signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 
   signal branch_f : std_logic;
@@ -201,7 +200,7 @@ begin
               end if;
             when x"0A" => --ble
               ctrl <= "000";
-              alu_iw <= x"0000" & "00" & pc;
+              alu_iw1 <= x"0000" & "00" & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -214,7 +213,7 @@ begin
               end if;
             when x"0B" => --blt
               ctrl <= "000";
-              alu_iw <= x"0000" & "00" & pc;
+              alu_iw1 <= x"0000" & "00" & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -262,7 +261,7 @@ begin
                 state <= state + 1;
               end if;
             when x"01" => --store
-              if mem_busy = '0' and mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= alu_ow(19 downto 0);
@@ -270,7 +269,7 @@ begin
                 state <= state+1;
               end if;
             when x"0C" => --jsub
-              if mem_busy = '0' and mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= sp;
@@ -278,14 +277,14 @@ begin
                 state <= state+1;
               end if;
             when x"0D" => --return
-              if mem_busy = '0' and mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '0';
                 mem_go <= '1';
                 mem_addr <= sp;
                 state <= state+1;
               end if;
             when x"0E" => --push
-              if mem_busy = '0' and mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= alu_ow(19 downto 0);
@@ -294,7 +293,7 @@ begin
                 state <= state+1;
               end if;
             when x"0F" => --pop
-              if mem_busy = '0' and mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '0';
                 mem_go <= '1';
                 mem_addr <= sp;
@@ -305,45 +304,35 @@ begin
           end case;
 
         when x"5" => -- memory complete
+          mem_we <= '0';
+          mem_go <= '0';
           case instr(31 downto 24) is
             when x"00" => --load
               if mem_busy = '0' and mem_go = '0' then
                 buf <= mem_load;
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when x"01" => --store
               if mem_busy = '0' and mem_go = '0' then
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when x"0C" => --jsub
-              if mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when x"0D" => --ret
-              if mem_busy = '0' then
+              if mem_busy = '0' and mem_go = '0' then
                 pc <= mem_load(13 downto 0);
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when x"0E" => --push
               if mem_busy = '0' and mem_go = '0' then
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when x"0F" => --pop
               if mem_busy = '0' and mem_go = '0' then
                 buf <= mem_load;
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
             when others =>
           end case;

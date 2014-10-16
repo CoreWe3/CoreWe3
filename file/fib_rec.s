@@ -1,5 +1,5 @@
 :main
-ADDI	r1	r0	10
+ADDI	r1	r0	1
 JSUB	:fib
 ST	r1	r0	65535
 BEQ	r0	r0	:main
@@ -20,4 +20,3 @@ ADD	r1	r1	r2
 RET
 :base
 RET
-

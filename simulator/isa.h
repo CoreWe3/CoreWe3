@@ -16,7 +16,7 @@ typedef union{
 	} L;
 	struct {
 		int cx:24;
-		unsigned int ra:4;
+		//unsigned int ra:4;
 		unsigned int op:8;
 	} J;
 } INS;
