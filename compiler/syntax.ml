@@ -64,18 +64,18 @@ let rec pp_t t =
     | If (t1, t2, t3) -> 
        Format.sprintf "%sIf\n%s%sThen\n%s%sElse\n%s" sps (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2) sps (pp_t' (d + 1) t3)
     | Let ((name, _), t1, t2) -> 
-       Format.sprintf "%sLet\n%s%s\n%s%sIN\n%s" sps (indent (d + 1)) (Id.pp_t name) (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+       Format.sprintf "%sLet\n%s%s\n%s%sIN\n%s" sps (indent (d + 1)) (Id.pp_t name) (pp_t' (d + 1) t1) sps (pp_t' d t2)
     | Var name -> 
        Format.sprintf "%sVar %s\n" sps (Id.pp_t name)
     | LetRec (fdef, t) -> 
-       Format.sprintf "%sLetRec\n%s%sIN\n%s" sps (pp_fundef (d + 1) fdef) sps (pp_t' (d + 1) t) 
+       Format.sprintf "%sLetRec\n%s%sIN\n%s" sps (pp_fundef (d + 1) fdef) sps (pp_t' d t) 
     | App (t, ts) -> 
        Format.sprintf "%sApp\n%s%s" sps (pp_t' (d + 1) t) (pp_t_list (d + 1) ts)
     | Tuple ts -> 
        Format.sprintf "%sTuple\n%s" sps (pp_t_list (d + 1) ts)
     | LetTuple (xs, t1, t2) ->
        let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
-       Format.sprintf "%sLetTuple\n%s(%s)\n%s%sIN\n%s" sps (indent (d + 1)) names (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+       Format.sprintf "%sLetTuple\n%s(%s)\n%s%sIN\n%s" sps (indent (d + 1)) names (pp_t' (d + 1) t1) sps (pp_t' d t2)
     | Array (t1, t2) ->
        Format.sprintf "%sArray\n%s%s" sps (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
     | Get (t1, t2) ->
