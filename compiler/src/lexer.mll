@@ -2,10 +2,15 @@
 (* lexerが利用する変数、関数、型などの定義 *)
 open Parser
 open Type
+let line_no = ref 1
+let end_of_previousline = ref 0
+let get_range lexbuf = ((!line_no, (Lexing.lexeme_start lexbuf) - (!end_of_previousline))
+		       ,(!line_no, (Lexing.lexeme_end lexbuf) - (!end_of_previousline)))
 }
 
 (* 正規表現の略記 *)
-let space = [' ' '\t' '\n' '\r']
+let space = [' ' '\t' '\r']
+let newline = ['\n']
 let digit = ['0'-'9']
 let lower = ['a'-'z']
 let upper = ['A'-'Z']
@@ -13,83 +18,87 @@ let upper = ['A'-'Z']
 rule token = parse
 | space+
     { token lexbuf }
+| newline
+    { end_of_previousline := (Lexing.lexeme_end lexbuf);
+      line_no := !line_no+1;
+      token lexbuf}
 | "(*"
     { comment lexbuf; (* ネストしたコメントのためのトリック *)
       token lexbuf }
 | '('
-    { LPAREN }
+    { LPAREN(get_range lexbuf) }
 | ')'
-    { RPAREN }
+    { RPAREN(get_range lexbuf) }
 | "true"
-    { BOOL(true) }
+    { BOOL(get_range lexbuf, true) }
 | "false"
-    { BOOL(false) }
+    { BOOL(get_range lexbuf, false) }
 | "not"
-    { NOT }
+    { NOT(get_range lexbuf) }
 | digit+ (* 整数を字句解析するルール (caml2html: lexer_int) *)
-    { INT(int_of_string (Lexing.lexeme lexbuf)) }
+    { INT(get_range lexbuf, int_of_string (Lexing.lexeme lexbuf)) }
 | digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
-    { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
+    { FLOAT(get_range lexbuf, float_of_string (Lexing.lexeme lexbuf)) }
 | '-' (* -.より後回しにしなくても良い? 最長一致? *)
-    { MINUS }
+    { MINUS(get_range lexbuf) }
 | '+' (* +.より後回しにしなくても良い? 最長一致? *)
-    { PLUS }
+    { PLUS(get_range lexbuf) }
 | '*'
-    { AST }
+    { AST(get_range lexbuf) }
 | '/'
-    { SLASH }
+    { SLASH(get_range lexbuf) }
 | "lsl"
-    { LSL }
+    { LSL(get_range lexbuf) }
 | "lsr"
-    { LSR }
+    { LSR(get_range lexbuf) }
 | "-."
-    { MINUS_DOT }
+    { MINUS_DOT(get_range lexbuf) }
 | "+."
-    { PLUS_DOT }
+    { PLUS_DOT(get_range lexbuf) }
 | "*."
-    { AST_DOT }
+    { AST_DOT(get_range lexbuf) }
 | "/."
-    { SLASH_DOT }
+    { SLASH_DOT(get_range lexbuf) }
 | '='
-    { EQUAL }
+    { EQUAL(get_range lexbuf) }
 | "<>"
-    { LESS_GREATER }
+    { LESS_GREATER(get_range lexbuf) }
 | "<="
-    { LESS_EQUAL }
+    { LESS_EQUAL(get_range lexbuf) }
 | ">="
-    { GREATER_EQUAL }
+    { GREATER_EQUAL(get_range lexbuf) }
 | '<'
-    { LESS }
+    { LESS(get_range lexbuf) }
 | '>'
-    { GREATER }
+    { GREATER(get_range lexbuf) }
 | "if"
-    { IF }
+    { IF (get_range lexbuf)}
 | "then"
-    { THEN }
+    { THEN(get_range lexbuf) }
 | "else"
-    { ELSE }
+    { ELSE(get_range lexbuf) }
 | "let"
-    { LET }
+    { LET (get_range lexbuf)}
 | "in"
-    { IN }
+    { IN(get_range lexbuf) }
 | "rec"
-    { REC }
+    { REC(get_range lexbuf) }
 | ','
-    { COMMA }
+    { COMMA(get_range lexbuf) }
 | '_'
-    { IDENT(Id.gentmp Type.Unit) }
+    { IDENT(get_range lexbuf, Id.gentmp Type.Unit) }
 | "Array.create" (* [XX] ad hoc *)
-    { ARRAY_CREATE }
+    { ARRAY_CREATE(get_range lexbuf)}
 | '.'
-    { DOT }
+    { DOT(get_range lexbuf) }
 | "<-"
-    { LESS_MINUS }
+    { LESS_MINUS(get_range lexbuf) }
 | ';'
-    { SEMICOLON }
+    { SEMICOLON(get_range lexbuf) }
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)
-    { IDENT(Lexing.lexeme lexbuf) }
+    { IDENT(get_range lexbuf, Lexing.lexeme lexbuf) }
 | _
     { failwith
 	(Printf.sprintf "unknown token %s near characters %d-%d"
