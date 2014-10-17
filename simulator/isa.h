@@ -52,7 +52,7 @@ const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10",
 unsigned int reg[REGNUM]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned int pc=0;
 unsigned int pcflag;
-unsigned int sp;
+unsigned int sp=0xF7FFF;
 unsigned int ram[RAMSIZE];
 unsigned int rom[ROMSIZE];
 
