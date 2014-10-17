@@ -92,7 +92,7 @@ architecture arch_core_main of core_main is
   signal mem_store : std_logic_vector(31 downto 0);
   signal mem_load : std_logic_vector(31 downto 0);
   signal mem_addr : std_logic_vector(19 downto 0);
-  signal mem_we : std_logic;
+  signal mem_we : std_logic := '0';
   signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 

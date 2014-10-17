@@ -47,7 +47,7 @@ architecture blackbox of memory_io is
   
   signal state : std_logic_vector(4 downto 0) := (others => '0');
   signal store_word_tmp : std_logic_vector(31 downto 0);
-  signal iowe : std_logic;
+  signal iowe : std_logic := '0';
   signal iogo : std_logic := '0';
   signal iosend_data : std_logic_vector(31 downto 0);
   signal ioreceive_data : std_logic_vector(31 downto 0);
@@ -107,8 +107,8 @@ begin
 
         when "10000" => --io load
           if iobusy = '0' and iogo = '0' then
-            iowe <= '1';
-            iogo <= '0';
+            iowe <= '0';
+            iogo <= '1';
             state <= "10001";
           else
             iogo <= '0';
@@ -118,7 +118,7 @@ begin
             load_word <= ioreceive_data;
             state <= "00000";
           end if;
-
+          iogo <= '0';
         when "11100" => --sram store
           XWA <= '1';
           state <= "00000";
