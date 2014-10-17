@@ -4,7 +4,9 @@ use ieee.std_logic_unsigned.all;
 
 entity core_main is
   generic (
-    CODE : string := "code.bin");
+    CODE : string := "code.bin";
+    wtime : std_logic_vector(15 downto 0) := x"1ADB";
+    debug : boolean := false);
   port (
     clk   : in    std_logic;
     RS_TX : out   std_logic;
@@ -45,6 +47,9 @@ architecture arch_core_main of core_main is
   end component;
 
   component memory_io
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime;
+      debug : boolean := debug);
     port (
       clk        : in    std_logic;
       RS_RX      : in    std_logic;
