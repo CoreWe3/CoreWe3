@@ -87,7 +87,7 @@ architecture blackbox of memory_io is
   --signal flag : std_logic_vector(1 downto 0) := "00";
   --signal data_from_r : std_logic_vector(31 downto 0);
   --signal data_to_u : std_logic_vector(31 downto 0);
-  signal load_store_tmp : std_logic;
+  --signal load_store_tmp : std_logic;
   signal store_word_tmp : std_logic_vector(31 downto 0);
   signal iowe : std_logic;
   signal iogo : std_logic;
@@ -126,7 +126,6 @@ begin  -- blackbox
           iogo <= '0';
           XWA <= '1';
           if go = '1' then
-            load_store_tmp <= load_store;
             store_word_tmp <= store_word;
             if addr = x"fffff" then     --io
               if load_store = '1' then --store
@@ -135,21 +134,18 @@ begin  -- blackbox
                 state <= "10000";
               end if;
             else                      --sram
-              state <= "00001";
+              if load_store = '1' then  --store
+                ZD <= store_word;
+                XWA <= '0';
+                ZA <= addr;
+                state <= "11100";
+              else --load
+                ZD <= (others => 'Z');
+                XWA <= '1';
+                ZA <= addr;
+                state <= "11101";
+              end if;
             end if;
-          end if;
-
-        when "00001" => --sram
-          if load_store_tmp = '1' then  --store
-            ZD <= store_word_tmp;
-            XWA <= '0';
-            ZA <=addr;
-            state <= "11100";
-          else --load
-            ZD <= (others => 'Z');
-            XWA <= '1';
-            ZA <= addr;
-            state <= "11101";
           end if;
 
         when "01000" =>  --io store
@@ -178,10 +174,13 @@ begin  -- blackbox
 
         when "11100" => --sram store
           XWA <= '1';
-          state <= "11111";
+          state <= "00000";
+
         when "11101" => --sram load
           state <= "11110";
-        when "11110" => --sram load
+        when "11110" =>
+          state <= "11111";
+        when "11111" => --sram load
           load_word <= ZD;
           state <= "00000";
 

@@ -25,11 +25,13 @@ begin
   begin
     if rising_edge(clk) then
       case state is
-        when x"0000" => 
-          readline(data_file, data_line);
-          hread(data_line, data_v);
-          data <= data_v;
-          compete <= '1';
+        when x"0000" =>
+          if(not endfile(data_file)) then
+            readline(data_file, data_line);
+            hread(data_line, data_v);
+            data <= data_v;
+            compete <= '1';
+          end if;
           state <= wtime;
         when others =>
           compete <= '0';
