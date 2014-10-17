@@ -1,5 +1,4 @@
---receive用bufferは0xf800から0xf9fffまで(仮)
---send用bufferは0xfa000から0xfafffまで(仮)
+--buffer としてBRAMを使用
 
 library ieee;
 use ieee.std_logic_unsigned.all;
@@ -56,7 +55,7 @@ architecture example of memory_io_unit is
   signal owari : std_logic;
   signal cansend : std_logic := '0';
   signal temp : std_logic := '1';       -- rs_rx
-  type ram_type is array (0 to 65535) of std_logic_vector(31 downto 0);
+  type ram_type is array (0 to 255) of std_logic_vector(31 downto 0);
   signal rRAM : ram_type;
   signal uRAM : ram_type;
   signal uaddr : std_logic_vector(7 downto 0);

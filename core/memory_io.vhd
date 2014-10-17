@@ -62,7 +62,6 @@ architecture blackbox of memory_io is
   --signal cansend : std_logic := '0';
   --signal temp : std_logic := '1';
   --signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
-  signal store_word_tmp : std_logic_vector(31 downto 0);
   signal cpu_raddr : std_logic_vector(7 downto 0) := (others => '0');
   signal rsize : std_logic_vector(19 downto 0);
   signal raddr : std_logic_vector(7 downto 0);
@@ -85,7 +84,7 @@ begin  -- blackbox
     raddr => raddr,
     cpu_uaddr => cpu_uaddr,
     flag => flag,
-    data_to_r => data_from_r,
+    data_to_u => data_from_r,
     data_from_r => data_to_u);
 
   mio: process(clk)
@@ -123,7 +122,6 @@ begin  -- blackbox
           end if;
 
         when "01000" =>  --io store 
-        when "01000" => 
           data_to_u <= store_word_tmp;
           flag <= "11";  
           state <= "01001";

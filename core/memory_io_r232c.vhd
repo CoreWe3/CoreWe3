@@ -3,10 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 entity memory_io_r232c is
-  
   generic (
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
-
   port (
     clk  : in  std_logic;
     rx   : in  std_logic;
@@ -18,7 +16,6 @@ architecture structure of memory_io_r232c is
   signal countdown : std_logic_vector(15 downto 0) := (others=>'0');
   signal receivebuf : std_logic_vector(7 downto 0) := (others=>'1');
   signal state : std_logic_vector(3 downto 0) := "1001";
-  signal temp : std_logic := '0';
 begin  -- structure
   statemachine2: process(clk)
     begin
