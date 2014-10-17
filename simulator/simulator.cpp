@@ -28,7 +28,7 @@ FILE* iofpw;
 
 //Debugger
 unsigned int d_insnum = 0;
-
+unsigned int counter[ISANUM] = {0};
 
 int main(int argc, char* argv[])
 {
@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-
 	unsigned int tmp;
 	unsigned int num = 0;
 	while(fread(&tmp,sizeof(unsigned int),1,fpr) > 0){
@@ -70,6 +69,7 @@ int main(int argc, char* argv[])
 	while(pc<num){
 		ins.data = rom[pc];
 		pcflag = 1;
+		counter[ins.A.op]++;
 		switch(ins.A.op){
 			case LD:
 				ld(ins.L.ra,ins.L.rb,ins.L.cx);
@@ -125,15 +125,17 @@ int main(int argc, char* argv[])
 		}
 		reg[0] = 0;
 		pc+=pcflag;
-
-
 		d_insnum++;
 	}
 
-	
 	for(int i = 0; i < REGNUM; i++){
-		printf("%s = %u\n", reg2name(i), reg[i]);
+		printf("%s:%u, ", reg2name(i), reg[i]);
 	}
+	printf("\n");
+	for(int i = 0; i < ISANUM; i++){
+		printf("%s:%u, ", names[i], counter[i]);
+	}
+	printf("\n");
 	printf("Number of Instruction : %d\n",d_insnum);
 
 	fclose(iofpr);
