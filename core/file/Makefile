@@ -1,7 +1,7 @@
 
 %.bin: %.hex
-	./hex2bin.pl < $< > $@ && \
-	cp $@ ~/cpu_core/core_main_tb/
+	./hex2bin.pl < $< > $@
+
 %.hex: %.s ../../simulator/assembler
 	../../simulator/assembler $(basename $<) < $< && \
 	./bin2hex.pl < $(basename $<) > $@
