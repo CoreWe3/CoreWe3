@@ -3,7 +3,6 @@
 --load_store=1でstore、load_store=0でloadを行う。
 --busyが下りた時には、読み書きは完了していて、
 --loadの場合load_wordにデータが入っているものとする。
---インターフェースは以下、実装よろ
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -31,27 +30,6 @@ end memory_io;
 
 architecture blackbox of memory_io is
 
-  --component memory_io_unit
-  --  port (
-  --    clk          : in    std_logic;
-  --    rs_rx        : in    std_logic;
-  --    rs_tx        : out   std_logic;
-  --    --ZD           : inout std_logic_vector(31 downto 0);
-  --    --ZA           : out   std_logic_vector(19 downto 0);
-  --    --XWA          : out   std_logic;
-  --    cpu_raddr    : in    std_logic_vector(7 downto 0);
-  --    raddr        : out   std_logic_vector(7 downto 0);
-  --    cpu_uaddr    : in    std_logic_vector(7 downto 0);
-  --    --uaddr        : out   std_logic_vector(19 downto 0);
-  --    flag         : in    std_logic_vector(1 downto 0);
-  --    data_from_r  : out   std_logic_vector(31 downto 0);  --flag "01"
-  --    data_to_u    : in   std_logic_vector(31 downto 0));  --flag "11"
-  --    --rumemory_busy : out   std_logic;
-  --    --memory_busy  : in    std_logic);
-  --    --umemory_size : in    std_logic_vector(19 downto 0);
-  --    --rflag        : out   std_logic);
-  --end component;
-
   component IO_buffer is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
@@ -68,45 +46,14 @@ architecture blackbox of memory_io is
   end component;
   
   signal state : std_logic_vector(4 downto 0) := (others => '0');
-  --signal rdata : std_logic_vector(7 downto 0);
-  --signal udata : std_logic_vector(7 downto 0);
-  --signal uart_go: std_logic := '0';
-  --signal uart_busy: std_logic := '0';
-  --signal owari : std_logic;
-  --signal cansend : std_logic := '0';
-  --signal temp : std_logic := '1';
-  --signal load_word_temp : std_logic_vector(31 downto 0) := x"11111111";
-  --signal cpu_raddr : std_logic_vector(7 downto 0) := (others => '0');
-  --signal rsize : std_logic_vector(19 downto 0);
-  --signal raddr : std_logic_vector(7 downto 0);
-  --signal cpu_uaddr : std_logic_vector(7 downto 0) := (others => '0');
-  --signal usize : std_logic_vector(19 downto 0);
-  ----signal uaddr : std_logic_vector(19 downto 0);
-  --signal umemory_size : std_logic_vector(19 downto 0) := (others => '0');
-  --signal rumemory_busy : std_logic := '0';
-  --signal flag : std_logic_vector(1 downto 0) := "00";
-  --signal data_from_r : std_logic_vector(31 downto 0);
-  --signal data_to_u : std_logic_vector(31 downto 0);
-  --signal load_store_tmp : std_logic;
   signal store_word_tmp : std_logic_vector(31 downto 0);
   signal iowe : std_logic;
-  signal iogo : std_logic;
+  signal iogo : std_logic := '0';
   signal iosend_data : std_logic_vector(31 downto 0);
   signal ioreceive_data : std_logic_vector(31 downto 0);
   signal iobusy : std_logic;
     
-begin  -- blackbox
-  --io_unit : memory_io_unit port map(
-  --  clk => clk,
-  --  rs_rx => rs_rx,
-  --  rs_tx => rs_tx,
-  --  cpu_raddr => cpu_raddr,
-  --  raddr => raddr,
-  --  cpu_uaddr => cpu_uaddr,
-  --  flag => flag,
-  --  data_to_u => data_from_r,
-  --  data_from_r => data_to_u);
-
+begin
   IO : IO_buffer port map (
     clk => clk,
     RS_RX => RS_RX,

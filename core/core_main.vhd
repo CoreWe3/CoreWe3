@@ -124,7 +124,8 @@ begin
               reg_addr2 <= instr(15 downto 12);
             when x"04" => --addi
               reg_addr1 <= instr(19 downto 16);
-            when x"05" | x"06" | x"07" | x"08" => --and or shl shr
+            when x"05" | x"06" | x"07" | x"08" =>
+              --and or shl shr
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"09" | x"0A" | x"0B" => -- branch

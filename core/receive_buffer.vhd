@@ -58,7 +58,6 @@ architecture arch_receive_buffer of receive_buffer is
   signal igo : std_logic := '0';
   signal ogo : std_logic := '0';
   signal empty : std_logic;
-  signal full : std_logic;
 
   signal io_complete : std_logic;
   signal bdata : std_logic_vector(7 downto 0);
@@ -77,7 +76,7 @@ begin
     igo => igo,
     ogo => ogo,
     empty => empty,
-    full => full);
+    full => open);
 
   fpga : if debug = false generate 
     r232c : memory_io_r232c port map (

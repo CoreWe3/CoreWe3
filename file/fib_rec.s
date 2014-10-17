@@ -1,7 +1,7 @@
 :main
-ADDI	r1	r0	1
+ADDI	r1	r0	10
 JSUB	:fib
-ST	r1	r0	65535
+ST	r1	r0	0xffff
 BEQ	r0	r0	:main
 :fib				#fib n
 BEQ	r1	r0	:base	#if n == 0

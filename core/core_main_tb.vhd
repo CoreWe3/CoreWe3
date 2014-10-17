@@ -8,7 +8,7 @@ end core_main_tb;
 architecture arch_core_main_tb of core_main_tb is
   component core_main
     generic (
-      CODE : string := "stack_test.bin";
+      CODE : string := "fib_rec.bin";
       wtime : std_logic_vector(15 downto 0) := x"0001";
       debug : boolean := true);
     port (
