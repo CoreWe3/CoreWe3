@@ -64,8 +64,9 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 
 program: 
 | exp 
-    { print_string "SyntaxTree =======================-\n"; 
-      print_string (pp_t $1); 
+    { 
+      print_string "SyntaxTree =======================-\n";
+      print_string (pp_t $1);
       $1}
 
 simple_exp: /* 括弧をつけなくても関数の引数になれる式 (caml2html: parser_simple) */

@@ -18,7 +18,8 @@ let rec pp_t = function
   | Fun (args, t) -> Format.sprintf "%s -> %s" (pp_t_list args) (pp_t t)
   | Tuple ts -> pp_t_tup ts
   | Array t -> Format.sprintf "%s array" (pp_t t)
-  | Var v -> "tvar"
+  | Var({ contents = None }) -> "unknown"
+  | Var({ contents = Some(t) }) -> pp_t t
 and pp_t_list ts = 
   let rec pp_t_list' = function
     | [] -> ""
