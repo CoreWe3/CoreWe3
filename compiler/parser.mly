@@ -2,39 +2,44 @@
 (* parserが利用する変数、関数、型などの定義 *)
 open Syntax
 let addtyp x = (x, Type.gentyp ())
+let ex_range head tail ast = ((fst head, snd tail), ast)
 %}
 
 /* 字句を表すデータ型の定義 (caml2html: parser_token) */
-%token <bool> BOOL
-%token <int> INT
-%token <float> FLOAT
-%token NOT
-%token <Absyn.pos> MINUS
-%token <Absyn.pos> PLUS
-%token <Absyn.pos> MINUS_DOT
-%token <Absyn.pos> PLUS_DOT
-%token <Absyn.pos> AST_DOT
-%token <Absyn.pos> SLASH_DOT
-%token <Absyn.pos> EQUAL
-%token <Absyn.pos> LESS_GREATER
-%token <Absyn.pos> LESS_EQUAL
-%token <Absyn.pos> GREATER_EQUAL
-%token <Absyn.pos> LESS
-%token <Absyn.pos> GREATER
-%token IF
-%token THEN
-%token ELSE
-%token <Id.t*Absyn.pos> IDENT
-%token LET
-%token IN
-%token REC
-%token COMMA
-%token ARRAY_CREATE
-%token DOT
-%token LESS_MINUS
-%token SEMICOLON
-%token LPAREN
-%token RPAREN
+%token <Id.range*bool> BOOL
+%token <Id.range*int> INT
+%token <Id.range*float> FLOAT
+%token <Id.range>NOT
+%token <Id.range>MINUS
+%token <Id.range>PLUS
+%token <Id.range>AST
+%token <Id.range>SLASH
+%token <Id.range>LSL
+%token <Id.range>LSR
+%token <Id.range>MINUS_DOT
+%token <Id.range>PLUS_DOT
+%token <Id.range>AST_DOT
+%token <Id.range>SLASH_DOT
+%token <Id.range>EQUAL
+%token <Id.range>LESS_GREATER
+%token <Id.range>LESS_EQUAL
+%token <Id.range>GREATER_EQUAL
+%token <Id.range>LESS
+%token <Id.range>GREATER
+%token <Id.range>IF
+%token <Id.range>THEN
+%token <Id.range>ELSE
+%token <Id.range*Id.t> IDENT
+%token <Id.range>LET
+%token <Id.range>IN
+%token <Id.range>REC
+%token <Id.range>COMMA
+%token <Id.range>ARRAY_CREATE
+%token <Id.range>DOT
+%token <Id.range>LESS_MINUS
+%token <Id.range>SEMICOLON
+%token <Id.range>LPAREN
+%token <Id.range>RPAREN
 %token EOF
 
 /* 優先順位とassociativityの定義（低い方から高い方へ） (caml2html: parser_prior) */
@@ -45,94 +50,122 @@ let addtyp x = (x, Type.gentyp ())
 %left COMMA
 %left EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left PLUS MINUS PLUS_DOT MINUS_DOT
-%left AST_DOT SLASH_DOT
+%left AST SLASH AST_DOT SLASH_DOT
+%left LSL LSR
 %right prec_unary_minus
 %left prec_app
 %left DOT
 
 /* 開始記号の定義 */
-%type <Syntax.t> exp
-%start exp
+%type <Syntax.t> exp program
+%start program
 
 %%
 
+program: 
+| exp 
+    { 
+      print_string "SyntaxTree =======================-\n";
+      print_string (pp_t $1);
+      $1}
+
 simple_exp: /* 括弧をつけなくても関数の引数になれる式 (caml2html: parser_simple) */
 | LPAREN exp RPAREN
-    { $2 }
+    { ex_range $1 $3 (get_ast $2) }
 | LPAREN RPAREN
-    { Unit }
+    { ex_range $1 $2 Unit }
 | BOOL
-    { Bool($1) }
+    { ex_range (fst $1) (fst $1) (Bool (snd $1)) }
 | INT
-    { Int($1) }
+    { ex_range (fst $1) (fst $1) (Int (snd $1)) }
 | FLOAT
-    { Float($1) }
+    { ex_range (fst $1) (fst $1) (Float (snd $1)) }
 | IDENT
-    { Var($1) }
+    { ex_range (fst $1) (fst $1) (Var (snd $1)) }
 | simple_exp DOT LPAREN exp RPAREN
-    { Get($1, $4) }
+    { ex_range (get_range $1) $5 (Get ($1, $4)) }
 
 exp: /* 一般の式 (caml2html: parser_exp) */
 | simple_exp
     { $1 }
 | NOT exp
     %prec prec_app
-    { Not($2) }
+    { ex_range $1 (get_range $2) (Not $2)}
 | MINUS exp
     %prec prec_unary_minus
     { match $2 with
-    | Float(f) -> Float(-.f) (* -1.23などは型エラーではないので別扱い *)
-    | e -> Neg(e) }
+    | (r, Float(f)) -> ex_range $1 r (Float (-.f)) (* -1.23などは型エラーではないので別扱い *)
+    | (r, e) -> ex_range $1 r (Neg ($2)) }
 | exp PLUS exp /* 足し算を構文解析するルール (caml2html: parser_add) */
-    { Add($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (Add ($1, $3)) }
 | exp MINUS exp
-    { Sub($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (Sub ($1, $3)) }
+| exp AST exp
+    { ex_range (get_range $1) (get_range $3) (Mul ($1, $3)) }
+| exp SLASH exp
+    { ex_range (get_range $1) (get_range $3) (Div ($1, $3)) }
+| exp LSL exp
+    { ex_range (get_range $1) (get_range $3) (Lsl ($1, $3)) }
+| exp LSR exp
+    { ex_range (get_range $1) (get_range $3) (Lsr ($1, $3)) }
 | exp EQUAL exp
-    { Eq($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (Eq ($1, $3)) }
 | exp LESS_GREATER exp
-    { Not(Eq($1, $3)) }
+    { let head = (get_range $1) in
+      let tail = (get_range $3) in
+      let inner = ex_range head tail (Eq ($1, $3)) in
+      ex_range head tail (Not inner) }
 | exp LESS exp
-    { Not(LE($3, $1)) }
+    { let head = (get_range $1) in
+      let tail = (get_range $3) in
+      let inner = ex_range head tail (LE ($3, $1)) in
+      ex_range head tail (Not inner) }
 | exp GREATER exp
-    { Not(LE($1, $3)) }
+    { let head = (get_range $1) in
+      let tail = (get_range $3) in
+      let inner = ex_range head tail (LE ($1, $3)) in
+      ex_range head tail (Not inner) }
 | exp LESS_EQUAL exp
-    { LE($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (LE ($1, $3)) }
 | exp GREATER_EQUAL exp
-    { LE($3, $1) }
+    { ex_range (get_range $1) (get_range $3) (LE ($3, $1)) }
 | IF exp THEN exp ELSE exp
     %prec prec_if
-    { If($2, $4, $6) }
+    { ex_range $1 (get_range $6) (If ($2, $4, $6)) }
 | MINUS_DOT exp
     %prec prec_unary_minus
-    { FNeg($2) }
+    { ex_range $1 (get_range $2) (FNeg ($2)) }
 | exp PLUS_DOT exp
-    { FAdd($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (FAdd ($1, $3)) }
 | exp MINUS_DOT exp
-    { FSub($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
 | exp AST_DOT exp
-    { FMul($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (FMul ($1, $3)) }
 | exp SLASH_DOT exp
-    { FDiv($1, $3) }
+    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
-    { Let(addtyp $2, $4, $6) }
+    { ex_range $1 (get_range $6) (Let (addtyp (snd $2), $4, $6)) }
 | LET REC fundef IN exp
     %prec prec_let
-    { LetRec($3, $5) }
+    { ex_range $1 (get_range $5) (LetRec ($3, $5)) }
 | exp actual_args
     %prec prec_app
-    { App($1, $2) }
+    { let tail = get_range (List.hd (List.rev $2)) in
+      ex_range (get_range $1) tail (App ($1, $2)) }
 | elems
-    { Tuple($1) }
+    { let head = get_range (List.hd $1) in
+      let tail = get_range (List.hd (List.rev $1)) in
+      ex_range head tail (Tuple $1) }
 | LET LPAREN pat RPAREN EQUAL exp IN exp
-    { LetTuple($3, $6, $8) }
+    { ex_range $1 (get_range $8) (LetTuple($3, $6, $8)) }
 | simple_exp DOT LPAREN exp RPAREN LESS_MINUS exp
-    { Put($1, $4, $7) }
+    { ex_range (get_range $1) (get_range $7) (Put($1, $4, $7)) }
 | exp SEMICOLON exp
-    { Let((Id.gentmp Type.Unit, Type.Unit), $1, $3) }
+    { ex_range (get_range $1) (get_range $1) (Let((Id.gentmp Type.Unit, Type.Unit), $1, $3)) }
 | ARRAY_CREATE simple_exp simple_exp
     %prec prec_app
-    { Array($2, $3) }
+    { ex_range $1 (get_range $3) (Array($2, $3)) }
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"
@@ -141,13 +174,13 @@ exp: /* 一般の式 (caml2html: parser_exp) */
 
 fundef:
 | IDENT formal_args EQUAL exp
-    { { name = addtyp $1; args = $2; body = $4 } }
+    { { name = addtyp (snd $1); args = $2; body = $4 } }
 
 formal_args:
 | IDENT formal_args
-    { addtyp $1 :: $2 }
+    { addtyp (snd $1) :: $2 }
 | IDENT
-    { [addtyp $1] }
+    { [addtyp (snd $1)] }
 
 actual_args:
 | actual_args simple_exp
@@ -165,6 +198,6 @@ elems:
 
 pat:
 | pat COMMA IDENT
-    { $1 @ [addtyp $3] }
+    { $1 @ [addtyp (snd $3)] }
 | IDENT COMMA IDENT
-    { [addtyp $1; addtyp $3] }
+    { [addtyp (snd $1); addtyp (snd $3)] }

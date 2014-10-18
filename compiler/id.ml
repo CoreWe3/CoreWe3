@@ -1,6 +1,11 @@
 type t = string (* 変数の名前 (caml2html: id_t) *)
 type l = L of string (* トップレベル関数やグローバル配列のラベル (caml2html: id_l) *)
 
+type pos = (int * int) (* (line number, column) *)
+type range = (pos * pos) 
+
+let pp_range r = Format.sprintf "%d.%d-%d.%d" (fst (fst r)) (snd (fst r)) (fst (snd r)) (snd (snd r))
+
 let rec pp_list = function
   | [] -> ""
   | [x] -> x
@@ -11,7 +16,7 @@ let pp_t t = t
 let counter = ref 0
 let genid s =
   incr counter;
-  Printf.sprintf "%s.%d" s !counter
+  Format.sprintf "%s.%d" s !counter
 
 let rec id_of_typ = function
   | Type.Unit -> "u"

@@ -8,7 +8,7 @@ NCSUFFIX = .opt
 CC = gcc
 CFLAGS = -g -O2 -Wall
 
-default: debug-code top $(RESULT) do_test
+default: debug-code top $(RESULT) #do_test
 $(RESULT): debug-code top
 ## [自分（住井）用の注]
 ## ・OCamlMakefileや古いGNU Makeのバグ(?)で上のような定義が必要(??)
