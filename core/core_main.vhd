@@ -4,7 +4,9 @@ use ieee.std_logic_unsigned.all;
 
 entity core_main is
   generic (
-    CODE : string := "code.bin");
+    CODE : string := "code.bin";
+    wtime : std_logic_vector(15 downto 0) := x"1ADB";
+    debug : boolean := false);
   port (
     clk   : in    std_logic;
     RS_TX : out   std_logic;
@@ -45,6 +47,9 @@ architecture arch_core_main of core_main is
   end component;
 
   component memory_io
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime;
+      debug : boolean := debug);
     port (
       clk        : in    std_logic;
       RS_RX      : in    std_logic;
@@ -65,10 +70,8 @@ architecture arch_core_main of core_main is
     "00000000000000";
   signal next_pc : std_logic_vector(13 downto 0);
   signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
-  signal lr : std_logic_vector(13 downto 0);
   
   signal instr_addr : std_logic_vector(13 downto 0);
-  signal sram_addr : std_logic_vector(19 downto 0);
   signal instr : std_logic_vector(31 downto 0);
   signal state : std_logic_vector(3 downto 0) :=
     (others => '0');
@@ -89,8 +92,8 @@ architecture arch_core_main of core_main is
   signal mem_store : std_logic_vector(31 downto 0);
   signal mem_load : std_logic_vector(31 downto 0);
   signal mem_addr : std_logic_vector(19 downto 0);
-  signal mem_we : std_logic;
-  signal mem_go : std_logic;
+  signal mem_we : std_logic := '0';
+  signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 
   signal branch_f : std_logic;
@@ -116,19 +119,23 @@ begin
             when x"01" => --store
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(23 downto 20);
-            when x"02" => --add
-              reg_addr1 <= instr(19 downto 16);
-              reg_addr2 <= instr(15 downto 12);
-            when x"03" => --subtract
+            when x"02" | x"03" => --add
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"04" => --addi
               reg_addr1 <= instr(19 downto 16);
-            when x"09" => -- branch eq
+            when x"05" | x"06" | x"07" | x"08" =>
+              --and or shl shr
+              reg_addr1 <= instr(19 downto 16);
+              reg_addr2 <= instr(15 downto 12);
+            when x"09" | x"0A" | x"0B" => -- branch
               reg_addr1 <= instr(23 downto 20);
               reg_addr2 <= instr(19 downto 16);
             when x"0C" => --jump subroutine
             when x"0D" => --return
+            when x"0E" => --push
+              reg_addr1 <= instr(23 downto 20);
+            when x"0F" => --pop
             when others =>
           end case;
           state <= state+1;
@@ -152,11 +159,15 @@ begin
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
               buf <= reg_ow2;
-            when x"02" | x"03" =>
+            when x"02" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
-            when x"04" =>
+            when x"03" => --sub
+              ctrl <= "001";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"04" => --addi
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(15) = '0' then
@@ -164,7 +175,23 @@ begin
               else
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
-            when x"09" =>
+            when x"05" => --and
+              ctrl <= "010";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"06" => --or
+              ctrl <= "011";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"07" => --shl
+              ctrl <= "101";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"08" => --shr
+              ctrl <= "110";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"09" => --branch eq
               ctrl <= "000";
               alu_iw1 <= x"0000" & "00" & pc;
               if instr(15) = '0' then
@@ -177,7 +204,33 @@ begin
               else
                 branch_f <= '0';
               end if;
-            when x"0C" =>
+            when x"0A" => --ble
+              ctrl <= "000";
+              alu_iw1 <= x"0000" & "00" & pc;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              if reg_ow1 <= reg_ow2 then
+                branch_f <= '1';
+              else
+                branch_f <= '0';
+              end if;
+            when x"0B" => --blt
+              ctrl <= "000";
+              alu_iw1 <= x"0000" & "00" & pc;
+              if instr(15) = '0' then
+                alu_iw2 <= x"0000" & instr(15 downto 0);
+              else
+                alu_iw2 <= x"FFFF" & instr(15 downto 0);
+              end if;
+              if reg_ow1 < reg_ow2 then
+                branch_f <= '1';
+              else
+                branch_f <= '0';
+              end if;
+            when x"0C" => --jump subroutine
               ctrl <= "000";
               alu_iw1 <= x"0000" & "00" & pc;
               if instr(23) = '0' then
@@ -185,50 +238,107 @@ begin
               else
                 alu_iw2 <= x"FF" & instr(23 downto 0);
               end if;
-            when others =>  
+              sp <= sp-1;
+            when x"0D" => --ret
+              ctrl <= "000";
+              alu_iw1 <= x"000" & sp;
+              alu_iw2 <= x"00000001";
+            when x"0E" => --push
+              ctrl <= "001";
+              alu_iw1 <= x"000" & sp;
+              alu_iw2 <= x"00000001";
+              buf <= reg_ow1;
+            when x"0F" => --pop
+              ctrl <= "000";
+              alu_iw1 <= x"000" & sp;
+              alu_iw2 <= x"00000001";
+            when others =>
           end case;
           next_pc <= pc+1;
           state <= state+1;
 
         when x"4" => --memory request
           case instr(31 downto 24) is
-            when x"00" =>
+            when x"00" => --load
               if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '0';
                 mem_go <= '1';
                 mem_addr <= alu_ow(19 downto 0);
                 state <= state + 1;
-              else
-                mem_go <= '0';
               end if;
-            when x"01" =>
-              if mem_busy = '0' and mem_busy = '0' then
+            when x"01" => --store
+              if mem_busy = '0' and mem_go = '0' then
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= alu_ow(19 downto 0);
                 mem_store <= buf;
-                state <= state + 1;
-              else
-                mem_go <= '0';
+                state <= state+1;
+              end if;
+            when x"0C" => --jsub
+              if mem_busy = '0' and mem_go = '0' then
+                mem_we <= '1';
+                mem_go <= '1';
+                mem_addr <= sp;
+                mem_store <= x"0000" & "00" & next_pc;
+                state <= state+1;
+              end if;
+            when x"0D" => --return
+              if mem_busy = '0' and mem_go = '0' then
+                mem_we <= '0';
+                mem_go <= '1';
+                mem_addr <= sp;
+                state <= state+1;
+              end if;
+            when x"0E" => --push
+              if mem_busy = '0' and mem_go = '0' then
+                mem_we <= '1';
+                mem_go <= '1';
+                mem_addr <= alu_ow(19 downto 0);
+                sp <= alu_ow(19 downto 0);
+                mem_store <= buf;
+                state <= state+1;
+              end if;
+            when x"0F" => --pop
+              if mem_busy = '0' and mem_go = '0' then
+                mem_we <= '0';
+                mem_go <= '1';
+                mem_addr <= sp;
+                state <= state+1;
               end if;
             when others =>
               state <= state+2;
           end case;
 
         when x"5" => -- memory complete
+          mem_we <= '0';
+          mem_go <= '0';
           case instr(31 downto 24) is
             when x"00" => --load
               if mem_busy = '0' and mem_go = '0' then
                 buf <= mem_load;
                 state <= state+1;
-              else
-                mem_go <= '0';
               end if;
-            when x"01" =>
+            when x"01" => --store
               if mem_busy = '0' and mem_go = '0' then
                 state <= state+1;
-              else
-                mem_go <= '0';
+              end if;
+            when x"0C" => --jsub
+              if mem_busy = '0' and mem_go = '0' then
+                state <= state+1;
+              end if;
+            when x"0D" => --ret
+              if mem_busy = '0' and mem_go = '0' then
+                pc <= mem_load(13 downto 0);
+                state <= state+1;
+              end if;
+            when x"0E" => --push
+              if mem_busy = '0' and mem_go = '0' then
+                state <= state+1;
+              end if;
+            when x"0F" => --pop
+              if mem_busy = '0' and mem_go = '0' then
+                buf <= mem_load;
+                state <= state+1;
               end if;
             when others =>
           end case;
@@ -240,29 +350,41 @@ begin
               reg_iw <= buf;
               reg_we <= '1';
               pc <= next_pc;
-            when x"01" =>
+            when x"01" => --store
               pc <= next_pc;
-            when x"02" | x"03" =>
+            when x"02" | x"03" => --add sub
               reg_addr1 <= instr(23 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
-            when x"04" =>
+            when x"04" => --addi
               reg_addr1 <= instr(23 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
-            when x"09" =>
+            when x"05" | x"06" | x"07" | x"08" =>
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= alu_ow;
+              reg_we <= '1';
+              pc <= next_pc;
+            when x"09" | x"0A" | x"0B" => --beq
               if branch_f = '1' then
                 pc <= alu_ow(13 downto 0);
               else
                 pc <= next_pc;
               end if;
-            when x"0C" =>
-              lr <= pc;
+            when x"0C" => --jsub
               pc <= alu_ow(13 downto 0);
-            when x"0D" =>
-              pc <= lr;
+            when x"0D" => --ret
+              sp <= alu_ow(19 downto 0);
+            when x"0E" => --push
+              pc <= next_pc;
+            when x"0F" => --pop
+              reg_we <= '1';
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= buf;
+              sp <= alu_ow(19 downto 0);
+              pc <= next_pc;
             when others =>
           end case;
           state <= x"0";

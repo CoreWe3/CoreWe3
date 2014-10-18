@@ -1,0 +1,3 @@
+LD	r1	r0	0xFFFF
+ST	r1	r0	0xFFFF
+

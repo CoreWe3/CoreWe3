@@ -45,9 +45,7 @@ let Namespace = "Cpu0" in {
   def R13  : Cpu0GPRReg<13, "r13">, DwarfRegNum<[13]>;
   def R14  : Cpu0GPRReg<14, "r14">, DwarfRegNum<[14]>;
   def R15  : Cpu0GPRReg<15, "r15">, DwarfRegNum<[15]>;
-  //別のクラスにしたほうが良い?
   def SP   : Cpu0GPRReg<16, "sp">,  DwarfRegNum<[16]>;
-  def LR   : Cpu0GPRReg<17, "lr">,  DwarfRegNum<[17]>;
   def PC   : Cpu0GPRReg<18, "pc">,  DwarfRegNum<[18]>;
 }
 
@@ -55,9 +53,7 @@ let Namespace = "Cpu0" in {
 // Register Classes
 //===----------------------------------------------------------------------===//
 
-def CPURegs : RegisterClass<"Cpu0", [i32], 32, (add
-  R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15
-  SP, LR, PC)>;
+def CPURegs : RegisterClass<"Cpu0", [i32], 32, (add R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, SP, LR, PC)>;
 
 // Status Registers class
-//def SR   : RegisterClass<"Cpu0", [i32], 32, (add SW)>;
+//def SR      : RegisterClass<"Cpu0", [i32], 32, (add SP, LR, PC)>;
