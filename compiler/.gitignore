@@ -1,0 +1,7 @@
+._d/*
+._bcdi/*
+*.cmi
+*.cmo
+*.s
+*.S
+test/*
