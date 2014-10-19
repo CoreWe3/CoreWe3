@@ -83,6 +83,10 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "\tslw\t%s, %s, %s\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Slw(y, C(z))) -> 
       Printf.fprintf oc "\tslwi\t%s, %s, %d\n" (reg x) (reg y) z
+  | (NonTail(x), Srw(y, V(z))) -> 
+      Printf.fprintf oc "\tsrw\t%s, %s, %s\n" (reg x) (reg y) (reg z)
+  | (NonTail(x), Srw(y, C(z))) -> 
+      Printf.fprintf oc "\tsrwi\t%s, %s, %d\n" (reg x) (reg y) z
   | (NonTail(x), Lwz(y, V(z))) ->
       Printf.fprintf oc "\tlwzx\t%s, %s, %s\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Lwz(y, C(z))) -> 
@@ -132,7 +136,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (Tail, (Nop | Stw _ | Stfd _ | Comment _ | Save _ as exp)) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
       Printf.fprintf oc "\tblr\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | Slw _ |
+  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | Slw _ | Srw _ |
             Lwz _ as exp)) -> 
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tblr\n";
