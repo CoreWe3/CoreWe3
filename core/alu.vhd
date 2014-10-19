@@ -23,7 +23,8 @@ begin
               in_word1 or in_word2 when ctrl = "011" else
               in_word1 xor in_word2 when ctrl = "100" else
               shiftl when ctrl = "101" else
-              shiftr when ctrl = "110";
+              shiftr when ctrl = "110" else
+              zero;
 
   shiftl <= in_word1 when in_word2 = x"0000000" else
             in_word1(30 downto 0) & zero(31 downto 31) when in_word2 =  x"00000001" else

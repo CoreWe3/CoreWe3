@@ -8,7 +8,9 @@ end core_main_tb;
 architecture arch_core_main_tb of core_main_tb is
   component core_main
     generic (
-      CODE : string := "fib.bin");
+      CODE : string := "loopback.bin";
+      wtime : std_logic_vector(15 downto 0) := x"0001";
+      debug : boolean := true);
     port (
       clk   : in    std_logic;
       RS_TX : out   std_logic;
@@ -17,6 +19,15 @@ architecture arch_core_main_tb of core_main_tb is
       ZA    : out   std_logic_vector(19 downto 0);
       XWA   : out   std_logic);
   end component;
+
+  component SRAM
+    port (
+      clk : in std_logic;
+      ZD : inout std_logic_vector(31 downto 0);
+      ZA : in std_logic_vector(19 downto 0);
+      XWA : in std_logic);
+  end component;
+
 
   signal clk   : std_logic; 
   signal RS_TX : std_logic; 
@@ -34,6 +45,12 @@ begin
     ZA    => ZA    , 
     XWA   => XWA   );
 
+  sram_sim : SRAM port map (
+    clk => clk,
+    ZD => ZD,
+    ZA => ZA,
+    XWA => XWA);
+    
   process
   begin
     clk <= '0';
@@ -41,5 +58,6 @@ begin
     clk <= '1';
     wait for 1 ns;
   end process;
+
   
 end arch_core_main_tb;
