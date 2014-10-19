@@ -1,4 +1,4 @@
-CFLAGS = -O2 -g -Wall
+CFLAGS = -O3 -Wall
 TARGET = $(basename $(wildcard *cpp))
 SRCS = $(wildcard *.cpp)
 CC = clang++
