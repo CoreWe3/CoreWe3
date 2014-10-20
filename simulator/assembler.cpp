@@ -49,15 +49,17 @@ int main(int argc, char* argv[])
 	}
 
 	//Get Data
-	char buffer[256];
+	char buffer[256];;
+	const char *tokens = "\t \n";
 	std::list<std::string> data;
 	while(fgets(buffer,256,stdin)!=NULL){
 		if(buffer==NULL) continue;
+		char* tmp = strtok(buffer, tokens);
+		if(tmp==NULL) continue;
 		data.push_back(buffer);
 	}
 
 	//Detect Label
-	const char *tokens = "\t \n";
 	int line = 1;
 	std::map<std::string,int> label;
 	std::list<std::string>::iterator it = data.begin();
