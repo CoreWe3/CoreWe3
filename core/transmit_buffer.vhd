@@ -27,7 +27,7 @@ architecture arch_transmit_buffer of transmit_buffer is
       full : out std_logic);
   end component;
 
-  component memory_io_u232c is
+  component uart_transmitter is
     generic (wtime: std_logic_vector(15 downto 0) := wtime);
     Port ( clk  : in  STD_LOGIC;
            data : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -60,7 +60,7 @@ begin
     empty => empty,
     full => full);
 
-  u232c : memory_io_u232c port map (
+  transmitter : uart_transmitter port map (
     clk => clk,
     data => bdata,
     go => io_go,

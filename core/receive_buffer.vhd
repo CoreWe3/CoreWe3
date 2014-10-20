@@ -35,13 +35,13 @@ architecture arch_receive_buffer of receive_buffer is
       full : out std_logic);
   end component;
 
-  component memory_io_r232c is
+  component uart_receiver is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk  : in  std_logic;
       rx   : in  std_logic;
-      owari : out std_logic;
+      complete : out std_logic;
       data : out std_logic_vector(7 downto 0));
   end component;
 
@@ -49,7 +49,7 @@ architecture arch_receive_buffer of receive_buffer is
     generic (wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk : in std_logic;
-      compete : out std_logic;
+      complete : out std_logic;
       data : out std_logic_vector(7 downto 0));
   end component;
 
@@ -79,17 +79,17 @@ begin
     full => open);
 
   fpga : if debug = false generate 
-    r232c : memory_io_r232c port map (
+    receiver : uart_receiver port map (
       clk => clk,
       rx => RS_RX,
-      owari => io_complete,
+      complete => io_complete,
       data => bdata);
   end generate;
 
   sim : if debug = true generate
     read_data : read_file port map (
       clk => clk,
-      compete => io_complete,
+      complete => io_complete,
       data => bdata);
   end generate;
 
@@ -131,7 +131,7 @@ begin
     if rising_edge(clk) then
       case deq_state is
         when "00" => --ready
-          if go = '1' and empty = '0' then
+          if go = '1' and empty = '0' then --if not empty
             ogo <= '1';
             deq_state <= "10";
           elsif go = '1' and empty = '1' then --if empty

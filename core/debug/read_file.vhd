@@ -11,7 +11,7 @@ entity read_file is
     file_name : string := "data.hex");
   port (
     clk : in std_logic;
-    compete : out std_logic;
+    complete : out std_logic;
     data : out std_logic_vector(7 downto 0));
 end read_file;
 
@@ -30,11 +30,11 @@ begin
             readline(data_file, data_line);
             hread(data_line, data_v);
             data <= data_v;
-            compete <= '1';
+            complete <= '1';
           end if;
           state <= wtime;
         when others =>
-          compete <= '0';
+          complete <= '0';
           state <= state-1;
       end case;
     end if;

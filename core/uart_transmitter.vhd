@@ -2,16 +2,16 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-entity memory_io_u232c is
+entity uart_transmitter is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
   Port ( clk  : in  STD_LOGIC;
          data : in  STD_LOGIC_VECTOR (7 downto 0);
          go   : in  STD_LOGIC;
          busy : out STD_LOGIC;
          tx   : out STD_LOGIC);
-end memory_io_u232c;
+end uart_transmitter;
 
-architecture blackbox of memory_io_u232c is
+architecture arch_uart_transmitter of uart_transmitter is
   signal countdown: std_logic_vector(15 downto 0) := (others=>'0');
   signal sendbuf: std_logic_vector(8 downto 0) := (others=>'1');
   signal state: std_logic_vector(3 downto 0) := "1011";
@@ -57,5 +57,5 @@ begin
   end process;
   tx<=sendbuf(0);
   busy<= '0' when state="1011" else '1';
-end blackbox;
+end arch_uart_transmitter;
 
