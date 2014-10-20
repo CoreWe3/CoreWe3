@@ -69,6 +69,12 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	unsigned int limit = 0xffffffff;
+	if(argc > 4){
+		limit = atoi(argv[4]);
+	} 
+
+
 	unsigned int tmp;
 	unsigned int num = 0;
 	while(fread(&tmp,sizeof(unsigned int),1,fpr) > 0){
@@ -80,6 +86,8 @@ int main(int argc, char* argv[])
 	//MAIN ROUTINE
 	INS ins;
 	while(pc<num){
+		if(d_insnum >= limit) break;
+
 		ins.data = rom[pc];
 		pcflag = 1;
 		counter[ins.A.op]++;
@@ -227,10 +235,12 @@ void jsub(int cx){
 	ram[sp] = pc + 1;
 	sp--;
 	pc = pc + cx;
+	pcflag = 0;
 }
 void ret(){
-	pc = ram[sp];
 	sp++;
+	pc = ram[sp];
+	pcflag = 0;
 }
 void push(unsigned int ra){
 	sp--;
