@@ -50,7 +50,7 @@ int fadd_valid_case(float a, float b) {
     res = fabsf(a + b);
     a = fabsf(a);
     b = fabsf(b);
-    return (lower < a && upper < a) && (lower < b && b < upper) && (lower < res && res < upper);
+    return (lower < a && a < upper) && (lower < b && b < upper) && (lower < res && res < upper);
 }
 
 void fadd_check(){
@@ -66,7 +66,7 @@ void fadd_check(){
 		b = b | (i << 23);
 		b = b | (k << (23 + 8));
 		if (fadd_valid_case(itof(a), itof(b))) {
-		    fadd_check_case(a, b);
+		    fadd_check_case(a, b);		    
 		}
 	    }
 	}
@@ -80,7 +80,7 @@ int fsub_valid_case(float a, float b) {
     res = fabsf(a - b);
     a = fabsf(a);
     b = fabsf(b);
-    return (lower < a && upper < a) && (lower < b && b < upper) && (lower < res && res < upper);
+    return (lower < a && a < upper) && (lower < b && b < upper) && (lower < res && res < upper);
 }
 
 int fsub_check_case(uint32_t a, uint32_t b) {
@@ -112,7 +112,7 @@ void fsub_check(){
 		b = ((rand() << 16) | rand()) >> (1 + 8);
 		b = b | (i << 23);
 		b = b | (k << (23 + 8));
-		if (fadd_valid_case(itof(a), itof(b))) {
+		if (fsub_valid_case(itof(a), itof(b))) {
 		    fsub_check_case(a, b);
 		}
 	    }

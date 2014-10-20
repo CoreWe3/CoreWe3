@@ -19,18 +19,17 @@ uint32_t fadd(uint32_t a, uint32_t b){
     //絶対値の大きい方をr1(r3)とする
     if (r4 <= r3) {} else {
 	r5 = r1; r1 = r2; r2 = r5;
-	r5 = r3; r3 = r4; r4 = r5;
     }
 
-    //答えが0になる演算
-    if (r3 == r4) {
-    	r3 = r1 >> r12;
-    	r4 = r2 >> r12;
-    	if (r3 != r4) {
-    	    r1 = 0;
-    	    return r1;
-    	}
-    }
+    /* //答えが0になる演算 */
+    /* if (r3 == r4) { */
+    /* 	r3 = r1 >> r12; */
+    /* 	r4 = r2 >> r12; */
+    /* 	if (r3 != r4) { */
+    /* 	    r1 = 0; */
+    /* 	    return r1; */
+    /* 	} */
+    /* } */
 
     //r3(4) = exp
     r5 = 24;
@@ -42,7 +41,6 @@ uint32_t fadd(uint32_t a, uint32_t b){
     r4 = r3 - r4;
     
     //r5(6) = man
-    r11 = 9;
     r5 = r1 << r11;
     r5 = r5 >> r11;
     r6 = r2 << r11;
@@ -95,16 +93,18 @@ uint32_t fadd(uint32_t a, uint32_t b){
 }
 
 uint32_t fsub(uint32_t a, uint32_t b){
-    uint32_t r1, r2, r3;
+    uint32_t r1, r2, r3, r15, r14, r13;
     
     r1 = a; r2 = b;
-    r3 = r2 >> 31;;
+    r15 = 1;
+    r14 = 31;
+    r13 = r15 << r14;
+    r3 = r2 >> r14;;
     if (r3 != 0) {
-	r3 = 0x7fffffff;
-	r2 = r2 & r3;
+	r13 = r13 - r15;
+	r2 = r2 & r13;
     } else {
-	r3 = 0x80000000;
-	r2 = r2 | r3;
+	r2 = r2 | r13;
     }
     r1 = fadd(r1, r2);
     return r1;
