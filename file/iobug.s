@@ -1,6 +1,6 @@
 :main
 	ADDI	r3	r0	0
-	ADDI	r4	r0	0xE4EE
+	ADDI	r4	r0	0x7000 #overflow when 0x8000
 :loop
 	LD	r1	r0	0xFFFF
 	LD	r2	r0	0xFFFF
