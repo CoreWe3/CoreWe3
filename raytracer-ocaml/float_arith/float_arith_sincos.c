@@ -48,28 +48,28 @@ uint32_t reduction(uint32_t a){
 uint32_t kernel_sin(uint32_t a){
     uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
     uint32_t s1, s2, s3, s4;
-    r1 = a;
+    r2 = a;
 
-    s1 = r1;
-    r2 = r1;
-    r1 = fmul(r1, r2);//r1 = a^2
-    r2 = s1; //r2 = a
+    s1 = r2;
+    r3 = r2;
+    r2 = fmul(r2, r3);//r2 = a^2
+    r3 = s1; //r3 = a
     
-    s1 = r2;//s1 = a
-    s2 = r1;//s2 = a^2
-    r1 = fmul(r1, r2);//r1 = a^3
+    s1 = r3;//s1 = a
+    s2 = r2;//s2 = a^2
+    r2 = fmul(r2, r3);//r2 = a^3
     
-    //r2 = 0xbe2aaaac
+    //r3 = 0xbe2aaaac
     r14 = 16;
-    r2 = 0xbe2a;
-    r2 = r2 << r14;
+    r3 = 0xbe2a;
+    r3 = r3 << r14;
     r14 = 0xaaac;
-    r2 = r2 | r14;
-    r1 = fmul(r1, r2);//r1 = S3 * a^3
+    r3 = r3 | r14;
+    r2 = fmul(r2, r3);//r2 = S3 * a^3
 
-    r2 = r1;//r2 = S3 * a^3
-    r1 = s2;//r1 = a
-    r1 = fsub(r1, r2);//r1 = a - S3 * a^3
+    r3 = r2;//r3 = S3 * a^3
+    r2 = s2;//r2 = a
+    r2 = fsub(r2, r3);//r2 = a - S3 * a^3
 
     
 }
