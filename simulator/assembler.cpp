@@ -49,12 +49,14 @@ int main(int argc, char* argv[])
 	}
 
 	//Get Data
-	char buffer[256];;
+	char buffer[256];
+	char buffer2[256];
 	const char *tokens = "\t \n";
 	std::list<std::string> data;
 	while(fgets(buffer,256,stdin)!=NULL){
 		if(buffer==NULL) continue;
-		char* tmp = strtok(buffer, tokens);
+		strcpy(buffer2,buffer);
+		char* tmp = strtok(buffer2, tokens);
 		if(tmp==NULL) continue;
 		data.push_back(buffer);
 	}
