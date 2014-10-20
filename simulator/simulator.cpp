@@ -264,22 +264,22 @@ void blt(unsigned int ra, unsigned int rb, int cx){
 	}
 }
 void jsub(int cx){
-	ram[sp] = pc + 1;
 	sp--;
+	ram[sp] = pc + 1;
 	pc = pc + cx;
 	pcflag = 0;
 }
 void ret(){
-	sp++;
 	pc = ram[sp];
 	pcflag = 0;
+	sp++;
 }
 void push(unsigned int ra){
-	ram[sp] = reg[ra];
 	sp--;
+	ram[sp] = reg[ra];
 }
 void pop(unsigned int ra){
-	sp++;
 	reg[ra] = ram[sp];
+	sp++;
 }
 
