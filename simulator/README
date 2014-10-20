@@ -5,7 +5,7 @@
 ./disassembler [Binary File] > [Output File]
 
 #Simulate
-./simulator [Source Binary File] [Input Binary File] [Output Binary File]
+./simulator -a [Source Binary File] -i [Input Binary File] (-o [Output Binary File]) (-l [Insutruction Limit]) (-b [Break Point])
 
 #View Binary File
 ./hex.sh [Binary File]
