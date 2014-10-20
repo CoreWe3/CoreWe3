@@ -88,6 +88,12 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	if(fpr == NULL){
+		printf("No Assembly File\n");
+		return 0;
+	}
+
+
 	//READ INSTRUCTIONS
 	unsigned int tmp;
 	unsigned int num = 0;
@@ -269,11 +275,11 @@ void ret(){
 	pcflag = 0;
 }
 void push(unsigned int ra){
-	sp--;
 	ram[sp] = reg[ra];
+	sp--;
 }
 void pop(unsigned int ra){
-	reg[ra] = ram[sp];
 	sp++;
+	reg[ra] = ram[sp];
 }
 
