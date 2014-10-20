@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 {
 	FILE *fpr;
 	unsigned int limit = 0xffffffff;
-	int breakpoint = -1;
+	unsigned int breakpoint = 0xffffffff;
 	char result;
 	while((result=getopt(argc,argv,"a:i:o:l:b:"))!=-1){
 		switch(result){
