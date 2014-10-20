@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity send_buffer is
+entity transmit_buffer is
   generic(wtime : std_logic_vector(15 downto 0) := x"1ADB");
   port (
     clk : in std_logic;
@@ -10,9 +10,9 @@ entity send_buffer is
     go : in std_logic;
     data : in std_logic_vector(31 downto 0);
     busy : out std_logic);
-end send_buffer;
+end transmit_buffer;
 
-architecture arch_send_buffer of send_buffer is
+architecture arch_transmit_buffer of transmit_buffer is
   component FIFO is
     generic (
       SIZE : integer := 256;
@@ -51,7 +51,7 @@ architecture arch_send_buffer of send_buffer is
   signal deq_state : std_logic_vector(2 downto 0) := "000";
 begin
   
-  send_fifo : fifo port map (
+  transmit_fifo : fifo port map (
     clk => clk,
     idata => idata,
     odata => odata,
@@ -121,7 +121,7 @@ begin
         when "010" =>
           outbuf <= odata;
           deq_state <= "011";
-        when "011" => --send first byte
+        when "011" => --transmit first byte
           if io_busy = '0' and io_go = '0' then
             bdata <= outbuf(31 downto 24);
             io_go <= '1';
@@ -129,7 +129,7 @@ begin
           else
             io_go <= '0';
           end if;
-        when "100" => --send second byte
+        when "100" => --transmit second byte
           if io_busy = '0' and io_go = '0' then
             bdata <= outbuf(23 downto 16);
             io_go <= '1';
@@ -137,7 +137,7 @@ begin
           else
             io_go <= '0';
           end if;
-        when "101" => --send third byte
+        when "101" => --transmit third byte
           if io_busy = '0' and io_go = '0' then
             bdata <= outbuf(15 downto 8);
             io_go <= '1';
@@ -145,7 +145,7 @@ begin
           else
             io_go <= '0';
           end if;
-        when "110" => --send forth byte
+        when "110" => --transmit forth byte
           if io_busy = '0' and io_go = '0' then
             bdata <= outbuf(7 downto 0);
             io_go <= '1';
@@ -159,5 +159,5 @@ begin
       end case;
     end if;
   end process;
-end arch_send_buffer;
+end arch_transmit_buffer;
                    

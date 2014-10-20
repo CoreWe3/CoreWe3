@@ -40,7 +40,7 @@ architecture blackbox of memory_io is
       RS_TX : out std_logic;
       we : in std_logic;
       go : in std_logic;
-      send_data : in std_logic_vector(31 downto 0);
+      transmit_data : in std_logic_vector(31 downto 0);
       receive_data : out std_logic_vector(31 downto 0);
       busy : out std_logic);
   end component;
@@ -49,7 +49,7 @@ architecture blackbox of memory_io is
   signal store_word_tmp : std_logic_vector(31 downto 0);
   signal iowe : std_logic := '0';
   signal iogo : std_logic := '0';
-  signal iosend_data : std_logic_vector(31 downto 0);
+  signal iotransmit_data : std_logic_vector(31 downto 0);
   signal ioreceive_data : std_logic_vector(31 downto 0);
   signal iobusy : std_logic;
     
@@ -60,7 +60,7 @@ begin
     RS_TX => RS_TX,
     we => iowe,
     go => iogo,
-    send_data => iosend_data,
+    transmit_data => iotransmit_data,
     receive_data => ioreceive_data,
     busy => iobusy);
   
@@ -99,7 +99,7 @@ begin
           if iobusy = '0' and iogo = '0' then
             iowe <= '1';
             iogo <= '1';
-            iosend_data <= store_word_tmp;
+            iotransmit_data <= store_word_tmp;
             state <= "00000";
           else
             iogo <= '0';
