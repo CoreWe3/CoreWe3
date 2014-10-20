@@ -3,10 +3,20 @@
 
 extern uint32_t fadd(uint32_t a, uint32_t b);
 extern uint32_t fsub(uint32_t a, uint32_t b);
-extern uint32_t fmul(uint32_t a, uint32_t b);
+//extern uint32_t fmul(uint32_t a, uint32_t b);
+
+uint32_t fmul(uint32_t a, uint32_t b){
+    float *pa, *pb;
+    uint32_t *pi;
+    pa = (float *) &a;
+    pb = (float *) &b;
+    *pa = (*pa) * (*pb);
+    pi = (uint32_t *) pa;
+    return *pi;
+}
 
 uint32_t reduction(uint32_t a){
-    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
+    uint32_t r2, r3, r4, r12, r13, r14, r15;
     uint32_t s1, s2;
     r2 = a;
 
@@ -47,8 +57,8 @@ uint32_t reduction(uint32_t a){
 }    
 
 uint32_t kernel_sin(uint32_t a){
-    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
-    uint32_t s1, s2, s3, s4;
+    uint32_t r2, r3, r14, r15;
+    uint32_t s1, s2, s3;
     r2 = a;
 
     s1 = r2;//[a]
@@ -92,7 +102,7 @@ uint32_t kernel_sin(uint32_t a){
     r2 = fmul(r2, r3);//r2 = S5 * a^5
     
     r3 = s3;//r3 = S7 * a^7, [a^3, a]
-    r2 = fsub(r2, r3);//r2 = S5 * a^5 - S7 * a^7
+    r2 = fadd(r2, r3);//r2 = S5 * a^5 - S7 * a^7
     r3 = s2;//r3 = a^3, [a]
     s2 = r2;//[S5 * a^5 - S7 * a^7, a]
     
@@ -107,7 +117,7 @@ uint32_t kernel_sin(uint32_t a){
     r2 = fmul(r2, r3);//r2 = S3 * a^3
     r3 = r2;
     r2 = s2;//r2 = S5 * a^5 - S7 * a^7, [a]
-    r2 = fsub(r2, r3);//r2 = -S3 * a^3 + S5 * a^5 - S7 * a^7
+    r2 = fadd(r2, r3);//r2 = -S3 * a^3 + S5 * a^5 - S7 * a^7
     r3 = s1;//r3 = a, []
     r2 = fadd(r2, r3);
 
@@ -115,8 +125,8 @@ uint32_t kernel_sin(uint32_t a){
 }
 
 uint32_t kernel_cos(uint32_t a){
-    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
-    uint32_t s1, s2, s3, s4;
+    uint32_t r2, r3, r4, r5, r6, r7, r8, r9, r10, r14, r15;
+    uint32_t s1, s2;
     r2 = a;
 
     r3 = r2;//r3 = a
@@ -154,7 +164,7 @@ uint32_t kernel_cos(uint32_t a){
     r2 = fmul(r2, r3);//r2 = C4 * a^4
     r3 = s2;//r3 = C6 * a^6, [a^2]
 
-    r2 = fsub(r2, r3);//r2 = C4 * a^4 - C6 * a^6
+    r2 = fadd(r2, r3);//r2 = C4 * a^4 - C6 * a^6
     r3 = s1;//r3 = a^2, []
 
     r10 = 31; 
@@ -185,8 +195,8 @@ uint32_t kernel_cos(uint32_t a){
 }
 
 uint32_t fsin(uint32_t a){
-    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
-    uint32_t s1, s2, s3, s4;
+    uint32_t r2, r3, r4, r5, r12, r13, r14, r15;
+    uint32_t s1, s2, s3;
     r2 = a;
 
     r4 = 31;
@@ -196,7 +206,6 @@ uint32_t fsin(uint32_t a){
     r2 = r2 >> r5;
     s1 = r3;
     r2 = reduction(r2);
-    r3 = s1;
     
     //r15 = 0x490fdb(man of PI)
     r4 = 16;
@@ -211,7 +220,6 @@ uint32_t fsin(uint32_t a){
     r14 = r14 | r15;
     
     if (r2 < r14 /*r2 >= r14*/) {} else {
-	s1 = r3;
 	s2 = r15;
 	s3 = r14;
 	r3 = r14;
@@ -220,19 +228,19 @@ uint32_t fsin(uint32_t a){
 	r15 = s2;
 	r3 = s1;
 	if(r3 != 0 /*r3 == 0*/) {
-	    r3 = 1;
-	} else {
 	    r3 = 0;
+	} else {
+	    r3 = 1;
 	}
+	s1 = r3;
     }
 
     //r13 = 0x3fc90fdb(PI/2)    
     r4 = 23;
     r13 = 0x7f;
-    r13 = r13 << r3;
+    r13 = r13 << r4;
     r13 = r13 | r15;    
     if(r2 < r13 /*r2 >= r13*/) {} else {
-	s1 = r3;
 	s2 = r15;
 	s3 = r13;
 	r3 = r2;
@@ -258,7 +266,7 @@ uint32_t fsin(uint32_t a){
 
     r4 = 31;
     r3 = s1;
-    r3 = r3 << r3;
+    r3 = r3 << r4;
     r2 = r3 | r2;
     return r2;
 }
