@@ -7,15 +7,15 @@ extern uint32_t fmul(uint32_t a, uint32_t b);
 uint32_t reduction(uint32_t a){
     uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
     uint32_t s1, s2;
-    r1 = a;
+    r2 = a;
 
     //r15 = 0x40c90fdb(2*PI)
-    r3 = 16;
+    r4 = 16;
     r15 = 0x40c9;
-    r15 = r15 << r3;
+    r15 = r15 << r4;
     r14 = 0x0fdb;
     r15 = r15 | r14;
-    if (r1 < r15 /*r15 <= r1*/) {} else {
+    if (r2 < r15 /*r15 <= r2*/) {} else {
 	//r14 = 0x490fdb(man of PI)
 	r13 = 16;
 	r14 = 0x49;
@@ -23,26 +23,26 @@ uint32_t reduction(uint32_t a){
 	r13 = 0x0fdb;
 	r14 = r14 | r13;
 
-	//r3 = exp
+	//r4 = exp
 	r13 = 23;
-	r3 = r1 >> r13;
+	r4 = r2 >> r13;
 	while(1) {
 	    r13 = 23;
-	    r2 = r3 << r13;
-	    r2 = r2 | r14;
+	    r3 = r4 << r13;
+	    r3 = r3 | r14;
 	    r12 = 1;
-	    r3 = r3 - r12;
-	    if(r1 < r2 /*r1 >= r2*/) {} else {
+	    r4 = r4 - r12;
+	    if(r2 < r3 /*r2 >= r3*/) {} else {
 		s1 = r15;
 		s2 = r14;
-		r1 = fsub(r1, r2);
+		r2 = fsub(r2, r3);
 		r14 = s2;
 		r15 = s1;
-		if(r1 < r15) break;
+		if(r2 < r15) break;
 	    }
 	}
     }
-    return r1;
+    return r2;
 }    
 
 uint32_t kernel_sin(uint32_t a){
