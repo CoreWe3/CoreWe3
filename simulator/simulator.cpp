@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include "isa.h"
 
 void ld(unsigned int ra, unsigned int rb, int cx);
@@ -23,8 +24,8 @@ void pop(unsigned int ra);
 const char* op2name(unsigned int op);
 const char* reg2name(unsigned int reg);
 
-FILE* iofpr;
-FILE* iofpw;
+FILE* iofpr = NULL;
+FILE* iofpw = NULL;
 
 //Debugger
 unsigned int d_insnum = 0;
@@ -45,36 +46,49 @@ void debuginfo(){
 
 int main(int argc, char* argv[])
 {
-	if(argc < 4){
-		printf("Need Binary filenames\n");
-		return 1;
-	}
-	
-	//Initilaize IO
-	iofpr = fopen(argv[2],"rb");
-	if (iofpr == NULL){
-		printf("Can't open %s\n",argv[2]);
-		return 1;
-	}
-	iofpw = fopen(argv[3],"wb");
-	if (iofpr == NULL){
-		printf("Can't open %s\n",argv[3]);
-		return 1;
+	FILE *fpr;
+	unsigned int limit = 0xffffffff;
+	int breakpoint = -1;
+	char result;
+	while((result=getopt(argc,argv,"a:i:o:l:b:"))!=-1){
+		switch(result){
+			case 'a':
+				fpr = fopen(optarg,"rb");
+				if (fpr == NULL){
+					printf("Can't open %s\n",argv[1]);
+					return 1;
+				}
+				break;
+			case 'i':
+				iofpr = fopen(optarg,"rb");
+				if (iofpr == NULL){
+					printf("Can't open %s\n",optarg);
+					return 1;
+				}
+				break;
+			case 'o':
+				iofpw = fopen(optarg,"wb");
+				if (iofpr == NULL){
+					printf("Can't open %s\n",optarg);
+					return 1;
+				}
+				break;
+			case 'l':
+				limit = atoi(optarg);
+				break;
+			case 'b':
+				breakpoint = atoi(optarg);
+				break;
+			case ':':
+				fprintf(stdout,"%c needs value\n",result);
+				return 1;
+			case '?':
+				fprintf(stdout,"unknown\n");
+				return 1;
+		}
 	}
 
 	//READ INSTRUCTIONS
-	FILE *fpr = fopen(argv[1],"rb");
-	if (fpr == NULL){
-		printf("Can't open %s\n",argv[1]);
-		return 1;
-	}
-
-	unsigned int limit = 0xffffffff;
-	if(argc > 4){
-		limit = atoi(argv[4]);
-	} 
-
-
 	unsigned int tmp;
 	unsigned int num = 0;
 	while(fread(&tmp,sizeof(unsigned int),1,fpr) > 0){
@@ -85,8 +99,20 @@ int main(int argc, char* argv[])
 
 	//MAIN ROUTINE
 	INS ins;
-	while(pc<num){
-		if(d_insnum >= limit) break;
+	while(true){
+
+		if(pc >= num){
+			printf("The program sucessfully done.\n");
+			break;
+		}
+		if(d_insnum >= limit){
+			printf("The program reached limit instruction process : %d\n", limit);
+			break;
+		}
+		if(breakpoint == pc){
+			printf("The program reached break point. : %d\n", pc);
+			break;
+		}
 
 		ins.data = rom[pc];
 		pcflag = 1;
@@ -149,8 +175,8 @@ int main(int argc, char* argv[])
 		d_insnum++;
 	}
 
-	fclose(iofpr);
-	fclose(iofpw);
+	if(iofpr!=NULL) fclose(iofpr);
+	if(iofpw!=NULL) fclose(iofpw);
 	
 	debuginfo();;
 
@@ -185,7 +211,7 @@ void st(unsigned int ra, unsigned int rb, int cx){
 	if(tmp != IOADDR ){
 		ram[tmp] = reg[ra];
 	}else{
-		if(fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
+		if(iofpw!=NULL && fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
 			printf("File Write Error");
 			debuginfo();
 			exit(1);
