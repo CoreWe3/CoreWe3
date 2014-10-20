@@ -9,6 +9,7 @@ DIR = ./bin/
 all: $(TARGET)
 
 %:%.cpp isa.h
+	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) $(addsuffix .cpp, $(basename $<)) $(CFLAGS) -o $(DIR)$@
 
 
