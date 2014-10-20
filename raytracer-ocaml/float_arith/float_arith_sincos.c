@@ -50,38 +50,79 @@ uint32_t kernel_sin(uint32_t a){
     uint32_t s1, s2, s3, s4;
     r2 = a;
 
-    s1 = r2;
-    r3 = r2;
+    s1 = r2;//[a]
+    r3 = r2;//r3 = a
     r2 = fmul(r2, r3);//r2 = a^2
-    r3 = s1; //r3 = a
+    r3 = s1; //r3 = a, []
     
-    s1 = r3;//s1 = a
-    s2 = r2;//s2 = a^2
+    s1 = r3;//[a]
+    s2 = r2;//[a^2,a]
     r2 = fmul(r2, r3);//r2 = a^3
+    r3 = s2;//r3 = a^2, [a]
+
+    s2 = r2;//[a^3,a]
+    s3 = r3;//[a^2,a^3,a]
+    r2 = fmul(r2, r3);//r2 = a^5
+    r3 = s3;//r3 = a^2, [a^3,a]
     
-    //r3 = 0xbe2aaaac
-    r14 = 16;
-    r3 = 0xbe2a;
-    r3 = r3 << r14;
-    r14 = 0xaaac;
+    s3 = r2;//[a^5,a^3,a]
+    r2 = fmul(r2, r3);//r2 = a^7
+
+    //r3 = 0xb94d64b6
+    r15 = 16;
+    r3 = 0xb94d;
+    r3 = r3 << r15;
+    r14 = 0x64b6;
+    r14 = r14 << r15;
+    r14 = r14 >> r15;
     r3 = r3 | r14;
-    r2 = fmul(r2, r3);//r2 = S3 * a^3
-
-    r3 = r2;//r3 = S3 * a^3
-    r2 = s2;//r2 = a
-    r2 = fsub(r2, r3);//r2 = a - S3 * a^3
-
+    r2 = fmul(r2, r3);//r2 = S7 * a^7
+    r3 = s3;//r3 = a^5, [a^3, a]
     
+    s3 = r2;//[S7 * a^7, a^3, a]
+    //r2 = 0x3c088666
+    r15 = 16;
+    r2 = 0x3c08;
+    r2 = r2 << r15;
+    r14 = 0x8666;
+    r14 = r14 << r15;
+    r14 = r14 >> r15;
+    r2 = r2 | r14;
+    r2 = fmul(r2, r3);//r2 = S5 * a^5
+    
+    r3 = s3;//r3 = S7 * a^7, [a^3, a]
+    r2 = fsub(r2, r3);//r2 = S5 * a^5 - S7 * a^7
+    r3 = s2;//r3 = a^3, [a]
+    s2 = r2;//[S5 * a^5 - S7 * a^7, a]
+    
+    //r2 = 0xbe2aaaac
+    r15 = 16;
+    r2 = 0xbe2a;
+    r2 = r2 << r15;
+    r14 = 0xaaac;
+    r14 = r14 << r15;
+    r14 = r14 >> r15;
+    r2 = r2 | r14;
+    r2 = fmul(r2, r3);//r2 = S3 * a^3
+    r3 = r2;
+    r2 = s2;//r2 = S5 * a^5 - S7 * a^7, [a]
+    r2 = fsub(r2, r3);//r2 = -S3 * a^3 + S5 * a^5 - S7 * a^7
+    r3 = s1;//r3 = a, []
+    r2 = fadd(r2, r3);
+
+    return r2;
 }
 
 uint32_t fsin(uint32_t a){
     uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
     uint32_t s1, s2, s3, s4;
     r2 = a;
-    
-    r3 = r2 >> 31;
-    r2 = r2 << 1;
-    r2 = r2 >> 1;
+
+    r4 = 31;
+    r5 = 1;
+    r3 = r2 >> r4;
+    r2 = r2 << r5;
+    r2 = r2 >> r5;
     s1 = r3;
     r2 = reduction(r2);
     r3 = s1;
