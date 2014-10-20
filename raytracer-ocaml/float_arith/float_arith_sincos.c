@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+extern uint32_t fadd(uint32_t a, uint32_t b);
 extern uint32_t fsub(uint32_t a, uint32_t b);
 extern uint32_t fmul(uint32_t a, uint32_t b);
 
@@ -110,6 +111,76 @@ uint32_t kernel_sin(uint32_t a){
     r3 = s1;//r3 = a, []
     r2 = fadd(r2, r3);
 
+    return r2;
+}
+
+uint32_t kernel_cos(uint32_t a){
+    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
+    uint32_t s1, s2, s3, s4;
+    r2 = a;
+
+    r3 = r2;//r3 = a
+    r2 = fmul(r2, r3);//r2 = a^2
+    
+    s1 = r2;//[a^2]
+    s2 = r2;//[a^2, a^2]
+    r3 = r2;//r3 = a^2
+    r2 = fmul(r2, r3);//r2 = a^4
+    r3 = s2;//r3 = a^2, [a^2]
+
+    s2 = r2;//[a^4, a^2]
+    r2 = fmul(r2, r3);//r2 = a^6
+
+    //r3 = 0xbab38106
+    r15 = 16;
+    r3 = 0xbab3;
+    r3 = r3 << r15;
+    r14 = 0x8106;
+    r14 = r14 << r15;
+    r14 = r14 >> r15;
+    r3 = r3 | r14;
+    r2 = fmul(r2, r3);//r2 = C6 * a^6
+    r3 = s2;//r3 = a^4, [a^2]
+    
+    s2 = r2;//[C6 * a^6, a^2]
+    //r2 = 0x3d2aa789
+    r15 = 16;
+    r2 = 0x3d2a;
+    r2 = r2 << r15;
+    r14 = 0xa789;
+    r14 = r14 << r15;
+    r14 = r14 >> r15;
+    r2 = r2 | r14;
+    r2 = fmul(r2, r3);//r2 = C4 * a^4
+    r3 = s2;//r3 = C6 * a^6, [a^2]
+
+    r2 = fsub(r2, r3);//r2 = C4 * a^4 - C6 * a^6
+    r3 = s1;//r3 = a^2, []
+
+    r10 = 31; 
+    r9 = 1;
+    r8 = 24;
+    r7 = 23;
+    r6 = 9;
+    r4 = r3 >> r10;
+    r4 = r4 << r10;
+    r5 = r3 << r9;
+    r5 = r5 >> r8;
+    r5 = r5 - r9;
+    r5 = r5 << r7;
+    r3 = r3 << r6;
+    r3 = r3 >> r6;
+    r3 = r5 | r3;
+    r3 = r4 | r3;
+    
+    r2 = fsub(r2, r3);//r2 = - 0.5 * a^2 + C4 * a^4 - C6 * a^6
+
+    r14 = 16;
+    r3 = 0x3f80;
+    r3 = r3 << r14;
+
+    r2 = fadd(r2, r3);
+	
     return r2;
 }
 
