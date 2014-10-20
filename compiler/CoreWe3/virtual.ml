@@ -58,21 +58,20 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	     Let ((reg_hp, Type.Int), Add (reg_hp, C (align offset)), 
 	     let z = Id.genid "l" in  
 	       Let ((z, Type.Int), SetL(l), 
-		       seq (Stw (z, x, C (0)), store_fv))))
+		       seq (St (z, x, C (0)), store_fv))))
   | Closure.AppCls (x, ys) ->
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallCls (x, int, float))
+	Ans (CallCls (x, int))
   | Closure.AppDir (Id.L(x), ys) ->
       let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallDir (Id.L(x), int, float))
+	Ans (CallDir (Id.L(x), int))
   | Closure.Tuple (xs) -> (* 組の生成 *)
       let y = Id.genid "t" in
       let (offset, store) = 
 	expand
 	  (List.map (fun x -> (x, M.find x env)) xs)
 	  (0, Ans (Mr (y)))
-	  (fun x offset store -> seq (Stfd (x, y, C (offset)), store))
-	  (fun x _ offset store -> seq (Stw (x, y, C (offset)), store))  in
+	  (fun x _ offset store -> seq (St (x, y, C (offset)), store))  in
 	Let ((y, Type.Tuple (List.map (fun x -> M.find x env) xs)), Mr (reg_hp),
 	     Let ((reg_hp, Type.Int), Add (reg_hp, C (align offset)), store))
   | Closure.LetTuple (xts, y, e2) ->
@@ -81,12 +80,9 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	expand
 	  xts
 	  (0, g (M.add_list xts env) e2)
-	  (fun x offset load ->
-	     if not (S.mem x s) then load 
-	     else fletd (x, Lfd (y, C (offset)), load))
 	  (fun x t offset load ->
 	     if not (S.mem x s) then load 
-	     else Let ((x, t), Lwz (y, C (offset)), load)) in
+	     else Let ((x, t), Ld (y, C (offset)), load)) in
 	load
   | Closure.Get (x, y) -> (* 配列の読み出し *)
       let offset = Id.genid "o" in  

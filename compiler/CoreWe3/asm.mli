@@ -12,6 +12,8 @@ and exp =
   | Sub of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
+  | Ld of Id.t * id_or_imm
+  | St of Id.t * id_or_imm
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
   | IfLE of Id.t * id_or_imm * t * t
@@ -32,6 +34,7 @@ val regs : Id.t array
 val allregs : Id.t list
 val reg_cl : Id.t
 val reg_sw : Id.t
+val reg_hp : Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list

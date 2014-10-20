@@ -30,6 +30,19 @@ FILE* iofpw;
 unsigned int d_insnum = 0;
 unsigned int counter[ISANUM] = {0};
 
+void debuginfo(){
+	for(int i = 0; i < REGNUM; i++){
+		printf("%s:%u, ", reg2name(i), reg[i]);
+	}
+	printf("\n");
+	for(int i = 0; i < ISANUM; i++){
+		printf("%s:%u, ", names[i], counter[i]);
+	}
+	printf("\n");
+	printf("Number of Instruction : %d\n",d_insnum);
+}
+
+
 int main(int argc, char* argv[])
 {
 	if(argc < 4){
@@ -128,18 +141,10 @@ int main(int argc, char* argv[])
 		d_insnum++;
 	}
 
-	for(int i = 0; i < REGNUM; i++){
-		printf("%s:%u, ", reg2name(i), reg[i]);
-	}
-	printf("\n");
-	for(int i = 0; i < ISANUM; i++){
-		printf("%s:%u, ", names[i], counter[i]);
-	}
-	printf("\n");
-	printf("Number of Instruction : %d\n",d_insnum);
-
 	fclose(iofpr);
 	fclose(iofpw);
+	
+	debuginfo();;
 
 
 	return 0;
@@ -162,6 +167,7 @@ void ld(unsigned int ra, unsigned int rb, int cx){
 			reg[ra] = iotmp;
 		}else{
 			printf("File Read Error");
+			debuginfo();
 			exit(1);
 		}
 	}
@@ -173,6 +179,7 @@ void st(unsigned int ra, unsigned int rb, int cx){
 	}else{
 		if(fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
 			printf("File Write Error");
+			debuginfo();
 			exit(1);
 		}
 	}

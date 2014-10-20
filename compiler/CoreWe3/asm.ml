@@ -15,8 +15,8 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Sub of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
-(*| Lwz of Id.t * id_or_imm
-  | Stw of Id.t * Id.t * id_or_imm*)
+  | Ld of Id.t * id_or_imm
+  | St of Id.t * id_or_imm
 (*| FMr of Id.t 
   | FNeg of Id.t
   | FAdd of Id.t * Id.t
@@ -56,6 +56,7 @@ let regs = [| "%r1"; "%r2"; "%r3"; "%r4"; "%r5"; "%r6"; "%r7"; "%r8"; "%r9"; "%r
 let allregs = Array.to_list regs
 let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
+let reg_hp = "%r4"
 
 (* is_reg : Id.t -> bool *)
 let is_reg x = x.[0] = '%'
@@ -75,6 +76,8 @@ let rec fv_exp = function
   | Mr (x) | Neg (x) | Save (x, _) -> [x]
   | Add (x, y') | Sub (x, y') | Slw (x, y') | Srw (x, y') -> 
       x :: fv_id_or_imm y'
+  | St(x, y, z') | Ld(x, y, z') ->
+      x ::y :: fv_id_or_imm z'
   | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) | IfGE (x, y', e1, e2) -> 
       x :: fv_id_or_imm y' @ remove_and_uniq S.empty (fv e1 @ fv e2)
   | CallCls (x, ys) -> x :: ys
