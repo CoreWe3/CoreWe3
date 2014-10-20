@@ -1,29 +1,25 @@
-(* translation into PowerPC assembly (infinite number of virtual registers) *)
+(* translation into CoreWe3 assembly (infinite number of virtual registers) *)
 
 open Asm
 
 let data = ref [] (* 浮動小数点数の定数テーブル *)
 
-let classify xts ini addf addi =
+let classify xts ini addi =
   List.fold_left
     (fun acc (x, t) -> match t with
        | Type.Unit -> acc
-       | Type.Float -> addf acc x
        | _ -> addi acc x t) ini xts
 
 let separate xts = 
   classify 
     xts 
     ([], []) 
-    (fun (int, float) x -> (int, float @ [x]))
     (fun (int, float) x _ -> (int @ [x], float))
 
-let expand xts ini addf addi = 
+let expand xts ini addi = 
   classify
     xts
     ini
-    (fun (offset, acc) x -> let offset = align offset in
-       (offset + 8, addf x offset acc))
     (fun (offset, acc) x t -> (offset + 4, addi x t offset acc))
 
 let rec g env = function (* 式の仮想マシンコード生成 *)
@@ -37,11 +33,11 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.IfEq (x, y, e1, e2) -> 
       (match M.find x env with
 	 | Type.Bool | Type.Int -> Ans (IfEq (x, V (y), g env e1, g env e2))
-	 | _ -> failwith "equality supported only for bool, int, and float")
+	 | _ -> failwith "equality supported only for bool, int")
   | Closure.IfLE (x, y, e1, e2) ->
       (match M.find x env with
 	 | Type.Bool | Type.Int -> Ans (IfLE (x, V (y), g env e1, g env e2))
-	 | _ -> failwith "inequality supported only for bool, int, and float")
+	 | _ -> failwith "inequality supported only for bool, int")
   | Closure.Let ((x, t1), e1, e2) ->
       let e1' = g env e1 in
       let e2' = g (M.add x t1 env) e2 in
@@ -57,7 +53,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	expand
 	  (List.map (fun y -> (y, M.find y env)) ys)
 	  (4, e2')
-	  (fun y _ offset store_fv -> seq (Stw (y, x, C (offset)), store_fv)) in
+	  (fun y _ offset store_fv -> seq (St (y, x, C (offset)), store_fv)) in
 	Let ((x, t), Mr (reg_hp), 
 	     Let ((reg_hp, Type.Int), Add (reg_hp, C (align offset)), 
 	     let z = Id.genid "l" in  
