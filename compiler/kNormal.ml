@@ -271,7 +271,7 @@ let rec pp_t t =
 
 let f e = 
   let s = fst (g M.empty e) in
-  (* print_string "KNormalized =======================-\n"; *)
-  (* print_string (pp_t s); *)
+  print_string "KNormalized =======================-\n";
+  print_string (pp_t s);
   s
 
