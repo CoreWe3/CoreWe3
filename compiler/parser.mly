@@ -136,13 +136,17 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
     %prec prec_unary_minus
     { ex_range $1 (get_range $2) (FNeg ($2)) }
 | exp PLUS_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FAdd ($1, $3)) }
+    {let fadd = ex_range $2 $2 (Var "fadd") in
+     ex_range (get_range $1) (get_range $3) (App (fadd, [$1; $3]))}
 | exp MINUS_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
+    {let fsub = ex_range $2 $2 (Var "fsub") in
+     ex_range (get_range $1) (get_range $3) (App (fsub, [$1; $3]))}
 | exp AST_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FMul ($1, $3)) }
+    {let fmul = ex_range $2 $2 (Var "fmul") in
+     ex_range (get_range $1) (get_range $3) (App (fmul, [$1; $3]))}
 | exp SLASH_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
+    {let fdiv = ex_range $2 $2 (Var "fdiv") in
+     ex_range (get_range $1) (get_range $3) (App (fdiv, [$1; $3]))}
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
     { ex_range $1 (get_range $6) (Let (addtyp (snd $2), $4, $6)) }
