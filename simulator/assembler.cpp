@@ -13,8 +13,8 @@ unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int addi(unsigned int ra, unsigned int rb, int cx);
 unsigned int _and(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int shl(unsigned int ra, unsigned int rb, int cx);
-unsigned int shr(unsigned int ra, unsigned int rb, int cx);
+unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc);
+unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int beq(unsigned int ra, unsigned int rb, int cx);
 unsigned int ble(unsigned int ra, unsigned int rb, int cx);
 unsigned int blt(unsigned int ra, unsigned int rb, int cx);
@@ -273,22 +273,22 @@ unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc){
 	ins.A.rc = rc;
 	return ins.data;
 }
-unsigned int shl(unsigned int ra, unsigned int rb, int cx){
+unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = SHL;
 	ins.A.ra = ra;
 	ins.A.rb = rb;
-	ins.A.cx = cx;
+	ins.A.rc = rc;
 	return ins.data;
 }
-unsigned int shr(unsigned int ra, unsigned int rb, int cx){
+unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = SHR;
 	ins.A.ra = ra;
 	ins.A.rb = rb;
-	ins.A.cx = cx;
+	ins.A.rc = rc;
 	return ins.data;
 }
 unsigned int beq(unsigned int ra, unsigned int rb, int cx){

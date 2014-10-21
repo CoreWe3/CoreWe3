@@ -13,7 +13,7 @@ and exp =
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
   | Ld of Id.t * id_or_imm
-  | St of Id.t * id_or_imm
+  | St of Id.t * Id.t * id_or_imm
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
   | IfLE of Id.t * id_or_imm * t * t

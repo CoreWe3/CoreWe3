@@ -88,23 +88,17 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
       let offset = Id.genid "o" in  
 	(match M.find x env with
 	   | Type.Array (Type.Unit) -> Ans (Nop)
-	   | Type.Array (Type.Float) ->
-	       Let ((offset, Type.Int), Slw (y, C (3)), 
-		    Ans (Lfd (x, V (offset))))
 	   | Type.Array (_) ->
 	       Let ((offset, Type.Int), Slw (y, C (2)),
-		    Ans (Lwz (x, V (offset))))
+		    Ans (Ld (x, V (offset))))
 	   | _ -> assert false)
   | Closure.Put (x, y, z) ->
       let offset = Id.genid "o" in 
 	(match M.find x env with
 	   | Type.Array (Type.Unit) -> Ans (Nop)
-	   | Type.Array (Type.Float) -> 
-	       Let ((offset, Type.Int), Slw (y, C (3)),
-		    Ans (Stfd (z, x, V (offset)))) 
 	   | Type.Array (_) ->
 	       Let ((offset, Type.Int), Slw (y, C (2)), 
-		    Ans (Stw (z, x, V (offset)))) 
+		    Ans (St (z, x, V (offset)))) 
 	   | _ -> assert false)
   | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
 
@@ -116,11 +110,10 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
     expand
       zts
       (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
-      (fun z offset load -> fletd (z, Lfd (reg_cl, C (offset)), load))
-      (fun z t offset load -> Let ((z, t), Lwz (reg_cl, C (offset)), load)) in
+      (fun z t offset load -> Let ((z, t), Ld (reg_cl, C (offset)), load)) in
     match t with
       | Type.Fun (_, t2) ->
-	  { name = Id.L(x); args = int; fargs = float; body = load; ret = t2 }
+	  { name = Id.L(x); args = int; body = load; ret = t2 }
       | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
