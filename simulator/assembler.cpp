@@ -13,8 +13,8 @@ unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int addi(unsigned int ra, unsigned int rb, int cx);
 unsigned int _and(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int shl(unsigned int ra, unsigned int rb, int cx);
-unsigned int shr(unsigned int ra, unsigned int rb, int cx);
+unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc);
+unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int beq(unsigned int ra, unsigned int rb, int cx);
 unsigned int ble(unsigned int ra, unsigned int rb, int cx);
 unsigned int blt(unsigned int ra, unsigned int rb, int cx);
@@ -50,14 +50,18 @@ int main(int argc, char* argv[])
 
 	//Get Data
 	char buffer[256];
+	char buffer2[256];
+	const char *tokens = "\t \n";
 	std::list<std::string> data;
 	while(fgets(buffer,256,stdin)!=NULL){
 		if(buffer==NULL) continue;
+		strcpy(buffer2,buffer);
+		char* tmp = strtok(buffer2, tokens);
+		if(tmp==NULL) continue;
 		data.push_back(buffer);
 	}
 
 	//Detect Label
-	const char *tokens = "\t \n";
 	int line = 1;
 	std::map<std::string,int> label;
 	std::list<std::string>::iterator it = data.begin();
@@ -269,22 +273,22 @@ unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc){
 	ins.A.rc = rc;
 	return ins.data;
 }
-unsigned int shl(unsigned int ra, unsigned int rb, int cx){
+unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = SHL;
 	ins.A.ra = ra;
 	ins.A.rb = rb;
-	ins.A.cx = cx;
+	ins.A.rc = rc;
 	return ins.data;
 }
-unsigned int shr(unsigned int ra, unsigned int rb, int cx){
+unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = SHR;
 	ins.A.ra = ra;
 	ins.A.rb = rb;
-	ins.A.cx = cx;
+	ins.A.rc = rc;
 	return ins.data;
 }
 unsigned int beq(unsigned int ra, unsigned int rb, int cx){

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include "isa.h"
+#include "isa_64.h"
 
 void ld(unsigned int ra, unsigned int rb, int cx);
 void st(unsigned int ra, unsigned int rb, int cx);
@@ -28,8 +28,8 @@ FILE* iofpr = NULL;
 FILE* iofpw = NULL;
 
 //Debugger
-unsigned int d_insnum = 0;
-unsigned int counter[ISANUM] = {0};
+unsigned long d_insnum = 0;
+unsigned long counter[ISANUM] = {0};
 
 void debuginfo(){
 	for(int i = 0; i < REGNUM; i++){
@@ -37,18 +37,18 @@ void debuginfo(){
 	}
 	printf("\n");
 	for(int i = 0; i < ISANUM; i++){
-		printf("%s:%u, ", names[i], counter[i]);
+		printf("%s:%lu, ", names[i], counter[i]);
 	}
 	printf("\n");
-	printf("Number of Instruction : %d\n",d_insnum);
+	printf("Number of Instruction : %lu\n",d_insnum);
 }
 
 
 int main(int argc, char* argv[])
 {
 	FILE *fpr;
-	unsigned int limit = 0xffffffff;
-	unsigned int breakpoint = 0xffffffff;
+	unsigned long limit = 0xffffffff;
+	unsigned long breakpoint = 0xffffffff;
 	char result;
 	while((result=getopt(argc,argv,"a:i:o:l:b:"))!=-1){
 		switch(result){
@@ -112,11 +112,11 @@ int main(int argc, char* argv[])
 			break;
 		}
 		if(d_insnum >= limit){
-			printf("The program reached limit instruction process : %d\n", limit);
+			printf("The program reached limit instruction process : %lu\n", limit);
 			break;
 		}
 		if(breakpoint == pc){
-			printf("The program reached break point. : %d\n", pc);
+			printf("The program reached break point. : %lu\n", pc);
 			break;
 		}
 
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 				pop(ins.A.ra);
 				break;
 			default:
-				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
+				printf("no such instruction \"%d\" : PC = %lu\n",ins.A.op,pc);
 				break;
 		}
 		reg[0] = 0;
