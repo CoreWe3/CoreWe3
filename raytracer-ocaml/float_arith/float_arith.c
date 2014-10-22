@@ -2,11 +2,10 @@
 #include <stdint.h>
 
 uint32_t fadd(uint32_t a, uint32_t b){
-    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
+    uint32_t r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r14, r15;
     
     r15 = 1;
     r14 = 23;
-    r13 = 16;
     r12 = 31;
     r11 = 9;
     r1 = a;
@@ -51,7 +50,6 @@ uint32_t fadd(uint32_t a, uint32_t b){
     r6 = r6 | r7;
     //man_b >> shift
     r6 = r6 >> r4;
-
     
     //r7(8) = sig
     r7 = r1 >> r12;
@@ -78,6 +76,10 @@ uint32_t fadd(uint32_t a, uint32_t b){
 	r9 = r9 >> r4;
     } else { //繰り下がり
 	r4 = r14 - r4;
+	if (r4 < r3 /*r3<=r4*/) {} else {
+	    r3 = 0;
+	    return r3;
+	}
 	r10 = r3 - r4;
 	r9 = r9 << r4;
     }
