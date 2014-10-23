@@ -2,29 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
+#include "float_arith.h"
 
 extern uint32_t fadd(uint32_t a, uint32_t b);
 extern uint32_t fsub(uint32_t a, uint32_t b);
-
-uint32_t ftoi(float a) {
-    uint32_t *p;
-    p = (uint32_t *) &a;
-    return *p;
-}
-
-float itof(uint32_t a) {
-    float *p;
-    p = (float *) &a;
-    return *p;
-}
-
-float fabsf(float f) {
-    return (f < 0)? -f: f;
-}
-
-float fmaxf(float f, float g) {
-    return (f < g)? g: f;
-}
 
 int fadd_check_case(uint32_t a, uint32_t b) {
     float eps, r, fa, fb, err, bnd;
