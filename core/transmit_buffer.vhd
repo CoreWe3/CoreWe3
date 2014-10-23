@@ -77,7 +77,7 @@ begin
               idata <= data;
               igo <= '1';
               enq_state <= "10";
-            else
+            else --full
               inbuf <= data;
               igo <= '0';
               enq_state <= "01";

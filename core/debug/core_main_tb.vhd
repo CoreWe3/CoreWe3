@@ -8,8 +8,8 @@ end core_main_tb;
 architecture arch_core_main_tb of core_main_tb is
   component core_main
     generic (
-      CODE : string := "loopback.bin";
-      wtime : std_logic_vector(15 downto 0) := x"0001";
+      CODE : string := "stack_test.bin";
+      wtime : std_logic_vector(15 downto 0) := x"0080";
       debug : boolean := true);
     port (
       clk   : in    std_logic;
