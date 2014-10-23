@@ -4,7 +4,6 @@
 
 extern uint32_t fadd(uint32_t a, uint32_t b);
 extern uint32_t fsub(uint32_t a, uint32_t b);
-//extern void fmul_body();
 
 uint32_t fmul(uint32_t a, uint32_t b) {
     float *pa, *pb;
@@ -59,7 +58,7 @@ uint32_t reduction(uint32_t a){
 	    }
 	}
     }
-    retrun r[3];
+    return r[3];
 }
 
 uint32_t kernel_sin(uint32_t a){
@@ -130,7 +129,7 @@ uint32_t kernel_sin(uint32_t a){
     pop(1, r, s, &sp);
     pop(2, r, s, &sp);
     
-    pop(4);//r[4] = S7 * a^7, [a^3, a]
+    pop(4, r, s, &sp);//r[4] = S7 * a^7, [a^3, a]
     push(2, r, s, &sp);
     push(1, r, s, &sp);
     r[3] = fadd(r[3], r[4]);//r[3] = S5 * a^5 - S7 * a^7
@@ -159,7 +158,7 @@ uint32_t kernel_sin(uint32_t a){
     r[3] = fadd(r[3], r[4]);//r[3] = -S3 * a^3 + S5 * a^5 - S7 * a^7
     pop(1, r, s, &sp);
     pop(2, r, s, &sp);
-    pop(3, r, s, &sp);//r[4] = a, []
+    pop(4, r, s, &sp);//r[4] = a, []
     
     r[3] = fadd(r[3], r[4]);//r[3] = a - S3 * a^3 + S5 * a^5 - S7 * a^7
     return r[3];
@@ -202,7 +201,7 @@ uint32_t kernel_cos(uint32_t a){
     r[14] = 0x8106;
     r[14] = r[14] << r[15];
     r[14] = r[14] >> r[15];
-    r[4] = r[4] | r14;
+    r[4] = r[4] | r[14];
     push(2, r, s, &sp);
     push(1, r, s, &sp);
     r[3] = fmul(r[3], r[4]);//r[3] = C6 * a^6
@@ -255,15 +254,15 @@ uint32_t kernel_cos(uint32_t a){
     pop(1, r, s, &sp);
     pop(2, r, s, &sp);
 
-    r14 = 16;
+    r[14] = 16;
     r[4] = 0x3f80;
-    r[4] = r[4] << r14;//r[3] = - 0.5 * a^2 + C4 * a^4 - C6 * a^6
+    r[4] = r[4] << r[14];
     r[3] = fadd(r[3], r[4]);
     return r[3];
 }
 
 uint32_t fsin(uint32_t a){
-    uint32_t r[16], s[16];//, m[16];
+    uint32_t r[16], s[16], m[16];
     int sp;
     r[0] = r[1] = r[2] = 0; sp = 0;
     r[3] = a;
@@ -271,7 +270,7 @@ uint32_t fsin(uint32_t a){
     r[5] = 31;
     r[6] = 1;
     r[4] = r[3] >> r[5];//r[4] = sig
-    store(4, r[2]);
+    store(4, r[2], r, m);
     r[3] = r[3] << r[6];//r[3] = abs
     r[3] = r[3] >> r[6];
     r[2] = r[2] + 1;
@@ -305,13 +304,13 @@ uint32_t fsin(uint32_t a){
 	pop(14, r, s, &sp);
 	pop(15, r, s, &sp);
 	
-	load(4, r[2] - 1);
+	load(4, r[2] - 1, r, m);
 	if(r[4] != 0 /*r[4] == 0*/) {
 	    r[4] = 0;
 	} else {
 	    r[4] = 1;
 	}
-	store(4, r[2] - 1);	
+	store(4, r[2] - 1, r, m);	
     }
 
     //r[13] = 0x3fc90fdb(PI/2)
@@ -358,21 +357,21 @@ uint32_t fsin(uint32_t a){
     pop(2, r, s, &sp);
 
     r[5] = 31;
-    load(4, r[2] - 1);
+    load(4, r[2] - 1, r, m);
     r[4] = r[4] << r[5];
     r[3] = r[4] | r[3];
     return r[3];
 }
 
 uint32_t fcos(uint32_t a){
-    uint32_t r[16], s[16];//, m[16];
+    uint32_t r[16], s[16],  m[16];
     int sp;
     r[0] = r[1] = r[2] = 0; sp = 0;
     r[3] = a;
     
     r[6] = 1;
     r[4] = 0;
-    store(4, r[2]);
+    store(4, r[2], r, m);
     r[3] = r[3] << r[6];//r[3] = abs
     r[3] = r[3] >> r[6];
     r[2] = r[2] + 1;
@@ -406,13 +405,13 @@ uint32_t fcos(uint32_t a){
 	pop(14, r, s, &sp);
 	pop(15, r, s, &sp);
 	
-	load(4, r[2] - 1);
+	load(4, r[2] - 1, r, m);
 	if(r[4] != 0 /*r[4] == 0*/) {
 	    r[4] = 0;
 	} else {
 	    r[4] = 1;
 	}
-	store(4, r[2] - 1);	
+	store(4, r[2] - 1, r, m);	
     }
 
     //r[13] = 0x3fc90fdb(PI/2)
@@ -433,13 +432,13 @@ uint32_t fcos(uint32_t a){
 	pop(13, r, s, &sp);
 	pop(15, r, s, &sp);
 	
-	load(4, r[2] - 1);
+	load(4, r[2] - 1, r, m);
 	if(r[4] != 0 /*r[4] == 0*/) {
 	    r[4] = 0;
 	} else {
 	    r[4] = 1;
 	}
-	store(4, r[2] - 1);	
+	store(4, r[2] - 1, r, m);
     }
 
     //r[12] = 0x3f490fdb(PI/4)
@@ -467,7 +466,7 @@ uint32_t fcos(uint32_t a){
     pop(2, r, s, &sp);
 
     r[5] = 31;
-    load(4, r[2] - 1);
+    load(4, r[2] - 1, r, m);
     r[4] = r[4] << r[5];
     r[3] = r[4] | r[3];
     return r[3];
