@@ -1,7 +1,4 @@
 
-/*
-先に例外処理をして、その後wikiにあるファイルと同じ手順でやりました。
-*/
 
 
 #include <stdio.h>
@@ -14,141 +11,164 @@ void printbin(uint32_t x) {
     }
     printf("\n");
 }
-
-/*
-uint32_t getsign(uint32_t a){
-  return a>>31;
-}
-uint32_t getexp(uint32_t a){
-  a= a>>23;
-  return a & ((1<<8)-1);
-}
-uint32_t getfrac(uint32_t a){
-  return a & ((1<<23)-1);
-}
-uint32_t geth(uint32_t a){
-  return (1<<12) | ((a>>11) & ((1<<13)-1));
-}
-uint32_t getl(uint32_t b){
-  return a & ((1<<12) -1);
-}
-引数増やしてまとめた↓*/
-
-
 #include <stdint.h>
 
-uint32_t getbits(uint32_t a,uint32_t x,uint32_t y){
-  /*aのxbit目からybit目を返す
-   expなら(a,30,23)と渡す*/
-  a=a<<(31-x);
-  a=a>>(y+31-x);
-  return a;  
-}
+/*
+実装まとめ
+NaNは入力として想定していない。
 
+∞*0=NaN(exp255frac1を返す）
+∞*その他=∞
+0や非正規化数*なにか=0
+
+それ以外：
+配布資料通り。
+
+
+*/
 
 uint32_t fmul(uint32_t a, uint32_t b){
-
+  uint32_t r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15;
   uint32_t aexp,afrac,ah,al;
   uint32_t bexp,bfrac,bh,bl;
 
   uint32_t frac;
   uint32_t exp;
-  uint32_t sign=(a>>31)^(b>>31);
+  r10=(a>>31)^(b>>31);
 
 
-  /*NaNのある計算*/
+  /*使うのは1,24,9*/
+  r13=1;
+  r14=24;
+  r15=9;
+  r12=255;
+  r3=a;
+  r4=b;
+  r5=r3<<r13;
+  r5=r5>>r14;
+  r6=r3<<r15;
+  r6=r6>>r15;
 
-  aexp=getbits(a,30,23);
-  afrac=getbits(a,22,0);
-  bexp=getbits(b,30,23);
-  bfrac=getbits(b,22,0);
+  r7=r4<<r13;
+  r7=r7>>r14;
+  r8=r4<<r15;
+  r8=r8>>r15;
+  /*aexp=r5,afrac=r6,bexp=r7,bfrac=r8*/
+  /*NaNは入力としてこないはず*/
+
   /*∞のある計算*/
-  if (aexp==255){
-    if (bexp==0 && bfrac==0){
-      exp=255;
-      frac=1;
+  if (r5==r12){
+    if (r7==0 && r8==0){
+   /*∞と0*/
+      r13=255;
+      r9=1;
       goto END;
     }
-    exp=255;
-    frac=0;
+    r13=255;
+    r9=0;
     goto END;
   }
-  if (bexp==255){
-    if (aexp==0 && afrac==0){
-      exp=255;
-      frac=1;
+  if (r7==r12){
+    if (r5==0 && r6==0){
+      r13=255;
+      r9=1;
       goto END;
     }
-    exp=255;
-    frac=0;
+    r13 =255;
+    r9 =0;
     goto END;
   }
 
-  /*0のある計算*/
-  if ((aexp==0 && afrac==0) ||(bexp==0 && bfrac==0)){
-    exp=0;
-    frac=0;
-    goto END;
-  }
-  /*非正規化数のある計算*/
-  if (aexp==0 || bexp==0){
-    exp=0;
-    frac=1;
+  /*非正規化数や0がある場合*/
+  if (r5==0 || r7==0){
+    r13=0;
+    r9=0;
     goto END;
 
   }
 
   /*以下通常*/
-  
-  ah=getbits(afrac,22,11);
-  al=getbits(afrac,10,0);
-  bh=getbits(bfrac,22,11);
-  bl=getbits(bfrac,10,0);
-  exp=aexp+bexp;
-  /*ここからaexp,bexp,afrac,bfracは使わない*/
-  
+  r13=r5+r7;
+  /*r13=exp*/
 
-  if (127>exp) {
-/*本当は非正規化数*/
-    frac=0;
-    exp=0;
+  /*r3,4は使ってよい*/
+  r14=20;
+  r11=21;
+  r3=r6<<r15;
+  r3=r3>>r14;
+  /*r3=ah*/
+  r4=r6<<r11;
+  r4=r4>>r11;
+  /*r4=al*/
+  /*r5,r6も使ってよい*/
+  
+  r5=r8<<r15;
+  r5=r5>>r14;
+  r6=r8<<r11;
+  r6=r6>>r11;
+  /*r5=bh,r6=bl*/
+  r14=6;
+  r8=127;
+  if (r8>r13) {
+    r9=0;
+    r13=0;
     goto END;
   }
-  /*↑符号に注意して訂正する*/
-  exp =exp -127;
-  if (exp>254) {
-    exp=255;
-    frac=0;
+
+  r13 =r13 - r8;
+
+  r11=254;
+  if (r13>r11) {
+    r9=255;
+    r13=0;
     goto END;
   }
-
-  ah += 1<<12;
-  bh += 1<<12;
-  frac= (ah*bh)+((ah*bl)>>11)+((al*bh)>>11)+2;
-
-  if (frac>(1<<25)) {
+  r8=64;
+  r8=r8<<r14;
+  /*r13=1<<12*/
+  r3 += r8;
+  r5 += r8;
+  r9=r3*r5;
+  r7=r4*r5;
+  r11=11;
+  r7=r7>>r11;
+  r9=r9+r7;
+  r7=r3*r6;
+  r7=r7>>r11;
+  r9=r9+r7;
+  r9=r9+2;
+  r7=13;
+  r8=r8<<r7;
+  if (r9>r8) {
     /*桁上がりする場合*/
-    exp +=1;
-    if (exp==255) {
-    exp=255;
-    frac=0;
+    r13 +=1;
+    if (r13==r12) {
+    r9=0;
     goto END;
     }
+    r14=7;
+    r9=r9<<r14;
+    r9=r9>>r15;
 
-    frac=getbits(frac,24,2);
   }else{
-    if (exp==0){
-  /*本当は非正規化数*/
-      frac=0;
+    if (r13==0){
+  /*本当は非正規化数も考える*/
+      r9=0;
       goto END;
     }
-    frac=getbits(frac,23,1);
-    
-  /*この-1がなんなのかわかっていないので考えておく*/
+    r14=8;
+    r15=9;
+    r9=r9<<r14;
+    r9=r9>>r15;
   }
 
- END:
-  return sign<<31| exp<<23|frac;
-    
-
+  END:
+ 
+  r14=23;
+  r15=31;
+  r13=r13<<r14;
+  r10=r10<<r15;
+  r3=r13+r10;
+  r3=r3+r9;
+  return r3;
 }
