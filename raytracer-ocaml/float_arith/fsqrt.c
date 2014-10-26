@@ -1,4 +1,7 @@
-//not tested yet!!
+//fsqrt.s
+//正の正規化数及び、ゼロに対して基準を満たす平方根を返します。
+//それ以外については未定義としておきます。
+
 
 #include<stdio.h>
 #include<stdint.h>
@@ -21,13 +24,6 @@ uint32_t div2(uint32_t a){
     r[15] = r[15] << r[14];
     r[3] = r[3] - r[15];
   }
-  return r[3];
-}
-
-uint32_t myfabs(uint32_t a){
-  uint32_t r[16];
-  r[0] = 0;
-  r[3] = a;
   return r[3];
 }
 
