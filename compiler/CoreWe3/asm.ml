@@ -17,21 +17,11 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Srw of Id.t * id_or_imm
   | Lwz of Id.t * id_or_imm
   | Stw of Id.t * Id.t * id_or_imm
-  | FMr of Id.t 
-  | FNeg of Id.t
-  | FAdd of Id.t * Id.t
-  | FSub of Id.t * Id.t
-  | FMul of Id.t * Id.t
-  | FDiv of Id.t * Id.t
-  | Lfd of Id.t * id_or_imm
-  | Stfd of Id.t * Id.t * id_or_imm
   | Comment of string
   (* virtual instructions *)
-  | IfEq of Id.t * id_or_imm * t * t
-  | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t
-  | IfFEq of Id.t * Id.t * t * t
-  | IfFLE of Id.t * Id.t * t * t
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
+  | IfGE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list
   | CallDir of Id.l * Id.t list
@@ -73,15 +63,11 @@ let fv_id_or_imm = function V (x) -> [x] | _ -> []
 (* fv_exp : Id.t list -> t -> S.t list *)
 let rec fv_exp = function
   | Nop | Li (_) | FLi (_) | SetL (_) | Comment (_) | Restore (_) -> []
-  | Mr (x) | Neg (x) | FMr (x) | FNeg (x) | Save (x, _) -> [x]
-  | Add (x, y') | Sub (x, y') | Slw (x, y') | Srw (x, y')| Lfd (x, y') | Lwz (x, y') -> 
+  | Mr (x) | Neg (x) | Save (x, _) -> [x]
+  | Add (x, y') | Sub (x, y') | Slw (x, y') | Srw (x, y') | Lwz (x, y') -> 
       x :: fv_id_or_imm y'
-  | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) ->
-      [x; y]
-  | Stw (x, y, z') | Stfd (x, y, z') -> x :: y :: fv_id_or_imm z'
-  | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) | IfGE (x, y', e1, e2) -> 
-      x :: fv_id_or_imm y' @ remove_and_uniq S.empty (fv e1 @ fv e2)
-  | IfFEq (x, y, e1, e2) | IfFLE (x, y, e1, e2) ->
+  | Stw (x, y, z') -> x :: y :: fv_id_or_imm z'
+  | IfEq (x, y, e1, e2) | IfLE (x, y, e1, e2) | IfGE (x, y, e1, e2) -> 
       x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)
   | CallCls (x, ys) -> x :: ys
   | CallDir (_, ys) -> ys 
