@@ -5,7 +5,6 @@ type t =
 and exp = 
   | Nop
   | Li of int
-  | FLi of Id.l
   | SetL of Id.l
   | Mr of Id.t
   | Neg of Id.t
@@ -13,26 +12,15 @@ and exp =
   | Sub of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
-  | Lwz of Id.t * id_or_imm
-  | Stw of Id.t * Id.t * id_or_imm
-  | FMr of Id.t 
-  | FNeg of Id.t
-  | FAdd of Id.t * Id.t
-  | FSub of Id.t * Id.t
-  | FMul of Id.t * Id.t
-  | FDiv of Id.t * Id.t
-  | Lfd of Id.t * id_or_imm
-  | Stfd of Id.t * Id.t * id_or_imm
-  | Comment of string
+  | Ld of Id.t * id_or_imm
+  | St of Id.t * Id.t * id_or_imm
   (* virtual instructions *)
-  | IfEq of Id.t * id_or_imm * t * t
-  | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t (* for simm *)
-  | IfFEq of Id.t * Id.t * t * t
-  | IfFLE of Id.t * Id.t * t * t
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
+  | IfGE of Id.t * Id.t * t * t (* for simm *)
   (* closure address, integer arguments, and float arguments *)
-  | CallCls of Id.t * Id.t list * Id.t list
-  | CallDir of Id.l * Id.t list * Id.t list
+  | CallCls of Id.t * Id.t list
+  | CallDir of Id.l * Id.t list
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of Id.t (* スタック変数から値を復元 *)
 type fundef =
@@ -47,7 +35,6 @@ val allregs : Id.t list
 val reg_cl : Id.t
 val reg_sw : Id.t
 val reg_hp : Id.t
-val reg_sp : Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list

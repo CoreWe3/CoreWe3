@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	while(true){
 
 		if(pc >= num){
-			printf("The program sucessfully done.\n");
+			printf("The program successfully done.\n");
 			break;
 		}
 		if(d_insnum >= limit){
