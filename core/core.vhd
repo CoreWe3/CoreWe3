@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/loopback.bin");
+      CODE : string := "file/stack_test.bin");
     port (
       clk   : in    std_logic;
       RS_TX : out   std_logic;

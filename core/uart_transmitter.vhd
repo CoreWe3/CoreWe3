@@ -14,7 +14,7 @@ end uart_transmitter;
 architecture arch_uart_transmitter of uart_transmitter is
   signal countdown: std_logic_vector(15 downto 0) := (others=>'0');
   signal sendbuf: std_logic_vector(8 downto 0) := (others=>'1');
-  signal state: std_logic_vector(3 downto 0) := "1100";
+  signal state: std_logic_vector(3 downto 0) := "1011";
 begin
   statemachine: process(clk)
   begin
@@ -58,4 +58,3 @@ begin
   tx<=sendbuf(0);
   busy<= '0' when state="1011" else '1';
 end arch_uart_transmitter;
-

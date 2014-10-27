@@ -28,7 +28,7 @@ entity memory_io is
 
 end memory_io;
 
-architecture blackbox of memory_io is
+architecture arch_memory_io of memory_io is
 
   component IO_buffer is
     generic (
@@ -75,27 +75,17 @@ begin
             store_word_tmp <= store_word;
             if addr = x"fffff" then     --io
               XWA <= '1';
-              if iobusy = '0' and iogo = '0' then
-                --available
-                iogo <= '1';
-                if load_store = '1' then --store
-                  iowe <= '1';
-                  iotransmit_data <= store_word;
-                  state <= x"1";
-                else  --load
-                  iowe <= '0';
-                  state <= x"2";
-                end if;
-              else
-                -- busy
-                iogo <= '0';
-                if load_store = '1' then
-                  state <= x"3";
-                else
-                  state <= x"4";
-                end if;
+              iogo <= '1';
+              if load_store = '1' then --store
+                iowe <= '1';
+                iotransmit_data <= store_word;
+                state <= x"1";
+              else  --load
+                iowe <= '0';
+                state <= x"2";
               end if;
             else                      --sram
+              iogo <= '0';              
               if load_store = '1' then  --store
                 XWA <= '0';
                 ZA <= addr;
@@ -107,26 +97,26 @@ begin
                 state <= x"4";
               end if;
             end if;
-          end if;
-
-        when x"1" =>  --io store
-          if iobusy = '0' and iogo = '0' then
-            state <= x"0";
           else
             iogo <= '0';
           end if;
-        when x"2" => --io load
+
+        when x"1" =>  --io storing
+          iogo <= '0';
+          if iobusy = '0' and iogo = '0' then
+            state <= x"0";
+          end if;
+        when x"2" => --io loading
+          iogo <= '0';
           if iobusy = '0' and iogo = '0' then
             load_word <= ioreceive_data;
             state <= x"0";
-          else
-            iogo <= '0';
           end if;
 
-        when x"3" => --sram store
+        when  x"3" => --sram store
           XWA <= '1';
           state <= x"A";
-        when x"A" => --sram store
+        when  x"A" => --sram store
           XWA <= '1';
           ZD <= store_word_tmp;
           state <= x"0";
@@ -145,4 +135,4 @@ begin
   end process;
 
   busy <= '0' when state = x"0" else '1';
-end blackbox;
+end arch_memory_io;

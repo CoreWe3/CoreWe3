@@ -9,7 +9,7 @@ architecture arch_core_main_tb of core_main_tb is
   component core_main
     generic (
       CODE : string := "stack_test.bin";
-      wtime : std_logic_vector(15 downto 0) := x"0080";
+      wtime : std_logic_vector(15 downto 0) := x"000F";
       debug : boolean := true);
     port (
       clk   : in    std_logic;
