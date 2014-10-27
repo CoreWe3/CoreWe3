@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <string.h>
 
 uint32_t binarytouint(char *bin){
   uint32_t ret=0;
@@ -140,14 +140,54 @@ char *makebinary(){
 int main(){
   u2f temp,temp2;
   srand(time(NULL));
-  char *random = makebinary();
-  uint32_t ux = binarytouint(random);
-  temp.utemp = ux;
-  uint32_t finv_answer = temp2.utemp = finv(ux);
-  printf("finv     : %s : %f\n",uinttobinary(finv_answer),temp2.ftemp);
-  float fx = temp.ftemp;
-  temp.ftemp = 1.0 / fx;
-  printf("answer   : %s : %f\n",uinttobinary(temp.utemp),temp.ftemp);
-  printf("distance : %d\n",finv_answer - temp.utemp);
+  int i;
+  int count[17] = {0};
+  int distance;
+  int max=0,min=0;
+  char my_maxstr[50]={0},my_minstr[50]={0};
+  char ans_max[50]={0},ans_min[50]={0};
+  for(i=0;i<10000;i++){
+    char *random = makebinary();
+    uint32_t ux = binarytouint(random);
+    temp.utemp = ux;
+    uint32_t finv_answer = temp2.utemp = finv(ux);
+    //  printf("finv     : %s : %f\n",uinttobinary(finv_answer),temp2.ftemp);
+    float fx = temp.ftemp;
+    temp.ftemp = 1.0 / fx;
+    distance = finv_answer - temp.utemp;
+    if(distance <= -8){
+      count[0]++;
+    }
+    else if(distance >= 8){
+      count[16]++;
+    }
+    else{
+      count[distance+8]++;
+    }
+    if(distance > 500 || distance < -500)
+      continue; // exp が0x00または0xffのときおかしくなるので
+    if(max < distance){
+      max = distance;
+      strcpy(my_maxstr,uinttobinary(finv_answer));
+      strcpy(ans_max,uinttobinary(temp.utemp));
+    }
+    else if(min > distance){
+      min = distance;
+      strcpy(my_minstr,uinttobinary(finv_answer));
+      strcpy(ans_min,uinttobinary(temp.utemp));
+    }
+    //printf("answer   : %s : %f\n",uinttobinary(temp.utemp),temp.ftemp);
+    free(random);
+  }
+  for(i=0;i<17;i++){
+    printf("count[%d] = %d\n",i-8,count[i]);
+  }
+  printf("指数部が0x00または0xffのとき除外している。\n");
+  printf("max = %d\n",max);
+  printf("finv : %s\n",my_maxstr);
+  printf("ansx : %s\n\n",ans_max);
+  printf("min = %d\n",min);
+  printf("finv : %s\n",my_minstr);
+  printf("ansn : %s\n",ans_min);
   return 0;
 }
