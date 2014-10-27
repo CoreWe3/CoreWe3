@@ -121,17 +121,10 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       when List.mem x allregs && not (S.mem y !stackset) ->
       save y;
 	Printf.fprintf oc "\tstw\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
-  | (NonTail(_), Save(x, y)) 
-      when List.mem x allfregs && not (S.mem y !stackset) ->
-      savef y;
-	Printf.fprintf oc "\tstfd\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
   | (NonTail(_), Save(x, y)) -> assert (S.mem y !stackset); ()
   (* 復帰の仮想命令の実装 *)
-  | (NonTail(x), Restore(y)) when List.mem x allregs ->
-      Printf.fprintf oc "\tlwz\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
   | (NonTail(x), Restore(y)) ->
-      assert (List.mem x allfregs);
-      Printf.fprintf oc "\tlfd\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
+      Printf.fprintf oc "\tlwz\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
   (* 末尾だったら計算結果を第一レジスタにセット *)
   | (Tail, (Nop | Stw _ | Stfd _ | Comment _ | Save _ as exp)) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
@@ -142,12 +135,12 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "\tblr\n";
   | (Tail, (FLi _ | FMr _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ |
             Lfd _ as exp)) ->
-      g' oc (NonTail(fregs.(0)), exp);
+      g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tblr\n";
   | (Tail, (Restore(x) as exp)) ->
       (match locate x with
 	 | [i] -> g' oc (NonTail(regs.(0)), exp)
-	 | [i; j] when (i + 1 = j) -> g' oc (NonTail(fregs.(0)), exp)
+	 | [i; j] when (i + 1 = j) -> g' oc (NonTail(regs.(0)), exp)
 	 | _ -> assert false);
       Printf.fprintf oc "\tblr\n";
   | (Tail, IfEq(x, V(y), e1, e2)) ->
@@ -199,16 +192,16 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "\tfcmpu\tcr7, %s, %s\n" (reg x) (reg y);
       g'_non_tail_if oc (NonTail(z)) e1 e2 "ble" "bgt"
   (* 関数呼び出しの仮想命令の実装 *)
-  | (Tail, CallCls(x, ys, zs)) -> (* 末尾呼び出し *)
-      g'_args oc [(x, reg_cl)] ys zs;
+  | (Tail, CallCls(x, ys)) -> (* 末尾呼び出し *)
+      g'_args oc [(x, reg_cl)] ys;
       Printf.fprintf oc "\tlwz\t%s, 0(%s)\n" (reg reg_sw) (reg reg_cl);
       Printf.fprintf oc "\tmtctr\t%s\n\tbctr\n" (reg reg_sw);
-  | (Tail, CallDir(Id.L(x), ys, zs)) -> (* 末尾呼び出し *)
-      g'_args oc [] ys zs;
+  | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
+      g'_args oc [] ys;
       Printf.fprintf oc "\tb\t%s\n" x
-  | (NonTail(a), CallCls(x, ys, zs)) ->
+  | (NonTail(a), CallCls(x, ys)) ->
       Printf.fprintf oc "\tmflr\t%s\n" reg_tmp;
-      g'_args oc [(x, reg_cl)] ys zs;
+      g'_args oc [(x, reg_cl)] ys;
       let ss = stacksize () in
 	Printf.fprintf oc "\tstw\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
 	Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
@@ -218,13 +211,11 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
 	Printf.fprintf oc "\tsubi\t%s, %s, %d\n" reg_sp reg_sp ss;
 	Printf.fprintf oc "\tlwz\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
 	(if List.mem a allregs && a <> regs.(0) then 
-	   Printf.fprintf oc "\tmr\t%s, %s\n" (reg a) (reg regs.(0)) 
-	 else if List.mem a allfregs && a <> fregs.(0) then 
-	   Printf.fprintf oc "\tfmr\t%s, %s\n" (reg a) (reg fregs.(0)));
+	   Printf.fprintf oc "\tmr\t%s, %s\n" (reg a) (reg regs.(0)));
 	Printf.fprintf oc "\tmtlr\t%s\n" reg_tmp
-  | (NonTail(a), CallDir(Id.L(x), ys, zs)) -> 
+  | (NonTail(a), CallDir(Id.L(x), ys)) -> 
       Printf.fprintf oc "\tmflr\t%s\n" reg_tmp;
-      g'_args oc [] ys zs;
+      g'_args oc [] ys;
       let ss = stacksize () in
 	Printf.fprintf oc "\tstw\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
 	Printf.fprintf oc "\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
@@ -232,9 +223,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
 	Printf.fprintf oc "\tsubi\t%s, %s, %d\n" reg_sp reg_sp ss;
 	Printf.fprintf oc "\tlwz\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
 	(if List.mem a allregs && a <> regs.(0) then
-	   Printf.fprintf oc "\tmr\t%s, %s\n" (reg a) (reg regs.(0))
-	 else if List.mem a allfregs && a <> fregs.(0) then
-	   Printf.fprintf oc "\tfmr\t%s, %s\n" (reg a) (reg fregs.(0)));
+	   Printf.fprintf oc "\tmr\t%s, %s\n" (reg a) (reg regs.(0)));
 	Printf.fprintf oc "\tmtlr\t%s\n" reg_tmp
 and g'_tail_if oc e1 e2 b bn = 
   let b_else = Id.genid (b ^ "_else") in
@@ -258,23 +247,16 @@ and g'_non_tail_if oc dest e1 e2 b bn =
 	Printf.fprintf oc "%s:\n" b_cont;
 	let stackset2 = !stackset in
 	  stackset := S.inter stackset1 stackset2
-and g'_args oc x_reg_cl ys zs = 
+and g'_args oc x_reg_cl ys = 
   let (i, yrs) = 
     List.fold_left
       (fun (i, yrs) y -> (i + 1, (y, regs.(i)) :: yrs))
       (0, x_reg_cl) ys in
     List.iter
       (fun (y, r) -> Printf.fprintf oc "\tmr\t%s, %s\n" (reg r) (reg y))
-      (shuffle reg_sw yrs);
-    let (d, zfrs) = 
-      List.fold_left
-	(fun (d, zfrs) z -> (d + 1, (z, fregs.(d)) :: zfrs))
-	(0, []) zs in
-      List.iter
-        (fun (z, fr) -> Printf.fprintf oc "\tfmr\t%s, %s\n" (reg fr) (reg z))
-	(shuffle reg_fsw zfrs)
+      (shuffle reg_sw yrs)
 
-let h oc { name = Id.L(x); args = _; fargs = _; body = e; ret = _ } =
+let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
   Printf.fprintf oc "%s:\n" x;
   stackset := S.empty;
   stackmap := [];

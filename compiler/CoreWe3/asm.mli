@@ -31,8 +31,8 @@ and exp =
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
-  | CallCls of Id.t * Id.t list * Id.t list
-  | CallDir of Id.l * Id.t list * Id.t list
+  | CallCls of Id.t * Id.t list
+  | CallDir of Id.l * Id.t list
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of Id.t (* スタック変数から値を復元 *)
 type fundef =
@@ -48,6 +48,7 @@ val reg_cl : Id.t
 val reg_sw : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
+val reg_tmp: Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list

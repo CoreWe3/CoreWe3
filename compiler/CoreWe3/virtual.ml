@@ -2,6 +2,8 @@
 
 open Asm
 
+exception RegAllocError 
+
 let data = ref [] (* 浮動小数点数の定数テーブル *)
 
 let classify xts ini addf addi =
@@ -83,11 +85,9 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	       Let ((z, Type.Int), SetL(l), 
 		       seq (Stw (z, x, C (0)), store_fv))))
   | Closure.AppCls (x, ys) ->
-      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallCls (x, int, float))
-  | Closure.AppDir (Id.L(x), ys) ->
-      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallDir (Id.L(x), int, float))
+	     Ans (CallCls (x, ys))
+  | Closure.AppDir (x, ys) ->
+	     Ans (CallDir (x, ys))
   | Closure.Tuple (xs) -> (* 組の生成 *)
       let y = Id.genid "t" in
       let (offset, store) = 

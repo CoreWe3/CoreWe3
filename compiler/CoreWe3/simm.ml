@@ -38,8 +38,8 @@ and g' env = function (* 各命令の 16 bit 即値最適化 *)
   | e -> e
 
 (* トップレベル関数の 16 bit 即値最適化 *)
-let h { name = l; args = xs; fargs = ys; body = e; ret = t } = 
-  { name = l; args = xs; fargs = ys; body = g M.empty e; ret = t }
+let h { name = l; args = xs; body = e; ret = t } = 
+  { name = l; args = xs; body = g M.empty e; ret = t }
 
 (* プログラム全体の 16 bit 即値最適化 *)
 let f (Prog(data, fundefs, e)) = 
