@@ -14,9 +14,9 @@ int main() {
     
     fa = 16.0;
     fans = sinf(fa);
-    ans = fsin(ftoi(fa));
-    printf("%08x %08x\n", ftoi(fans), ans);
-    printf("%e %e\n", fans, itof(ans));
+    ans = fsin(ftoui(fa));
+    printf("%08x %08x\n", ftoui(fans), ans);
+    printf("%e %e\n", fans, uitof(ans));
     
     return 0;
 }
