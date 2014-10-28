@@ -75,3 +75,4 @@
 	OR 	r2	r2	r13
 :fsub_L2
 	JSUB	:fadd
+	RET
