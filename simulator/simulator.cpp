@@ -32,6 +32,9 @@ unsigned int d_insnum = 0;
 unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
+
+	printf("pc:%d, sp:%d, ", pc, sp);
+
 	for(int i = 0; i < REGNUM; i++){
 		printf("%s:%u, ", reg2name(i), reg[i]);
 	}
@@ -39,6 +42,13 @@ void debuginfo(){
 	for(int i = 0; i < ISANUM; i++){
 		printf("%s:%u, ", names[i], counter[i]);
 	}
+	printf("\n");
+	for(int i = 0; i < 10; i++){
+		if(sp+i<RAMSIZE){
+			printf("%d:%d, ", sp+i, ram[sp+i]);
+		}
+	}
+
 	printf("\n");
 	printf("Number of Instruction : %d\n",d_insnum);
 }
@@ -108,7 +118,7 @@ int main(int argc, char* argv[])
 	while(true){
 
 		if(pc >= num){
-			printf("The program sucessfully done.\n");
+			printf("The program successfully done.\n");
 			break;
 		}
 		if(d_insnum >= limit){
@@ -184,7 +194,7 @@ int main(int argc, char* argv[])
 	if(iofpr!=NULL) fclose(iofpr);
 	if(iofpw!=NULL) fclose(iofpw);
 	
-	debuginfo();;
+	debuginfo();
 
 
 	return 0;

@@ -5,6 +5,7 @@ type t =
 and exp = 
   | Nop
   | Li of int
+  | FLi of Id.l
   | SetL of Id.l
   | Mr of Id.t
   | Neg of Id.t
@@ -12,12 +13,13 @@ and exp =
   | Sub of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
-  | Ld of Id.t * id_or_imm
-  | St of Id.t * Id.t * id_or_imm
+  | Lwz of Id.t * id_or_imm
+  | Stw of Id.t * Id.t * id_or_imm
+  | Comment of string
   (* virtual instructions *)
-  | IfEq of Id.t * id_or_imm * t * t
-  | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t (* for simm *)
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
+  | IfGE of Id.t * Id.t * t * t (* for simm *)
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list
   | CallDir of Id.l * Id.t list
@@ -35,6 +37,8 @@ val allregs : Id.t list
 val reg_cl : Id.t
 val reg_sw : Id.t
 val reg_hp : Id.t
+val reg_sp : Id.t
+val reg_tmp: Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list

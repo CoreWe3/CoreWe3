@@ -1,6 +1,8 @@
-(* translation into CoreWe3 assembly (infinite number of virtual registers) *)
+(* translation into PowerPC assembly (infinite number of virtual registers) *)
 
 open Asm
+
+exception RegAllocError 
 
 let data = ref [] (* 浮動小数点数の定数テーブル *)
 
@@ -25,6 +27,16 @@ let expand xts ini addi =
 let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.Unit -> Ans (Nop)
   | Closure.Int (i) -> Ans (Li (i))
+  | Closure.Float (d) -> 
+      let l = 
+	try
+	  let (l, _) = List.find (fun (_, d') -> d = d') !data in
+	    l
+	with Not_found ->
+	  let l = Id.L (Id.genid "l") in
+	    data := (l, d) :: !data;
+	    l in
+	Ans (FLi (l))
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, V (y)))
@@ -32,12 +44,12 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.Lsr (x, y) -> Ans (Srw (x, V (y)))
   | Closure.IfEq (x, y, e1, e2) -> 
       (match M.find x env with
-	 | Type.Bool | Type.Int -> Ans (IfEq (x, V (y), g env e1, g env e2))
-	 | _ -> failwith "equality supported only for bool, int")
+	 | Type.Bool | Type.Int -> Ans (IfEq (x, y, g env e1, g env e2))
+	 | _ -> failwith "equality supported only for bool, int, and float")
   | Closure.IfLE (x, y, e1, e2) ->
       (match M.find x env with
-	 | Type.Bool | Type.Int -> Ans (IfLE (x, V (y), g env e1, g env e2))
-	 | _ -> failwith "inequality supported only for bool, int")
+	 | Type.Bool | Type.Int -> Ans (IfLE (x, y, g env e1, g env e2))
+	 | _ -> failwith "inequality supported only for bool, int, and float")
   | Closure.Let ((x, t1), e1, e2) ->
       let e1' = g env e1 in
       let e2' = g (M.add x t1 env) e2 in
@@ -53,25 +65,23 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	expand
 	  (List.map (fun y -> (y, M.find y env)) ys)
 	  (4, e2')
-	  (fun y _ offset store_fv -> seq (St (y, x, C (offset)), store_fv)) in
+	  (fun y _ offset store_fv -> seq (Stw (y, x, C (offset)), store_fv)) in
 	Let ((x, t), Mr (reg_hp), 
 	     Let ((reg_hp, Type.Int), Add (reg_hp, C (align offset)), 
 	     let z = Id.genid "l" in  
 	       Let ((z, Type.Int), SetL(l), 
-		       seq (St (z, x, C (0)), store_fv))))
+		       seq (Stw (z, x, C (0)), store_fv))))
   | Closure.AppCls (x, ys) ->
-      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallCls (x, int))
-  | Closure.AppDir (Id.L(x), ys) ->
-      let (int, float) = separate (List.map (fun y -> (y, M.find y env)) ys) in
-	Ans (CallDir (Id.L(x), int))
+	     Ans (CallCls (x, ys))
+  | Closure.AppDir (x, ys) ->
+	     Ans (CallDir (x, ys))
   | Closure.Tuple (xs) -> (* 組の生成 *)
       let y = Id.genid "t" in
       let (offset, store) = 
 	expand
 	  (List.map (fun x -> (x, M.find x env)) xs)
 	  (0, Ans (Mr (y)))
-	  (fun x _ offset store -> seq (St (x, y, C (offset)), store))  in
+	  (fun x _ offset store -> seq (Stw (x, y, C (offset)), store))  in
 	Let ((y, Type.Tuple (List.map (fun x -> M.find x env) xs)), Mr (reg_hp),
 	     Let ((reg_hp, Type.Int), Add (reg_hp, C (align offset)), store))
   | Closure.LetTuple (xts, y, e2) ->
@@ -82,7 +92,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	  (0, g (M.add_list xts env) e2)
 	  (fun x t offset load ->
 	     if not (S.mem x s) then load 
-	     else Let ((x, t), Ld (y, C (offset)), load)) in
+	     else Let ((x, t), Lwz (y, C (offset)), load)) in
 	load
   | Closure.Get (x, y) -> (* 配列の読み出し *)
       let offset = Id.genid "o" in  
@@ -90,7 +100,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	   | Type.Array (Type.Unit) -> Ans (Nop)
 	   | Type.Array (_) ->
 	       Let ((offset, Type.Int), Slw (y, C (2)),
-		    Ans (Ld (x, V (offset))))
+		    Ans (Lwz (x, V (offset))))
 	   | _ -> assert false)
   | Closure.Put (x, y, z) ->
       let offset = Id.genid "o" in 
@@ -98,7 +108,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	   | Type.Array (Type.Unit) -> Ans (Nop)
 	   | Type.Array (_) ->
 	       Let ((offset, Type.Int), Slw (y, C (2)), 
-		    Ans (St (z, x, V (offset)))) 
+		    Ans (Stw (z, x, V (offset)))) 
 	   | _ -> assert false)
   | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
 
@@ -110,7 +120,7 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
     expand
       zts
       (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
-      (fun z t offset load -> Let ((z, t), Ld (reg_cl, C (offset)), load)) in
+      (fun z t offset load -> Let ((z, t), Lwz (reg_cl, C (offset)), load)) in
     match t with
       | Type.Fun (_, t2) ->
 	  { name = Id.L(x); args = int; body = load; ret = t2 }
