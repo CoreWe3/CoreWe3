@@ -18,13 +18,13 @@ void store(int rn, int addr, uint32_t r[], uint32_t m[]){
     m[addr] = r[rn];
 }
 
-uint32_t ftoi(float a) {
+uint32_t ftoui(float a) {
     uint32_t *p;
     p = (uint32_t *) &a;
     return *p;
 }
 
-float itof(uint32_t a) {
+float iutof(uint32_t a) {
     float *p;
     p = (float *) &a;
     return *p;
