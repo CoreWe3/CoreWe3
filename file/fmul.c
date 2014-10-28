@@ -14,17 +14,16 @@ void printbin(uint32_t x) {
 #include <stdint.h>
 
 /*
-実装まとめ
+仕様まとめ
 NaNは入力として想定していない。
 
-∞*0=NaN(exp255frac1を返す）
-∞*その他=∞
+∞*なにか=∞
 0や非正規化数*なにか=0
 
 それ以外：
-配布資料通り。
+先人の資料通り。
 
-
+実装要件を読むに、0や∞の処理も必要ないようなのでカットすれば、大分短くなるかも。
 */
 
 uint32_t fmul(uint32_t a, uint32_t b){
@@ -58,22 +57,26 @@ uint32_t fmul(uint32_t a, uint32_t b){
 
   /*∞のある計算*/
   if (r5==r12){
+ /*
     if (r7==0 && r8==0){
-   /*∞と0*/
       r13=255;
       r9=1;
       goto END;
     }
+  */
     r13=255;
     r9=0;
     goto END;
   }
   if (r7==r12){
+ /*
     if (r5==0 && r6==0){
       r13=255;
       r9=1;
       goto END;
     }
+
+ */
     r13 =255;
     r9 =0;
     goto END;
@@ -128,7 +131,7 @@ uint32_t fmul(uint32_t a, uint32_t b){
   /*r13=1<<12*/
   r3 += r8;
   r5 += r8;
-  r9=r3*r5;
+  r9=r3*r5;/*ここ*/
   r7=r4*r5;
   r11=11;
   r7=r7>>r11;
@@ -157,7 +160,6 @@ uint32_t fmul(uint32_t a, uint32_t b){
       goto END;
     }
     r14=8;
-    r15=9;
     r9=r9<<r14;
     r9=r9>>r15;
   }
