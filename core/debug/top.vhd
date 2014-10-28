@@ -13,7 +13,9 @@ entity top is
 end top;
 
 architecture arch of top is
-  component loopback is
+  component IO_buffer_loopback is
+  --component transmit_buffer_test is
+  --component IO_buffer_test is
     port (
       clk : in std_logic;
       RS_RX : in std_logic;
@@ -31,7 +33,9 @@ begin
     i => iclk,
     o => clk);
 
-  main : loopback port map
+  main : IO_buffer_loopback port map
+  --main : transmit_buffer_test port map
+  --main : IO_buffer_test port map
     (clk => clk,
      RS_RX => RS_RX,
      RS_TX => RS_TX);

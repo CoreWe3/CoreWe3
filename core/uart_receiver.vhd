@@ -13,7 +13,7 @@ entity uart_receiver is
 end uart_receiver;
 
 architecture arch_uart_receiver of uart_receiver is
-  signal countdown : std_logic_vector(15 downto 0) := (others=>'0');
+  signal countdown : std_logic_vector(15 downto 0) := wtime;
   signal receivebuf : std_logic_vector(7 downto 0) := (others=>'1');
   signal state : std_logic_vector(3 downto 0) := x"9";
 begin  -- structure
@@ -26,15 +26,13 @@ begin  -- structure
           if rx='0' then
             receivebuf<=(others => '1');
             state<=state-1;
-            countdown<=wtime+("0"&wtime(15 downto 1));
+            countdown<=wtime+("0"&wtime(15 downto 1)); --debugging
           end if;
         when x"0" =>
           if countdown=0 then
-            if rx = '1' then
-              data<=receivebuf;
-              complete<='1';
-              state<=x"9";
-            end if;
+            data<=receivebuf;
+            complete<='1';
+            state<=x"9";
           else
             countdown<=countdown-1;
           end if;

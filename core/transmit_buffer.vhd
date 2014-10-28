@@ -82,12 +82,16 @@ begin
               igo <= '0';
               enq_state <= "01";
             end if;
+          else
+            igo <= '0';
           end if;
         when "01" => --wait for queue
           if full = '0' then
             idata <= inbuf;
             igo <= '1';
             enq_state <= "10";
+          else
+            igo <= '0';
           end if;
         when "10" => --complete
           igo <= '0';
@@ -118,7 +122,7 @@ begin
           ogo <= '0';
           io_go <= '0';
           deq_state <= "010";
-        when "010" =>
+        when "010" => --vain state
           outbuf <= odata;
           deq_state <= "011";
         when "011" => --transmit first byte
