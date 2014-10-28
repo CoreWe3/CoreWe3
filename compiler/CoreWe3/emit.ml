@@ -122,11 +122,11 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (NonTail(_), Save(x, y))
       when List.mem x allregs && not (S.mem y !stackset) ->
       save y;
-	Printf.fprintf oc "#\tstw\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
+	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) reg_sp (offset y) 
   | (NonTail(_), Save(x, y)) -> assert (S.mem y !stackset); ()
   (* 復帰の仮想命令の実装 *)
   | (NonTail(x), Restore(y)) ->
-      Printf.fprintf oc "#\tlwz\t%s, %d(%s)\n" (reg x) (offset y) reg_sp
+      Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) reg_sp (offset y)
   (* 末尾だったら計算結果を第一レジスタにセット *)
   | (Tail, (Nop | Stw _ | Comment _ | Save _ as exp)) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
@@ -165,30 +165,30 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "\tPOP\t%s\n" reg_tmp;
       g'_args oc [(x, reg_cl)] ys;
       let ss = stacksize () in
-	Printf.fprintf oc "#\tstw\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
+	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
 	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp ss;
 	Printf.fprintf oc "#\tlwz\t%s, 0(%s)\n" reg_tmp (reg reg_cl);
 	Printf.fprintf oc "#\tmtctr\t%s\n" reg_tmp;
 	Printf.fprintf oc "#\tbctrl\n";
 	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp (-ss);
-	Printf.fprintf oc "#\tlwz\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
+	Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
 	(if List.mem a allregs && a <> regs.(0) then 
-	   Printf.fprintf oc "#\tmr\t%s, %s\n" (reg a) (reg regs.(0)));
+	   Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg a) (reg regs.(0)));
 	Printf.fprintf oc "\tPUSH\t%s\n" reg_tmp
   | (NonTail(a), CallDir(Id.L(x), ys)) -> 
-      Printf.fprintf oc "#\tmflr\t%s\n" reg_tmp;
+      Printf.fprintf oc "\tPOP\t%s\n" reg_tmp;
       g'_args oc [] ys;
       let ss = stacksize () in
-	Printf.fprintf oc "#\tstw\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
-	Printf.fprintf oc "#\taddi\t%s, %s, %d\n" reg_sp reg_sp ss;
-	Printf.fprintf oc "#\tbl\t%s\n" x;
-	Printf.fprintf oc "#\tsubi\t%s, %s, %d\n" reg_sp reg_sp ss;
-	Printf.fprintf oc "#\tlwz\t%s, %d(%s)\n" reg_tmp (ss - 4) reg_sp;
+	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp ss;
+	Printf.fprintf oc "\tBEQ\tr0\tr0\t%s\n" x;
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp (-ss);
+	Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
 	(if List.mem a allregs && a <> regs.(0) then
-	   Printf.fprintf oc "#\tmr\t%s, %s\n" (reg a) (reg regs.(0)));
-	Printf.fprintf oc "#\tmtlr\t%s\n" reg_tmp
+	   Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg a) (reg regs.(0)));
+	Printf.fprintf oc "\tPUSH\t%s\n" reg_tmp
 and g'_tail_if oc e1 e2 b x y = 
-  let b_true = Id.genid (":" ^ b ^ "true") in
+  let b_true = Id.genid (b ^ "true") in
     Printf.fprintf oc "\t%s\t%s\t%s\t%s\n" b x y b_true;
     let stackset_back = !stackset in
       g oc (Tail, e1);
@@ -196,8 +196,8 @@ and g'_tail_if oc e1 e2 b x y =
       stackset := stackset_back;
       g oc (Tail, e2)
 and g'_non_tail_if oc dest e1 e2 b x y = 
-  let b_true = Id.genid (":" ^ b ^ "_true") in
-  let b_false = Id.genid (":" ^ b ^ "_false") in
+  let b_true = Id.genid (b ^ "_true") in
+  let b_false = Id.genid (b ^ "_false") in
     Printf.fprintf oc "\t%s\t%s\t%s\t%s\n" b x y b_true;
     let stackset_back = !stackset in
       g oc (dest, e1);
@@ -215,41 +215,22 @@ and g'_args oc x_reg_cl ys =
       (fun (i, yrs) y -> (i + 1, (y, regs.(i)) :: yrs))
       (0, x_reg_cl) ys in
     List.iter
-      (fun (y, r) -> Printf.fprintf oc "#\tmr\t%s, %s\n" (reg r) (reg y))
+      (fun (y, r) -> Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg r) (reg y))
       (shuffle reg_sw yrs)
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
-  Printf.fprintf oc ":%s\n" x;
+  Printf.fprintf oc "%s\n" x;
   stackset := S.empty;
   stackmap := [];
   g oc (Tail, e)
 
+
+
 let f oc (Prog(data, fundefs, e)) =
   Format.eprintf "generating assembly...@.";
-  (if data <> [] then
-    (Printf.fprintf oc "#\t.data\n\t.literal8\n";
-     List.iter
-       (fun (Id.L(x), d) ->
-	 Printf.fprintf oc "#\t.align 3\n";
-	 Printf.fprintf oc "#:%s\t # %f\n" x d;
-	 Printf.fprintf oc "#\t.long\t%ld\n" (gethi d);
-	 Printf.fprintf oc "#\t.long\t%ld\n" (getlo d))
-       data));
   Printf.fprintf oc "BEQ\tr0\tr0\t:_min_caml_start\n";
   List.iter (fun fundef -> h oc fundef) fundefs;
-  Printf.fprintf oc ":_min_caml_start: # main entry point\n";
-  Printf.fprintf oc "#\tmflr\tr0\n";
-  Printf.fprintf oc "#\tstmw\tr30, -8(r1)\n";
-  Printf.fprintf oc "#\tstw\tr0, 8(r1)\n";
-  Printf.fprintf oc "#\tstwu\tr1, -96(r1)\n";
-  Printf.fprintf oc "   # main program start\n";
+  Printf.fprintf oc ":_min_caml_start # main entry point\n";
   stackset := S.empty;
   stackmap := [];
   g oc (NonTail("_R_0"), e);
-  Printf.fprintf oc "   # main program end\n";
-(*  Printf.fprintf oc "\tmr\tr3, %s\n" regs.(0); *)
-  Printf.fprintf oc "#\tlwz\tr1, 0(r1)\n";
-  Printf.fprintf oc "#\tlwz\tr0, 8(r1)\n";
-  Printf.fprintf oc "#\tmtlr\tr0\n";
-  Printf.fprintf oc "#\tlmw\tr30, -8(r1)\n";
-  Printf.fprintf oc "#\tblr\n"

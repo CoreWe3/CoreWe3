@@ -44,9 +44,9 @@ let regs = [| "%r3"; "%r4"; "%r5"; "%r6"; "%r7"; "%r8"; "%r9"; "%r10"; "%r11"; "
 let allregs = Array.to_list regs
 let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
-let reg_hp = "%r2"
-let reg_sp = "%r1"
-let reg_tmp = "%r15"
+let reg_hp = "r2"
+let reg_sp = "r1"
+let reg_tmp = "r15"
 
 (* is_reg : Id.t -> bool *)
 let is_reg x = x.[0] = '%'
