@@ -2,29 +2,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
+#include "float_arith.h"
 
 extern uint32_t fadd(uint32_t a, uint32_t b);
 extern uint32_t fsub(uint32_t a, uint32_t b);
-
-uint32_t ftoi(float a) {
-    uint32_t *p;
-    p = (uint32_t *) &a;
-    return *p;
-}
-
-float itof(uint32_t a) {
-    float *p;
-    p = (float *) &a;
-    return *p;
-}
-
-float fabsf(float f) {
-    return (f < 0)? -f: f;
-}
-
-float fmaxf(float f, float g) {
-    return (f < g)? g: f;
-}
 
 int fadd_check_case(uint32_t a, uint32_t b) {
     float eps, r, fa, fb, err, bnd;
@@ -44,13 +26,12 @@ int fadd_check_case(uint32_t a, uint32_t b) {
 }
 
 int fadd_valid_case(float a, float b) {
-    float upper, lower, res;
-    lower = itof(0x00400000);
+    float upper, res;
     upper = itof(0x7f000000);
     res = fabsf(a + b);
     a = fabsf(a);
     b = fabsf(b);
-    return (lower < a && a < upper) && (lower < b && b < upper) && (lower < res && res < upper);
+    return (a < upper) && (b < upper) && (res < upper);
 }
 
 void fadd_check(){
@@ -74,13 +55,12 @@ void fadd_check(){
 }
 
 int fsub_valid_case(float a, float b) {
-    float upper, lower, res;
-    lower = itof(0x00400000);
+    float upper, res;
     upper = itof(0x7f000000);
     res = fabsf(a - b);
     a = fabsf(a);
     b = fabsf(b);
-    return (lower < a && a < upper) && (lower < b && b < upper) && (lower < res && res < upper);
+    return (a < upper) && (b < upper) && (res < upper);
 }
 
 int fsub_check_case(uint32_t a, uint32_t b) {
@@ -122,6 +102,7 @@ void fsub_check(){
 
 int main() {
     srand((unsigned) time(NULL));
+    
     printf("fadd\n");
     fadd_check();
     printf("fsub\n");
