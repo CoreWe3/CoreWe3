@@ -8,13 +8,15 @@ use UNISIM.VComponents.all;
 entity top is
   port (
     MCLK1 : in std_logic;
+    RS_RX : in std_logic;
     RS_TX : out std_logic);
 end top;
 
 architecture arch of top is
-  component uart_transmitter_test is
+  component loopback is
     port (
       clk : in std_logic;
+      RS_RX : in std_logic;
       RS_TX : out std_logic);
   end component;
 
@@ -29,8 +31,9 @@ begin
     i => iclk,
     o => clk);
 
-  main : uart_transmitter_test port map
+  main : loopback port map
     (clk => clk,
+     RS_RX => RS_RX,
      RS_TX => RS_TX);
 
 end arch;

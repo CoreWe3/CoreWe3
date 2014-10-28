@@ -29,8 +29,8 @@ begin
         when "0010" =>
           if countdown=0 then
             sendbuf <= '1'&sendbuf(8 downto 1);
-            --countdown<='0'&wtime(15 downto 1);
-            countdown <= wtime;
+            countdown<='0'&wtime(15 downto 1);
+            --countdown <= wtime;
             state<=state-1;
           else
             countdown<=countdown-1;
