@@ -14,7 +14,6 @@
 #--  Update 		 :
 #--
 #-----------------------------------------------------------
-
 #-----------------------------------------------------------
 # Target Information
 CONFIG PART=5VLX50TFF1136-1 ;
@@ -23,7 +22,6 @@ CONFIG PART=5VLX50TFF1136-1 ;
 ##########################################################
 # Pin Assign
 ##########################################################
-
 #////////////////////////////////////////
 #// ZBT-RAM connection.
 #////////////////////////////////////////
@@ -104,7 +102,6 @@ NET  ZZA		   LOC=AA31;
 
 #// = Inputs. =
 
-
 NET RS_TX			LOC=K11;
 NET RS_RX			LOC=J11;
 
@@ -114,12 +111,10 @@ NET RS_RX			LOC=J11;
 #///////////////////////////////////////
 #// = Outputs. =
 #NET  DUMY		   LOC=K17;
-
 #// = Inputs. =
 #NET  CLK48M 	   LOC=H17;
 NET  MCLK1		   LOC=J16;
 #NET XRST		   LOC=H18;
-
 ##########################################################
 # Pin Type Define
 ##########################################################
@@ -208,12 +203,10 @@ NET  ZZA		   IOSTANDARD = LVTTL;
 #////////////////////////////////////////
 #// UNIVERSAL-I/O Type Define.
 #////////////////////////////////////////
-
 #////////////////////////////////////////
 #// Clock Type Define.
 #////////////////////////////////////////
 #// = Outputs. =
-
 #// = Inputs. =
 #NET  CLK48M 	   IOSTANDARD = LVTTL;
 NET  MCLK1		   IOSTANDARD = LVTTL;
@@ -225,13 +218,13 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 ############################################################################
 # Clock constraints                                                        #
 ############################################################################
-
 #NET "u_mig/u_infrastructure/sys_clk_ibufg" TNM_NET =  "SYS_CLK";
 #NET "bufg_66" TNM_NET = "SYS_CLK";
-TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 14.52 ns HIGH 50 %;
-
+#TIMESPEC "TS_SYS_CLK" = PERIOD "SYS_CLK" 14.52 ns HIGH 50 %;
 ###############################################################################
 # Define multicycle paths - these paths may take longer because additional
 # time allowed for logic to settle in calibration/initialization FSM
 ###############################################################################
-
+#Created by Constraints Editor (xc5vlx50t-ff1136-1) - 2014/10/20
+NET "MCLK1" TNM_NET = MCLK1;
+TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;

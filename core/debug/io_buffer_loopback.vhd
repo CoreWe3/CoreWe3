@@ -23,14 +23,14 @@ architecture arch_loopback of IO_buffer_loopback is
       RS_TX : out std_logic;
       we : in std_logic;
       go : in std_logic;
-      send_data : in std_logic_vector(31 downto 0);
+      transmit_data : in std_logic_vector(31 downto 0);
       receive_data : out std_logic_vector(31 downto 0);
       busy : out std_logic);
   end component;
 
   signal we : std_logic;
   signal go : std_logic := '0';
-  signal send_data : std_logic_vector(31 downto 0);
+  signal transmit_data : std_logic_vector(31 downto 0);
   signal receive_data : std_logic_vector(31 downto 0);
   signal busy : std_logic;
   signal state : std_logic_vector(1 downto 0) := "00";
@@ -44,7 +44,7 @@ begin
       RS_TX => RS_TX,
       we => we,
       go => go,
-      send_data => send_data,
+      transmit_data => transmit_data,
       receive_data => receive_data,
       busy => busy);
 
@@ -70,7 +70,7 @@ begin
           if busy = '0' and go = '0' then
             we <= '1';
             go <= '1';
-            send_data <= buf;
+            transmit_data <= buf;
             state <= "00";
           else
             go <= '0';
@@ -83,7 +83,7 @@ begin
       --if busy = '0' and go = '0' then
       --  go <= '1';
       --  we <= '1';
-      --  send_data <= x"41424344";
+      --  transmit_data <= x"41424344";
       --else
       --  go <= '0';
       --end if;
