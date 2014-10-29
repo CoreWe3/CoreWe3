@@ -16,6 +16,7 @@ architecture arch_uart_receiver of uart_receiver is
   signal countdown : std_logic_vector(15 downto 0) := wtime;
   signal receivebuf : std_logic_vector(7 downto 0) := (others=>'1');
   signal state : std_logic_vector(3 downto 0) := x"9";
+  signal start : std_logic_vector(3 downto 0) := x"F";
 begin  -- structure
   process(clk)
   begin
@@ -23,16 +24,22 @@ begin  -- structure
       case state  is
         when x"9" =>
           complete <= '0';
-          if rx='0' then
+          start <= rx&start(3 downto 1);
+          if start = x"0" then
             receivebuf<=(others => '1');
             state<=state-1;
             countdown<=wtime+("0"&wtime(15 downto 1)); --debugging
           end if;
         when x"0" =>
           if countdown=0 then
-            data<=receivebuf;
+            if rx = '1' then
+              data<=receivebuf;
+            else
+              data<=x"58";
+            end if;
             complete<='1';
             state<=x"9";
+            start<=x"F";
           else
             countdown<=countdown-1;
           end if;
