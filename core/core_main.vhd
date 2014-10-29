@@ -5,7 +5,7 @@ use ieee.std_logic_unsigned.all;
 entity core_main is
   generic (
     CODE : string := "code.bin";
-    wtime : std_logic_vector(15 downto 0) := x"1ADB";
+    wtime : std_logic_vector(15 downto 0) := x"023D";
     debug : boolean := false);
   port (
     clk   : in    std_logic;
