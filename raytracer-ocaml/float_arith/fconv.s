@@ -25,8 +25,8 @@
 	SHR	r3	r3	r14
 	ADDI	r5	r5	127
 	SHL	r5	r5	r11
+	ADD	r3	r3	r5
 	OR	r3	r3	r4
-	OR	r3	r3	r5
 	RET
 
 :min_caml_ftoi
@@ -89,7 +89,13 @@
 	RET
 :min_caml_floor_L1
 	BLE	r11	r4	:min_caml_floor_L2
-	SHL	r3	r5	r15			#0を返す
+	BEQ	r5	r0	:min_caml_floor_L4
+	ADDI	r4	r0	16
+	ADDI	r3	r0	0xbf80
+	SHL	r3	r3	r4
+	RET						#-1を返す
+:min_caml_floor_L4
+	ADDI	r3	r0	0			#0を返す
 	RET
 :min_caml_floor_L2
 	SUB	r6	r12	r4

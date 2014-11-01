@@ -35,8 +35,8 @@ uint32_t itof(uint32_t a){
     r[3] = SHR(r[3], r[14]);
     r[5] = r[5] + 127;
     r[5] = SHL(r[5], r[11]);
+    r[3] = r[3] + r[5];
     r[3] = r[3] | r[4];
-    r[3] = r[3] | r[5];
     return r[3];
 }
 
@@ -113,8 +113,15 @@ uint32_t _floor(uint32_t a) {
 	return r[3];
     }
     if (r[11] <= r[4]) {} else {
-	r[3] = r[5];
-	return r[3];
+	if (r[5] != 0) {
+	    r[4] = 16;
+	    r[3] = 0xbf80;
+	    r[3] = SHL(r[3], r[4]);
+	    return r[3];
+	} else {
+	    r[3] = 0;
+	    return r[3];
+	}
     }
     r[6] = r[12] - r[4];
     r[4] = SHR(r[3], r[6]);
