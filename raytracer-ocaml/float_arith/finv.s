@@ -19,11 +19,12 @@
 	SUB	r4	r4	r12
 	SUB	r4	r12	r4
 	SUB	r4	r4	r16
+	BEQ	r0	r0	:end
 :else
 	SUB	r4	r12	r4
 	ADD	r4	r12	r4
 	SUB	r4	r4	r16
-
+:end
 	LD	r3	temp_a	r6	# from a.txt
 	PUSH r4
 	PUSH	r5
@@ -44,3 +45,5 @@
 	SHR	r10	r10	r13
 	OR	r3	r5	r4
 	OR	r3	r3	r10
+	ret
+	
