@@ -96,34 +96,6 @@ begin
   enque : process(clk)
   begin
     if rising_edge(clk) then
-      --case enq_state is
-        --when "000" => -- get first byte
-        --  igo <= '0';
-        --  if io_complete = '1' then
-        --    inbuf(31 downto 24) <= bdata;
-        --    enq_state <= "001";
-        --  end if;
-        --when "001" => --get second byte
-        --  if io_complete = '1' then
-        --    inbuf(23 downto 16) <= bdata;
-        --    enq_state <= "010";
-        --  end if;
-        --when "010" => --get third byte
-        --  if io_complete = '1' then
-        --    inbuf(15 downto 8) <= bdata;
-        --    enq_state <= "011";
-        --  end if;
-        --when "011" => --get forth byte and enque
-        --  if io_complete = '1' then
-        --    enq_state <= "000";
-        --    idata <= inbuf(31 downto 8) & bdata;
-        --    igo <= '1';
-        --  end if;
-
-        --when others =>
-          --enq_state <= "000";
-          --igo <= '0';
-        --end case;
       if io_complete = '1' then
         idata <= bdata;
         igo <= '1';

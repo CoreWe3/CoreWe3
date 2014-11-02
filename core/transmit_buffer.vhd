@@ -15,8 +15,8 @@ end transmit_buffer;
 architecture arch_transmit_buffer of transmit_buffer is
   component FIFO is
     generic (
-      SIZE : integer := 256;
-      WIDTH : integer := 8);
+      SIZE : integer := 1024;
+      WIDTH : integer := 10);
     port (
       clk : in std_logic;
       idata : in std_logic_vector(7 downto 0);
@@ -109,59 +109,6 @@ begin
   deque : process(clk)
   begin
     if rising_edge(clk) then
-      --case deq_state is
-      --  when "000" => --ready
-      --    io_go <= '0';
-      --    if empty = '0' then --if not empty
-      --      ogo <= '1';
-      --      deq_state <= "001";
-      --    else
-      --      ogo <= '0';
-      --    end if;
-      --  when "001" => --wait getting data from queue
-      --    ogo <= '0';
-      --    io_go <= '0';
-      --    deq_state <= "010";
-      --  when "010" => --vain state
-      --    outbuf <= odata;
-      --    deq_state <= "011";
-      --  when "011" => --transmit first byte
-      --    if io_busy = '0' and io_go = '0' then
-      --      bdata <= outbuf(31 downto 24);
-      --      io_go <= '1';
-      --      deq_state <= "100";
-      --    else
-      --      io_go <= '0';
-      --    end if;
-      --  when "100" => --transmit second byte
-      --    if io_busy = '0' and io_go = '0' then
-      --      bdata <= outbuf(23 downto 16);
-      --      io_go <= '1';
-      --      deq_state <= "101";
-      --    else
-      --      io_go <= '0';
-      --    end if;
-      --  when "101" => --transmit third byte
-      --    if io_busy = '0' and io_go = '0' then
-      --      bdata <= outbuf(15 downto 8);
-      --      io_go <= '1';
-      --      deq_state <= "110";
-      --    else
-      --      io_go <= '0';
-      --    end if;
-      --  when "110" => --transmit forth byte
-      --    if io_busy = '0' and io_go = '0' then
-      --      bdata <= outbuf(7 downto 0);
-      --      io_go <= '1';
-      --      deq_state <= "000";
-      --    else
-      --      io_go <= '0';
-      --    end if;
-      --  when others =>
-      --    deq_state <= "000";
-      --    io_go <= '0';
-      --end case;
-
       case deq_state is
         when "000" => --ready
           io_go <= '0';
