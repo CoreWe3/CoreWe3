@@ -19,8 +19,8 @@ architecture arch_transmit_buffer of transmit_buffer is
       WIDTH : integer := 8);
     port (
       clk : in std_logic;
-      idata : in std_logic_vector(31 downto 0);
-      odata : out std_logic_vector(31 downto 0);
+      idata : in std_logic_vector(7 downto 0);
+      odata : out std_logic_vector(7 downto 0);
       igo : in std_logic;
       ogo : in std_logic;
       empty : out std_logic;
@@ -36,15 +36,15 @@ architecture arch_transmit_buffer of transmit_buffer is
            tx   : out STD_LOGIC);
   end component;
 
-  signal idata : std_logic_vector(31 downto 0);
-  signal odata : std_logic_vector(31 downto 0);
+  signal idata : std_logic_vector(7 downto 0);
+  signal odata : std_logic_vector(7 downto 0);
   signal igo : std_logic := '0';
   signal ogo : std_logic := '0';
   signal empty : std_logic;
   signal full : std_logic;
   signal io_go : std_logic := '0';
-  signal inbuf : std_logic_vector(31 downto 0);
-  signal outbuf : std_logic_vector(31 downto 0);
+  signal inbuf : std_logic_vector(7 downto 0);
+  signal outbuf : std_logic_vector(7 downto 0);
   signal bdata : std_logic_vector(7 downto 0);
   signal io_busy : std_logic;
   signal enq_state : std_logic_vector(1 downto 0) := "00";
@@ -74,11 +74,11 @@ begin
         when "00" => --ready
           if go = '1' then
             if full = '0' then --not full
-              idata <= data;
+              idata <= data(7 downto 0);
               igo <= '1';
               enq_state <= "10";
             else --full
-              inbuf <= data;
+              inbuf <= data(7 downto 0);
               igo <= '0';
               enq_state <= "01";
             end if;
@@ -109,57 +109,88 @@ begin
   deque : process(clk)
   begin
     if rising_edge(clk) then
+      --case deq_state is
+      --  when "000" => --ready
+      --    io_go <= '0';
+      --    if empty = '0' then --if not empty
+      --      ogo <= '1';
+      --      deq_state <= "001";
+      --    else
+      --      ogo <= '0';
+      --    end if;
+      --  when "001" => --wait getting data from queue
+      --    ogo <= '0';
+      --    io_go <= '0';
+      --    deq_state <= "010";
+      --  when "010" => --vain state
+      --    outbuf <= odata;
+      --    deq_state <= "011";
+      --  when "011" => --transmit first byte
+      --    if io_busy = '0' and io_go = '0' then
+      --      bdata <= outbuf(31 downto 24);
+      --      io_go <= '1';
+      --      deq_state <= "100";
+      --    else
+      --      io_go <= '0';
+      --    end if;
+      --  when "100" => --transmit second byte
+      --    if io_busy = '0' and io_go = '0' then
+      --      bdata <= outbuf(23 downto 16);
+      --      io_go <= '1';
+      --      deq_state <= "101";
+      --    else
+      --      io_go <= '0';
+      --    end if;
+      --  when "101" => --transmit third byte
+      --    if io_busy = '0' and io_go = '0' then
+      --      bdata <= outbuf(15 downto 8);
+      --      io_go <= '1';
+      --      deq_state <= "110";
+      --    else
+      --      io_go <= '0';
+      --    end if;
+      --  when "110" => --transmit forth byte
+      --    if io_busy = '0' and io_go = '0' then
+      --      bdata <= outbuf(7 downto 0);
+      --      io_go <= '1';
+      --      deq_state <= "000";
+      --    else
+      --      io_go <= '0';
+      --    end if;
+      --  when others =>
+      --    deq_state <= "000";
+      --    io_go <= '0';
+      --end case;
+
       case deq_state is
         when "000" => --ready
           io_go <= '0';
-          if empty = '0' then --if not empty
+          if empty = '0' then
             ogo <= '1';
             deq_state <= "001";
-          else
-            ogo <= '0';
           end if;
-        when "001" => --wait getting data from queue
+        when "001" => --read wait
           ogo <= '0';
-          io_go <= '0';
           deq_state <= "010";
-        when "010" => --vain state
+        when "010" =>
           outbuf <= odata;
-          deq_state <= "011";
-        when "011" => --transmit first byte
-          if io_busy = '0' and io_go = '0' then
-            bdata <= outbuf(31 downto 24);
+          if io_go = '0' and io_busy = '0' then
             io_go <= '1';
-            deq_state <= "100";
-          else
-            io_go <= '0';
-          end if;
-        when "100" => --transmit second byte
-          if io_busy = '0' and io_go = '0' then
-            bdata <= outbuf(23 downto 16);
-            io_go <= '1';
-            deq_state <= "101";
-          else
-            io_go <= '0';
-          end if;
-        when "101" => --transmit third byte
-          if io_busy = '0' and io_go = '0' then
-            bdata <= outbuf(15 downto 8);
-            io_go <= '1';
-            deq_state <= "110";
-          else
-            io_go <= '0';
-          end if;
-        when "110" => --transmit forth byte
-          if io_busy = '0' and io_go = '0' then
-            bdata <= outbuf(7 downto 0);
-            io_go <= '1';
+            bdata <= odata;
             deq_state <= "000";
           else
-            io_go <= '0';
+            deq_state <= "011";
+          end if;
+        when "011" =>
+          if io_go = '0' and io_busy = '0' then
+            io_go <= '1';
+            bdata <= outbuf;
+            deq_state <= "000";
           end if;
         when others =>
-          deq_state <= "000";
           io_go <= '0';
+          ogo <= '0';
+          deq_state <= "000";
       end case;
     end if;
   end process;
