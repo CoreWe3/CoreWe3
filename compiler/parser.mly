@@ -14,6 +14,7 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>PLUS
 %token <Id.range>AST
 %token <Id.range>SLASH
+%token <Id.range>XOR
 %token <Id.range>LSL
 %token <Id.range>LSR
 %token <Id.range>MINUS_DOT
@@ -104,6 +105,8 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
     { ex_range (get_range $1) (get_range $3) (Mul ($1, $3)) }
 | exp SLASH exp
     { ex_range (get_range $1) (get_range $3) (Div ($1, $3)) }
+| exp XOR exp
+    { ex_range (get_range $1) (get_range $3) (Xor ($1, $3)) }
 | exp LSL exp
     { ex_range (get_range $1) (get_range $3) (Lsl ($1, $3)) }
 | exp LSR exp

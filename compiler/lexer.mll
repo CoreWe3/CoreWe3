@@ -47,6 +47,8 @@ rule token = parse
     { AST(get_range lexbuf) }
 | '/'
     { SLASH(get_range lexbuf) }
+| "xor"
+    { XOR(get_range lexbuf) }
 | "lsl"
     { LSL(get_range lexbuf) }
 | "lsr"

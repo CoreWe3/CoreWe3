@@ -11,6 +11,7 @@ and exp =
   | Neg of Id.t
   | Add of Id.t * id_or_imm
   | Sub of Id.t * id_or_imm
+  | Xor of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
   | Lwz of Id.t * id_or_imm
