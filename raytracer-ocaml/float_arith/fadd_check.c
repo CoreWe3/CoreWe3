@@ -11,15 +11,15 @@ extern uint32_t fsub(uint32_t a, uint32_t b);
 int fadd_check_case(uint32_t a, uint32_t b) {
     float eps, r, fa, fb, err, bnd;
     uint32_t res;
-    eps = itof(0x00800000); //2**(-126)
-    r = itof(0x34000000);   //2**(-23)
-    fa = itof(a);
-    fb = itof(b);    
+    eps = uitof(0x00800000); //2**(-126)
+    r = uitof(0x34000000);   //2**(-23)
+    fa = uitof(a);
+    fb = uitof(b);    
     res = fadd(a, b);
     bnd = fmaxf(fmaxf(fabsf(fa) * r, fabsf(fb) * r), fmaxf(fabsf(fa + fb) * r, eps));
-    err = fabsf(itof(res) - (fa + fb));
+    err = fabsf(uitof(res) - (fa + fb));
     if (err > bnd) {
-	printf("%08x %08x %08x %08x\n", a, b, ftoi(fa + fb), res);
+	printf("%08x %08x %08x %08x\n", a, b, ftoui(fa + fb), res);
 	return 1;
     }
     return 0;
@@ -27,7 +27,7 @@ int fadd_check_case(uint32_t a, uint32_t b) {
 
 int fadd_valid_case(float a, float b) {
     float upper, res;
-    upper = itof(0x7f000000);
+    upper = uitof(0x7f000000);
     res = fabsf(a + b);
     a = fabsf(a);
     b = fabsf(b);
@@ -46,7 +46,7 @@ void fadd_check(){
 		b = ((rand() << 16) | rand()) >> (1 + 8);
 		b = b | (i << 23);
 		b = b | (k << (23 + 8));
-		if (fadd_valid_case(itof(a), itof(b))) {
+		if (fadd_valid_case(uitof(a), uitof(b))) {
 		    fadd_check_case(a, b);		    
 		}
 	    }
@@ -56,7 +56,7 @@ void fadd_check(){
 
 int fsub_valid_case(float a, float b) {
     float upper, res;
-    upper = itof(0x7f000000);
+    upper = uitof(0x7f000000);
     res = fabsf(a - b);
     a = fabsf(a);
     b = fabsf(b);
@@ -66,15 +66,15 @@ int fsub_valid_case(float a, float b) {
 int fsub_check_case(uint32_t a, uint32_t b) {
     float eps, r, fa, fb, err, bnd;
     uint32_t res;
-    eps = itof(0x00800000); //2**(-126)
-    r = itof(0x34000000);   //2**(-23)
-    fa = itof(a);
-    fb = itof(b);
+    eps = uitof(0x00800000); //2**(-126)
+    r = uitof(0x34000000);   //2**(-23)
+    fa = uitof(a);
+    fb = uitof(b);
     res = fsub(a, b);
     bnd = fmaxf(fmaxf(fabsf(fa) * r, fabsf(fb) * r), fmaxf(fabsf(fa - fb) * r, eps));
-    err = fabsf(itof(res) - (fa - fb));
+    err = fabsf(uitof(res) - (fa - fb));
     if (err > bnd) {
-	printf("%08x %08x %08x %08x\n", a, b, ftoi(fa - fb), res);
+	printf("%08x %08x %08x %08x\n", a, b, ftoui(fa - fb), res);
 	return 1;
     }
     return 0;
@@ -92,7 +92,7 @@ void fsub_check(){
 		b = ((rand() << 16) | rand()) >> (1 + 8);
 		b = b | (i << 23);
 		b = b | (k << (23 + 8));
-		if (fsub_valid_case(itof(a), itof(b))) {
+		if (fsub_valid_case(uitof(a), uitof(b))) {
 		    fsub_check_case(a, b);
 		}
 	    }
