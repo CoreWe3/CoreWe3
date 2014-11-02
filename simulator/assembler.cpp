@@ -13,6 +13,7 @@ unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int addi(unsigned int ra, unsigned int rb, int cx);
 unsigned int _and(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc);
+unsigned int _xor(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int beq(unsigned int ra, unsigned int rb, int cx);
@@ -133,6 +134,12 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
 						code = _or(name2reg(ra),name2reg(rb),name2reg(rc));
+						break;
+					case XOR:
+						ra = strtok(NULL,tokens);
+						rb = strtok(NULL,tokens);
+						rc = strtok(NULL,tokens);
+						code = _xor(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case SHL:
 						ra = strtok(NULL,tokens);
@@ -268,6 +275,15 @@ unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = OR;
+	ins.A.ra = ra;
+	ins.A.rb = rb;
+	ins.A.rc = rc;
+	return ins.data;
+}
+unsigned int _xor(unsigned int ra, unsigned int rb, unsigned int rc){
+	INS ins;
+	ins.data = 0;
+	ins.A.op = XOR;
 	ins.A.ra = ra;
 	ins.A.rb = rb;
 	ins.A.rc = rc;

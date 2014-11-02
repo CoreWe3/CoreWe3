@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 			case SUB:
 			case AND:
 			case OR:
+			case XOR:
 			case SHL:
 			case SHR:
 				printf("%s\t%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb),reg2name(ins.A.rc));
