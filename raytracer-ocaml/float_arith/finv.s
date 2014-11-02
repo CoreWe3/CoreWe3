@@ -16,16 +16,16 @@
 	SHL	r4	r3	r16
 	SHR	r4	r4	r16
 	SHR	r4	r4	r14
-	BLT	r4	r12	:else
+	BLT	r4	r12	:finvelse
 	SUB	r4	r4	r12
 	SUB	r4	r12	r4
 	SUB	r4	r4	r16
-	BEQ	r0	r0	:end
-:else
+	BEQ	r0	r0	:finvend
+:finvelse
 	SUB	r4	r12	r4
 	ADD	r4	r12	r4
 	SUB	r4	r4	r16
-:end
+:finvend
 	LD	r3	temp_a	r6	# from a.txt
 	PUSH r4
 	PUSH	r5
