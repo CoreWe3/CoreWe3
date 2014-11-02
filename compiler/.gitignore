@@ -5,3 +5,4 @@
 *.s
 *.S
 test/*
+!test/*.ml
