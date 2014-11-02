@@ -46,5 +46,5 @@
 	SHR	r10	r10	r13
 	OR	r3	r5	r4
 	OR	r3	r3	r10
-	ret
+	RET
 	
