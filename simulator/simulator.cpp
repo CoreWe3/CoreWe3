@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include "isa.h"
 
+
 void ld(unsigned int ra, unsigned int rb, int cx);
 void st(unsigned int ra, unsigned int rb, int cx);
 void add(unsigned int ra, unsigned int rb, unsigned int rc);
@@ -11,6 +12,7 @@ void sub(unsigned int ra, unsigned int rb, unsigned int rc);
 void addi(unsigned int ra, unsigned int rb, int cx);
 void _and(unsigned int ra, unsigned int rb, unsigned int rc);
 void _or(unsigned int ra, unsigned int rb, unsigned int rc);
+void _xor(unsigned int ra, unsigned int rb, unsigned int rc);
 void shl(unsigned int ra, unsigned int rb, unsigned int rc);
 void shr(unsigned int ra, unsigned int rb, unsigned int rc);
 void beq(unsigned int ra, unsigned int rb, int cx);
@@ -33,10 +35,14 @@ unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
 
-	printf("pc:%d, sp:%d, ", pc, sp);
+	printf("pc:%d, sp:%d\n", pc, sp);
 
 	for(int i = 0; i < REGNUM; i++){
-		printf("%s:%u, ", reg2name(i), reg[i]);
+		printf("%s:%u, ", reg2name(i), reg[i].u);
+	}
+	printf("\n");
+	for(int i = 0; i < REGNUM; i++){
+		printf("%s:%d, ", reg2name(i), reg[i].d);
 	}
 	printf("\n");
 	for(int i = 0; i < ISANUM; i++){
@@ -60,6 +66,12 @@ int main(int argc, char* argv[])
 	unsigned int limit = 0xffffffff;
 	unsigned int breakpoint = 0xffffffff;
 	char result;
+	
+	for(int i=0; i< REGNUM; i++){
+		reg[i].u = 0;
+	}
+
+
 	while((result=getopt(argc,argv,"a:i:o:l:b:"))!=-1){
 		switch(result){
 			case 'a':
@@ -155,6 +167,9 @@ int main(int argc, char* argv[])
 			case OR:
 				_or(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
+			case XOR:
+				_xor(ins.A.ra,ins.A.rb,ins.A.rc);
+				break;
 			case SHL:
 				shl(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
@@ -186,7 +201,7 @@ int main(int argc, char* argv[])
 				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
 				break;
 		}
-		reg[0] = 0;
+		reg[0].u = 0;
 		pc+=pcflag;
 		d_insnum++;
 	}
@@ -208,13 +223,13 @@ const char* reg2name(unsigned int reg){
 }
 
 void ld(unsigned int ra, unsigned int rb, int cx){
-	unsigned int tmp = (reg[rb] + cx) & 0xFFFFF;
+	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
 	if(tmp != IOADDR ){
-		reg[ra] = ram[tmp];
+		reg[ra].u = ram[tmp];
 	}else{
 		int iotmp;
 		if(fread(&iotmp,sizeof(int),1,iofpr) > 0){
-			reg[ra] = iotmp;
+			reg[ra].u = iotmp & 0xFF;
 		}else{
 			printf("File Read Error");
 			debuginfo();
@@ -223,9 +238,9 @@ void ld(unsigned int ra, unsigned int rb, int cx){
 	}
 }
 void st(unsigned int ra, unsigned int rb, int cx){
-	unsigned int tmp = (reg[rb] + cx) & 0xFFFFF;
+	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
 	if(tmp != IOADDR ){
-		ram[tmp] = reg[ra];
+		ram[tmp] = reg[ra].u & 0xFF;
 	}else{
 		if(iofpw!=NULL && fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
 			printf("File Write Error");
@@ -235,40 +250,43 @@ void st(unsigned int ra, unsigned int rb, int cx){
 	}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] + reg[rc];
+	reg[ra].d = reg[rb].d + reg[rc].d;
 }
 void sub(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] - reg[rc];
+	reg[ra].d = reg[rb].d - reg[rc].d;
 }
 void addi(unsigned int ra, unsigned int rb, int cx){
-	reg[ra] = reg[rb] + cx;
+	reg[ra].d = reg[rb].d + cx;
 }
 void _and(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] & reg[rc];
+	reg[ra].u = reg[rb].u & reg[rc].u;
 }
 void _or(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] | reg[rc];
+	reg[ra].u = reg[rb].u | reg[rc].u;
+}
+void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
+	reg[ra].u = reg[rb].u ^ reg[rc].u;
 }
 void shl(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] << reg[rc];
+	reg[ra].u = reg[rb].u << reg[rc].d;
 }
 void shr(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra] = reg[rb] >> reg[rc];
+	reg[ra].u = reg[rb].u >> reg[rc].d;
 }
 void beq(unsigned int ra, unsigned int rb, int cx){
-	if(reg[ra] == reg[rb]){ 
+	if(reg[ra].d == reg[rb].d){ 
 		pc = pc + cx;
 		pcflag = 0;
 	}
 }
 void ble(unsigned int ra, unsigned int rb, int cx){
-	if(reg[ra] <= reg[rb]){
+	if(reg[ra].d <= reg[rb].d){
 		pc = pc + cx;
 		pcflag = 0;
 	}
 }
 void blt(unsigned int ra, unsigned int rb, int cx){
-	if(reg[ra] < reg[rb]){
+	if(reg[ra].d < reg[rb].d){
 		pc = pc + cx;
 		pcflag = 0;
 	}
@@ -286,10 +304,10 @@ void ret(){
 }
 void push(unsigned int ra){
 	sp--;
-	ram[sp] = reg[ra];
+	ram[sp] = reg[ra].u;
 }
 void pop(unsigned int ra){
-	reg[ra] = ram[sp];
+	reg[ra].u = ram[sp];
 	sp++;
 }
 

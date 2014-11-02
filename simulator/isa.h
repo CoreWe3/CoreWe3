@@ -20,6 +20,10 @@ typedef union{
 	} J;
 } INS;
 
+typedef union{
+	unsigned int u;
+	int d;
+} REG;
 
 #define ISANUM 16
 
@@ -42,14 +46,14 @@ const char* names[] = {"LD","ST","ADD","SUB","ADDI","AND","OR","SHL","SHR","BEQ"
 #define RET  0xd
 #define PUSH  0xe
 #define POP  0xf
-
+#define XOR  0x10
 
 const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15"};
 
 #define REGNUM 16
 #define RAMSIZE 0x100000
 #define ROMSIZE 0x100000
-unsigned int reg[REGNUM]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+REG reg[REGNUM];
 unsigned int pc=0;
 unsigned int pcflag;
 unsigned int sp=0xF7FFF;
