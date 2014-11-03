@@ -40,7 +40,6 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, V (y)))
-  | Closure.Xor (x, y) -> Ans (Xor (x, V (y)))
   | Closure.Lsl (x, y) -> Ans (Slw (x, V (y)))
   | Closure.Lsr (x, y) -> Ans (Srw (x, V (y)))
   | Closure.IfEq (x, y, e1, e2) -> 

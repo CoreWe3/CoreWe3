@@ -227,11 +227,16 @@ void ld(unsigned int ra, unsigned int rb, int cx){
 	if(tmp != IOADDR ){
 		reg[ra].u = ram[tmp];
 	}else{
-		int iotmp;
-		if(fread(&iotmp,sizeof(int),1,iofpr) > 0){
-			reg[ra].u = iotmp & 0xFF;
+		if(iofpr == NULL){
+			printf("WARN: NO INPUT FILE\n");
+			reg[ra].u = 0;
+			return;
+		}
+		unsigned char iotmp;
+		if(fread(&iotmp,sizeof(unsigned char),1,iofpr) > 0){
+			reg[ra].u = iotmp;
 		}else{
-			printf("File Read Error");
+			printf("File Read Error\n");
 			debuginfo();
 			exit(1);
 		}
@@ -240,10 +245,11 @@ void ld(unsigned int ra, unsigned int rb, int cx){
 void st(unsigned int ra, unsigned int rb, int cx){
 	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
 	if(tmp != IOADDR ){
-		ram[tmp] = reg[ra].u & 0xFF;
+		ram[tmp] = reg[ra].u;
 	}else{
-		if(iofpw!=NULL && fwrite(&reg[ra],sizeof(int),1,iofpw) <= 0){
-			printf("File Write Error");
+		unsigned char iotmp = reg[ra].u & 0xFF;
+		if(iofpw!=NULL && fwrite(&iotmp,sizeof(unsigned char),1,iofpw) <= 0){
+			printf("File Write Error\n");
 			debuginfo();
 			exit(1);
 		}

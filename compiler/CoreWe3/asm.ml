@@ -13,7 +13,6 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Neg of Id.t
   | Add of Id.t * id_or_imm
   | Sub of Id.t * id_or_imm
-  | Xor of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
   | Lwz of Id.t * id_or_imm
@@ -47,8 +46,7 @@ let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
 let reg_hp = "r2"
 let reg_sp = "r1"
-let reg_tmp = "r15"
-
+let reg_tmp = "%r15"
 (* is_reg : Id.t -> bool *)
 let is_reg x = x.[0] = '%'
 
@@ -65,7 +63,7 @@ let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li (_) | FLi (_) | SetL (_) | Comment (_) | Restore (_) -> []
   | Mr (x) | Neg (x) | Save (x, _) -> [x]
-  | Add (x, y') | Sub (x, y') | Xor (x, y')| Slw (x, y') | Srw (x, y') | Lwz (x, y') -> 
+  | Add (x, y') | Sub (x, y') | Slw (x, y') | Srw (x, y') | Lwz (x, y') -> 
       x :: fv_id_or_imm y'
   | Stw (x, y, z') -> x :: y :: fv_id_or_imm z'
   | IfEq (x, y, e1, e2) | IfLE (x, y, e1, e2) | IfGE (x, y, e1, e2) -> 

@@ -11,7 +11,6 @@ and exp =
   | Neg of Id.t
   | Add of Id.t * id_or_imm
   | Sub of Id.t * id_or_imm
-  | Xor of Id.t * id_or_imm
   | Slw of Id.t * id_or_imm
   | Srw of Id.t * id_or_imm
   | Lwz of Id.t * id_or_imm
@@ -39,7 +38,7 @@ val reg_cl : Id.t
 val reg_sw : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
-val reg_tmp: Id.t
+val reg_tmp : Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list
