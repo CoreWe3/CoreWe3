@@ -27,18 +27,18 @@
 	SUB	r4	r4	r16
 :finvend
 	LD	r3	temp_a	r6	# from a.txt
-	PUSH r4
+	PUSH	r4
 	PUSH	r5
 	PUSH	r6
 	OR	r4	r7	r7
 	PUSH	r2
-	jsub	:fmul	# r3 * r4 = r3
-	POP r2
+	JSUB	:fmul	# r3 * r4 = r3
+	POP	r2
 	POP	r6
 	PUSH	r2
 	OR	r4	r3	r3
 	LD	r3	temp_b	r6	# from b.txt
-	jsub	:fsub	# r3 - r4 = r3
+	JSUB	:fsub	# r3 - r4 = r3
 	POP	r2
 	POP	r5
 	POP	r4
