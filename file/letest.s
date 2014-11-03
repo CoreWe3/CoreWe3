@@ -1,0 +1,3 @@
+ADDI	r3	r0	2
+BLE	r3	r0	4
+ADDI	r10	r0	1

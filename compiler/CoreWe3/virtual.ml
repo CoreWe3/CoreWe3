@@ -110,7 +110,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	       Let ((offset, Type.Int), Slw (y, C (2)), 
 		    Ans (Stw (z, x, V (offset)))) 
 	   | _ -> assert false)
-  | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
+  | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L(":min_caml_" ^ x)))
 
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 
@@ -131,4 +131,9 @@ let f (Closure.Prog (fundefs, e)) =
   data := [];
   let fundefs = List.map h fundefs in
   let e = g M.empty e in
+    print_string "\nVirtual ===============\n";
+    print_string (pp_prog (Prog (!data, fundefs, e)));
     Prog (!data, fundefs, e)
+
+
+

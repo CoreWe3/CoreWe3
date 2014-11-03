@@ -121,7 +121,6 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						code = addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						//print_L(code);
 						break;
 					case AND:
 						ra = strtok(NULL,tokens);
@@ -158,6 +157,9 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						if(cx[0] == ':') {
+							if(label.count(cx) == 0){
+								printf("WARN: Invalid Label\n");
+							}
 							code = beq(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
 							code = beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
@@ -168,6 +170,9 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						if(cx[0] == ':') {
+							if(label.count(cx) == 0){
+								printf("WARN: Invalid Label\n");
+							}
 							code = ble(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
 							code = ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
@@ -178,6 +183,9 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						if(cx[0] == ':') {
+							if(label.count(cx) == 0){
+								printf("WARN: Invalid Label\n");
+							}
 							code = blt(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
 							code = blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
@@ -186,6 +194,9 @@ int main(int argc, char* argv[])
 					case JSUB:
 						cx = strtok(NULL,tokens);
 						if(cx[0] == ':') {
+							if(label.count(cx) == 0){
+								printf("WARN: Invalid Label\n");
+							}
 							code = jsub(label[cx]-line);
 						}else{
 							code = jsub(strtol(cx,NULL,0));

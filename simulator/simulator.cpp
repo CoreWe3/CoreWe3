@@ -56,7 +56,7 @@ void debuginfo(){
 	}
 
 	printf("\n");
-	printf("Number of Instruction : %d\n",d_insnum);
+	printf("Number of Instruction : %u\n",d_insnum);
 }
 
 

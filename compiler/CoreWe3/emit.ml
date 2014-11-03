@@ -53,14 +53,14 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (dest, Let((x, t), exp, e)) -> g' oc (NonTail (x), exp); g oc (dest, e)
 and g' oc = function (* 各命令のアセンブリ生成 *)
     (* 末尾でなかったら計算結果を dest にセット *)
-  | (NonTail(_), Nop) -> ()
+  | (NonTail(_), Nop) -> () (* OK! *)
   | (NonTail(x), Li(i)) when i >= -32768 && i < 32768 -> 
-      Printf.fprintf oc "\tADDI\t%s\tr0\t%d\n" (reg x) i
+      Printf.fprintf oc "\tADDI\t%s\tr0\t%d #Li\n" (reg x) i
   | (NonTail(x), Li(i)) ->
       let n = i lsr 16 in
       let m = i lxor (n lsl 16) in
       let r = reg x in
-	Printf.fprintf oc "\tPUSH\tr1\n";
+    Printf.fprintf oc "\tPUSH\tr1\n";
     Printf.fprintf oc "\tPUSH\tr2\n";
     Printf.fprintf oc "\tADDI\tr1\tr0\t16\n";
     Printf.fprintf oc "\tADDI\tr2\tr0\t%d\n" n;
@@ -68,7 +68,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
     Printf.fprintf oc "\tSHL\t%s\t%s\tr1" r r;
     Printf.fprintf oc "\tSHR\t%s\t%s\tr1" r r;
     Printf.fprintf oc "\tADD\r%s\tr2\t%s" r r;
-	Printf.fprintf oc "\tPOP\tr2\n";
+    Printf.fprintf oc "\tPOP\tr2\n";
     Printf.fprintf oc "\tPOP\tr1\n";
   | (NonTail(x), FLi(Id.L(l))) ->
       let s = load_label reg_tmp l in
@@ -78,60 +78,60 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "%s" s
   | (NonTail(x), Mr(y)) when x = y -> ()
   | (NonTail(x), Mr(y)) -> 
-      Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg x) (reg y)
+      Printf.fprintf oc "\tADD\t%s\tr0\t%s #MR\n" (reg x) (reg y)
   | (NonTail(x), Neg(y)) -> 
-      Printf.fprintf oc "\tSUB\t%s\tr0\t%s\n" (reg x) (reg y)
+      Printf.fprintf oc "\tSUB\t%s\tr0\t%s #NEG\n" (reg x) (reg y)
   | (NonTail(x), Add(y, V(z))) -> 
-      Printf.fprintf oc "\tADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+      Printf.fprintf oc "\tADD\t%s\t%s\t%s #ADD_V\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Add(y, C(z))) -> 
-      Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" (reg x) (reg y) z
+      Printf.fprintf oc "\tADDI\t%s\t%s\t%d #ADD_C\n" (reg x) (reg y) z
   | (NonTail(x), Sub(y, V(z))) -> 
-      Printf.fprintf oc "\tSUB\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+      Printf.fprintf oc "\tSUB\t%s\t%s\t%s #SUB_V\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Sub(y, C(z))) -> 
-      Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" (reg x) (reg y) (-z);
+      Printf.fprintf oc "\tADDI\t%s\t%s\t%d #SUB_C\n" (reg x) (reg y) (-z);
   | (NonTail(x), Slw(y, V(z))) -> 
-      Printf.fprintf oc "\tSHL\t%s,\t%s\t%s\n" (reg x) (reg y) (reg z)
+      Printf.fprintf oc "\tSHL\t%s,\t%s\t%s #SLW_V\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Slw(y, C(z))) -> 
-      Printf.fprintf oc "\tPUSH\tr1\n";
-      Printf.fprintf oc "\tADDI\tr1\tr0\t%d\n" z;
-      Printf.fprintf oc "\tSHL\t%s\t%s\tr1\n" (reg x) (reg y);
-      Printf.fprintf oc "\tPOP\tr1\n";
+      Printf.fprintf oc "\tPUSH\tr1 #SLW_C\n";
+      Printf.fprintf oc "\tADDI\tr1\tr0\t%d #SLW_C\n" z;
+      Printf.fprintf oc "\tSHL\t%s\t%s\tr1 #SLW_C\n" (reg x) (reg y);
+      Printf.fprintf oc "\tPOP\tr1 #SLW_C\n";
   | (NonTail(x), Srw(y, V(z))) -> 
-      Printf.fprintf oc "\tSHR\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+      Printf.fprintf oc "\tSHR\t%s\t%s\t%s #SRW_V\n" (reg x) (reg y) (reg z)
   | (NonTail(x), Srw(y, C(z))) -> 
-      Printf.fprintf oc "\tPUSH\tr1\n";
-      Printf.fprintf oc "\tADDI\tr1\tr0\t%d\n" z;
-      Printf.fprintf oc "\tSHR\t%s\t%s\tr1\n" (reg x) (reg y);
-      Printf.fprintf oc "\tPOP\tr1\n";
+      Printf.fprintf oc "\tPUSH\tr1 #SRW_C\n";
+      Printf.fprintf oc "\tADDI\tr1\tr0\t%d #SRW_C\n" z;
+      Printf.fprintf oc "\tSHR\t%s\t%s\tr1 #SRW_C\n" (reg x) (reg y);
+      Printf.fprintf oc "\tPOP\tr1 #SRW_C\n";
   | (NonTail(x), Lwz(y, V(z))) ->
-      Printf.fprintf oc "\tPUSH\tr1\n";
-      Printf.fprintf oc "\tADD\tr1\t%s\t%s\n" (reg y) (reg z);
-      Printf.fprintf oc "\tLD\t%s\tr1\t0\n" (reg x);
-      Printf.fprintf oc "\tPOP\tr1\n";
+      Printf.fprintf oc "\tPUSH\tr1 #LWZ_V\n";
+      Printf.fprintf oc "\tADD\tr1\t%s\t%s #LWZ_V\n" (reg y) (reg z);
+      Printf.fprintf oc "\tLD\t%s\tr1\t0\ #LWZ_Vn" (reg x);
+      Printf.fprintf oc "\tPOP\tr1 #LWZ_V\n";
   | (NonTail(x), Lwz(y, C(z))) -> 
-      Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) (reg y) z
+      Printf.fprintf oc "\tLD\t%s\t%s\t%d #LWZ_C\n" (reg x) (reg y) z
   | (NonTail(_), Stw(x, y, V(z))) ->
-      Printf.fprintf oc "\tPUSH\tr1\n";
-      Printf.fprintf oc "\tADD\tr1\t%s\t%s\n" (reg y) (reg z);
-      Printf.fprintf oc "\tST\t%s\tr1\t0\n" (reg x);
-      Printf.fprintf oc "\tPOP\tr1\n";
+      Printf.fprintf oc "\tPUSH\tr1 #STW_V\n";
+      Printf.fprintf oc "\tADD\tr1\t%s\t%s #STW_V\n" (reg y) (reg z);
+      Printf.fprintf oc "\tST\t%s\tr1\t0 #STW_V\n" (reg x);
+      Printf.fprintf oc "\tPOP\tr1 #STW_V\n";
   | (NonTail(_), Stw(x, y, C(z))) -> 
-      Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) (reg y) z
-  | (NonTail(_), Comment(s)) -> Printf.fprintf oc "#\t%s\n" s
+      Printf.fprintf oc "\tST\t%s\t%s\t%d #STW_C\n" (reg x) (reg y) z
+  | (NonTail(_), Comment(s)) -> ()
   (* 退避の仮想命令の実装 *)
   | (NonTail(_), Save(x, y))
       when List.mem x allregs && not (S.mem y !stackset) ->
       save y;
-	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) reg_sp (offset y) 
+	Printf.fprintf oc "\tST\t%s\t%s\t%d #SAVE\n" (reg x) reg_sp (offset y) 
   | (NonTail(_), Save(x, y)) -> assert (S.mem y !stackset); ()
   (* 復帰の仮想命令の実装 *)
   | (NonTail(x), Restore(y)) ->
-      Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) reg_sp (offset y)
+      Printf.fprintf oc "\tLD\t%s\t%s\t%d #RESTORE\n" (reg x) reg_sp (offset y)
   (* 末尾だったら計算結果を第一レジスタにセット *)
   | (Tail, (Nop | Stw _ | Comment _ | Save _ as exp)) ->
       g' oc (NonTail(Id.gentmp Type.Unit), exp);
       Printf.fprintf oc "\tRET\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | Slw _ | Srw _ |
+  | (Tail, (Li _ | FLi _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | Slw _ | Srw _ |
             Lwz _ as exp)) -> 
       g' oc (NonTail(regs.(0)), exp);
       Printf.fprintf oc "\tRET\n";
@@ -142,71 +142,63 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
 	 | _ -> assert false);
       Printf.fprintf oc "\tRET\n";
   | (Tail, IfEq(x, y, e1, e2)) ->
-      g'_tail_if oc e1 e2 "BEQ" (reg x)  (reg y)
+      g'_tail_if oc e2 e1 "BEQ" (reg x)  (reg y)
   | (Tail, IfLE(x, y, e1, e2)) ->
-      g'_tail_if oc e1 e2 "BLE" (reg x)  (reg y)
+      g'_tail_if oc e2 e1 "BLE" (reg x)  (reg y)
   | (Tail, IfGE(x, y, e1, e2)) ->
-      g'_tail_if oc e1 e2 "BLT" (reg y)  (reg x)
+      g'_tail_if oc e2 e1 "BLT" (reg y)  (reg x)
   | (NonTail(z), IfEq(x, y, e1, e2)) ->
-      g'_non_tail_if oc (NonTail(z)) e1 e2 "BEQ" (reg x)  (reg y)
+      g'_non_tail_if oc (NonTail(z)) e2 e1 "BEQ" (reg x)  (reg y)
   | (NonTail(z), IfLE(x, y, e1, e2)) ->
-      g'_non_tail_if oc (NonTail(z)) e1 e2 "BLE" (reg x)  (reg y)
+      g'_non_tail_if oc (NonTail(z)) e2 e1 "BLE" (reg x)  (reg y)
   | (NonTail(z), IfGE(x, y, e1, e2)) ->
-      g'_non_tail_if oc (NonTail(z)) e1 e2 "BLT" (reg y)  (reg x)
+      g'_non_tail_if oc (NonTail(z)) e2 e1 "BLT" (reg y)  (reg x)
   (* 関数呼び出しの仮想命令の実装 *)
   | (Tail, CallCls(x, ys)) -> (* 末尾呼び出し *)
       g'_args oc [(x, reg_cl)] ys;
-      Printf.fprintf oc "#\tlwz\t%s, 0(%s)\n" (reg reg_sw) (reg reg_cl);
-      Printf.fprintf oc "#\tmtctr\t%s\n\tbctr\n" (reg reg_sw);
+      Printf.fprintf oc "#\tlwz\t%s, 0(%s) #CALLCLS\n" (reg reg_sw) (reg reg_cl);
+      Printf.fprintf oc "#\tmtctr\t%s\n\tbctr #CALLCLS\n" (reg reg_sw);
   | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
       g'_args oc [] ys;
-      Printf.fprintf oc "#\tb\t%s\n" x
+      Printf.fprintf oc "#\tb\t%s #CALLCLS\n" x
   | (NonTail(a), CallCls(x, ys)) ->
-      Printf.fprintf oc "\tPOP\t%s\n" reg_tmp;
       g'_args oc [(x, reg_cl)] ys;
       let ss = stacksize () in
-	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
-	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp ss;
-	Printf.fprintf oc "#\tlwz\t%s, 0(%s)\n" reg_tmp (reg reg_cl);
-	Printf.fprintf oc "#\tmtctr\t%s\n" reg_tmp;
-	Printf.fprintf oc "#\tbctrl\n";
-	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp (-ss);
-	Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d #CALLCLS\n" reg_sp reg_sp ss;
+	Printf.fprintf oc "#\tlwz\t%s, 0(%s) #CALLCLS\n" reg_tmp (reg reg_cl);
+	Printf.fprintf oc "#\tmtctr\t%s\n #CALLCLS" reg_tmp;
+	Printf.fprintf oc "#\tbctrl #CALLCLS\n";
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d #CALLCLS\n" reg_sp reg_sp (-ss);
 	(if List.mem a allregs && a <> regs.(0) then 
-	   Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg a) (reg regs.(0)));
-	Printf.fprintf oc "\tPUSH\t%s\n" reg_tmp
+	   Printf.fprintf oc "\tADD\t%s\tr0\t%s #CALLCLS\n" (reg a) (reg regs.(0)));
   | (NonTail(a), CallDir(Id.L(x), ys)) -> 
-      Printf.fprintf oc "\tPOP\t%s\n" reg_tmp;
       g'_args oc [] ys;
       let ss = stacksize () in
-	Printf.fprintf oc "\tST\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
-	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp ss;
-	Printf.fprintf oc "\tBEQ\tr0\tr0\t%s\n" x;
-	Printf.fprintf oc "\tADDI\t%s\t%s\t%d\n" reg_sp reg_sp (-ss);
-	Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" reg_tmp reg_sp (ss - 4);
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d #CALLDIR\n" reg_sp reg_sp ss;
+	Printf.fprintf oc "\tJSUB\t:%s #CALLDIR\n" x;
+	Printf.fprintf oc "\tADDI\t%s\t%s\t%d #CALLDIR\n" reg_sp reg_sp (-ss);
 	(if List.mem a allregs && a <> regs.(0) then
-	   Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg a) (reg regs.(0)));
-	Printf.fprintf oc "\tPUSH\t%s\n" reg_tmp
+	   Printf.fprintf oc "\tADD\t%s\tr0\t%s #CALLDIR\n" (reg a) (reg regs.(0)));
 and g'_tail_if oc e1 e2 b x y = 
   let b_true = Id.genid (b ^ "true") in
-    Printf.fprintf oc "\t%s\t%s\t%s\t%s\n" b x y b_true;
+    Printf.fprintf oc "\t%s\t%s\t%s\t:%s #TAILIF\n" b x y b_true;
     let stackset_back = !stackset in
       g oc (Tail, e1);
-      Printf.fprintf oc "%s\n" b_true;
+      Printf.fprintf oc ":%s\n" b_true;
       stackset := stackset_back;
       g oc (Tail, e2)
 and g'_non_tail_if oc dest e1 e2 b x y = 
   let b_true = Id.genid (b ^ "_true") in
   let b_false = Id.genid (b ^ "_false") in
-    Printf.fprintf oc "\t%s\t%s\t%s\t%s\n" b x y b_true;
+    Printf.fprintf oc "\t%s\t%s\t%s\t:%s #NONTAILIF\n" b x y b_true;
     let stackset_back = !stackset in
       g oc (dest, e1);
       let stackset1 = !stackset in
-	Printf.fprintf oc "\tBEQ\tr0\tr0\t%s\n" b_false;
-	Printf.fprintf oc "%s\n" b_true;
+	Printf.fprintf oc "\tJSUB\t:%s #NONTAILIF\n" b_false;
+	Printf.fprintf oc ":%s\n" b_true;
 	stackset := stackset_back;
 	g oc (dest, e2);
-	Printf.fprintf oc "%s\n" b_false;
+	Printf.fprintf oc ":%s\n" b_false;
 	let stackset2 = !stackset in
 	  stackset := S.inter stackset1 stackset2
 and g'_args oc x_reg_cl ys = 
@@ -219,11 +211,10 @@ and g'_args oc x_reg_cl ys =
       (shuffle reg_sw yrs)
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
-  Printf.fprintf oc "%s\n" x;
+  Printf.fprintf oc ":%s\n" x;
   stackset := S.empty;
   stackmap := [];
   g oc (Tail, e)
-
 
 
 let f oc (Prog(data, fundefs, e)) =

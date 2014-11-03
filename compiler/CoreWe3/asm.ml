@@ -1,6 +1,14 @@
-(* PowerPC assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
+
+let pp_id_or_imm ii = 
+    match ii with
+    | V id -> 
+            Format.sprintf "%s" (Id.pp_t id)
+    | C i ->
+            Format.sprintf "%d" i
+
+
 type t = (* Ì¿Îá¤ÎÎó *)
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
@@ -46,7 +54,7 @@ let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
 let reg_hp = "r2"
 let reg_sp = "r1"
-let reg_tmp = "%r15"
+let reg_tmp = "r15"
 (* is_reg : Id.t -> bool *)
 let is_reg x = x.[0] = '%'
 
@@ -85,3 +93,68 @@ let rec concat e1 xt e2 = match e1 with
 
 (* align : int -> int *)
 let align i = if i mod 8 = 0 then i else i + 4
+
+
+let rec indent n =
+    match n with 
+    | 0 -> ""
+    | x -> " " ^ (indent (n-1))
+
+let rec pp_t t i=
+    match t with
+    | Ans exp -> pp_exp exp i
+    | Let ((id, ty), exp, ta) ->
+            Format.sprintf "%sLet %s\n%s\n%s" (indent i) (Id.pp_t id) (pp_exp exp (i+1)) (pp_t ta i)
+and pp_exp e i =
+    match e with
+    | Nop -> ""
+    | Li im ->
+            Format.sprintf "%sLi %d" (indent i) im
+    | FLi (Id.L(id)) ->
+            Format.sprintf "%sFLi %s" (indent i) id
+    | SetL (Id.L(id)) ->
+            Format.sprintf "%sSetL %s" (indent i) id
+    | Mr id ->
+            Format.sprintf "%sMr %s" (indent i) (Id.pp_t id)
+    | Neg id ->
+            Format.sprintf "%sNeg %s" (indent i) (Id.pp_t id)
+    | Add (id, ii) ->
+            Format.sprintf "%sAdd %s %s" (indent i) (Id.pp_t id) (pp_id_or_imm ii)
+    | Sub (id, ii) ->
+            Format.sprintf "%sSub %s %s" (indent i) (Id.pp_t id) (pp_id_or_imm ii)
+    | Slw (id, ii) ->
+            Format.sprintf "%sSlw %s %s" (indent i) (Id.pp_t id) (pp_id_or_imm ii)
+    | Srw (id, ii) ->
+            Format.sprintf "%sSrw %s %s" (indent i) (Id.pp_t id) (pp_id_or_imm ii)
+    | Lwz (id, ii) ->
+            Format.sprintf "%sLwz %s %s" (indent i) (Id.pp_t id) (pp_id_or_imm ii)
+    | Stw (id1, id2, ii) ->
+            Format.sprintf "%sStw %s %s %s" (indent i) (Id.pp_t id1) (Id.pp_t id2) (pp_id_or_imm ii)
+    | Comment s -> ""
+    | IfEq (id1, id2, t1, t2) -> 
+            Format.sprintf "%sIfEq %s %s\n%s\n%sElse\n%s\n%sEndif\n" (indent i) (Id.pp_t id1) (Id.pp_t id2) (pp_t t1 (i+1)) (indent i) (pp_t t2 (i+1)) (indent i)
+    | IfLE (id1, id2, t1, t2) -> 
+            Format.sprintf "%sIfLE %s %s\n%s\n%sElse\n%s\n%sEndif\n" (indent i) (Id.pp_t id1) (Id.pp_t id2) (pp_t t1 (i+1)) (indent i) (pp_t t2 (i+1)) (indent i)
+    | IfGE (id1, id2, t1, t2) ->
+            Format.sprintf "%sIfGE %s %s\n%s\n%sElse\n%s\n%sEndif\n" (indent i) (Id.pp_t id1) (Id.pp_t id2) (pp_t t1 (i+1)) (indent i) (pp_t t2 (i+1)) (indent i)
+    | CallCls (id, ids) ->
+            Format.sprintf "%sCallCls %s %s" (indent i) (Id.pp_t id) (String.concat ", " (List.map (fun m -> Id.pp_t m) ids))
+    | CallDir (Id.L(id), ids) ->
+            Format.sprintf "%sCallDIr %s %s" (indent i) id (String.concat ", " (List.map (fun m -> Id.pp_t m) ids))
+    | Save (id1, id2) ->
+          Format.sprintf "%sSave %s %s" (indent i) (Id.pp_t id1) (Id.pp_t id2)
+    | Restore id ->
+          Format.sprintf "%sRestore %s" (indent i) (Id.pp_t id)
+
+let pp_fundef f i =
+    let Id.L(name) = f.name in
+    let args = f.args in
+    let body = f.body in
+    let ret = f.ret in
+    Format.sprintf "%s %s\n%s\n" name  (String.concat ", " (List.map (fun t -> Id.pp_t t) args)) (pp_t body (i+1))
+
+let pp_prog p = 
+    let Prog(_, funs, t) = p in
+    Format.sprintf "%s\n%s\n" (String.concat "\n" (List.map (fun f -> pp_fundef f 0) funs)) (pp_t t 0) 
+
+
