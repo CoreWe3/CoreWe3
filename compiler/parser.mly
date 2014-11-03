@@ -136,8 +136,8 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
     %prec prec_if
     { ex_range $1 (get_range $6) (If ($2, $4, $6)) }
 | MINUS_DOT exp
-    %prec prec_unary_minus
-    { ex_range $1 (get_range $2) (FNeg ($2)) }
+    {let fneg = ex_range $1 $1 (Var "fneg") in
+     ex_range $1 (get_range $2) (App (fneg, [$2]))}
 | exp PLUS_DOT exp
     {let fadd = ex_range $2 $2 (Var "fadd") in
      ex_range (get_range $1) (get_range $3) (App (fadd, [$1; $3]))}
