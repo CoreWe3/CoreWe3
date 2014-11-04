@@ -28,7 +28,7 @@ entity memory_io is
 
 end memory_io;
 
-architecture blackbox of memory_io is
+architecture arch_memory_io of memory_io is
 
   component IO_buffer is
     generic (
@@ -45,7 +45,7 @@ architecture blackbox of memory_io is
       busy : out std_logic);
   end component;
   
-  signal state : std_logic_vector(4 downto 0) := (others => '0');
+  signal state : std_logic_vector(3 downto 0) := (others => '0');
   signal store_word_tmp : std_logic_vector(31 downto 0);
   signal iowe : std_logic := '0';
   signal iogo : std_logic := '0';
@@ -63,78 +63,76 @@ begin
     transmit_data => iotransmit_data,
     receive_data => ioreceive_data,
     busy => iobusy);
-  
+
+  --SRAM : SRAM_controller 
     
-  mio: process(clk)
+  main: process(clk)
   begin
     if rising_edge(clk) then
       case state is 
-        when "00000" =>
-          iogo <= '0';
-          XWA <= '1';
+        when x"0" =>
           if go = '1' then
             store_word_tmp <= store_word;
             if addr = x"fffff" then     --io
+              XWA <= '1';
+              iogo <= '1';
               if load_store = '1' then --store
-                state <= "01000";
+                iowe <= '1';
+                iotransmit_data <= store_word;
+                state <= x"1";
               else  --load
-                state <= "10000";
+                iowe <= '0';
+                state <= x"2";
               end if;
             else                      --sram
+              iogo <= '0';              
               if load_store = '1' then  --store
-                ZD <= store_word;
                 XWA <= '0';
                 ZA <= addr;
-                state <= "11100";
+                state <= x"3";
               else --load
                 ZD <= (others => 'Z');
                 XWA <= '1';
                 ZA <= addr;
-                state <= "11101";
+                state <= x"4";
               end if;
             end if;
-          end if;
-
-        when "01000" =>  --io store
-          if iobusy = '0' and iogo = '0' then
-            iowe <= '1';
-            iogo <= '1';
-            iotransmit_data <= store_word_tmp;
-            state <= "00000";
           else
             iogo <= '0';
           end if;
 
-        when "10000" => --io load
+        when x"1" =>  --io storing
+          iogo <= '0';
           if iobusy = '0' and iogo = '0' then
-            iowe <= '0';
-            iogo <= '1';
-            state <= "10001";
-          else
-            iogo <= '0';
+            state <= x"0";
           end if;
-        when "10001" => --io load
+        when x"2" => --io loading
+          iogo <= '0';
           if iobusy = '0' and iogo = '0' then
             load_word <= ioreceive_data;
-            state <= "00000";
+            state <= x"0";
           end if;
-          iogo <= '0';
-        when "11100" => --sram store
+
+        when  x"3" => --sram store
           XWA <= '1';
-          state <= "00000";
+          state <= x"A";
+        when  x"A" => --sram store
+          XWA <= '1';
+          ZD <= store_word_tmp;
+          state <= x"0";
 
-        when "11101" => --sram load
-          state <= "11110";
-        when "11110" =>
-          state <= "11111";
-        when "11111" => --sram load
+        when x"4" => --sram load
+          state <= x"B";
+        when x"B" => --sram load
+          state <= x"C";
+        when x"C" => --sram load
           load_word <= ZD;
-          state <= "00000";
-
+          state <= x"0";
         when others =>
-          state <= "00000";
+          state <= x"0";
       end case;
     end if;
   end process;
-  busy <= '0' when state = "00000" else '1';
-end blackbox;
+
+  busy <= '0' when state = x"0" else '1';
+end arch_memory_io;
