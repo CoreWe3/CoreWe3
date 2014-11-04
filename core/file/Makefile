@@ -1,13 +1,16 @@
 AS = ../../simulator/bin/assembler
 
+%.tbin: %.hex
+	./hex2tbin.pl < $< > $@
 
-%.bin: %.hex
-	./hex2bin.pl < $< > $@
+%.hex: %.bin
+	./bin2hex.pl < $< > $@
 
-%.hex: %.s $(AS)
+%.bin: %.s $(AS)
 	$(AS) $(basename $<) < $< && \
-	./bin2hex.pl < $(basename $<) > $@
-../../simulator/assembler:
+	./swap.pl < $(basename $<) > $@
+
+$(AS):
 	cd ../../simulator && \
 	make && \
 	cd ../core/file/
