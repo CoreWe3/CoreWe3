@@ -31,7 +31,7 @@ let reg r =
 
 let load_label r label =
   "#\tlis\t" ^ (reg r) ^ ", ha16(" ^ label ^ ")\n" ^ 
-  "\taddi\t" ^ (reg r) ^ ", " ^ (reg r) ^ ", lo16(" ^ label ^ ")\n" 
+  "#\taddi\t" ^ (reg r) ^ ", " ^ (reg r) ^ ", lo16(" ^ label ^ ")\n" 
 
 (* 関数呼び出しのために引数を並べ替える (register shuffling) *)
 let rec shuffle sw xys = 
@@ -53,26 +53,38 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (dest, Let((x, t), exp, e)) -> g' oc (NonTail (x), exp); g oc (dest, e)
 and g' oc = function (* 各命令のアセンブリ生成 *)
     (* 末尾でなかったら計算結果を dest にセット *)
-  | (NonTail(_), Nop) -> () (* OK! *)
+  | (NonTail(_), Nop) -> ()
   | (NonTail(x), Li(i)) when i >= -32768 && i < 32768 -> 
       Printf.fprintf oc "\tADDI\t%s\tr0\t%d #Li\n" (reg x) i
   | (NonTail(x), Li(i)) ->
       let n = i lsr 16 in
       let m = i lxor (n lsl 16) in
       let r = reg x in
-    Printf.fprintf oc "\tPUSH\tr1\n";
-    Printf.fprintf oc "\tPUSH\tr2\n";
-    Printf.fprintf oc "\tADDI\tr1\tr0\t16\n";
-    Printf.fprintf oc "\tADDI\tr2\tr0\t%d\n" n;
-    Printf.fprintf oc "\tADDI\t%s\tr0\t%d\n" r m;
-    Printf.fprintf oc "\tSHL\t%s\t%s\tr1" r r;
-    Printf.fprintf oc "\tSHR\t%s\t%s\tr1" r r;
-    Printf.fprintf oc "\tADD\r%s\tr2\t%s" r r;
-    Printf.fprintf oc "\tPOP\tr2\n";
-    Printf.fprintf oc "\tPOP\tr1\n";
+    Printf.fprintf oc "\tPUSH\tr1 #Li\n";
+    Printf.fprintf oc "\tPUSH\tr2 #Li\n";
+    Printf.fprintf oc "\tADDI\tr1\tr0\t16 #Li\n";
+    Printf.fprintf oc "\tADDI\tr2\tr0\t%d #Li\n" n;
+    Printf.fprintf oc "\tADDI\t%s\tr0\t%d #Li\n" r m;
+    Printf.fprintf oc "\tSHL\t%s\t%s\tr1 #Li\n" r r;
+    Printf.fprintf oc "\tSHR\t%s\t%s\tr1 #Li\n" r r;
+    Printf.fprintf oc "\tADD\r%s\tr2\t%s #Li\n" r r;
+    Printf.fprintf oc "\tPOP\tr2 #Li\n";
+    Printf.fprintf oc "\tPOP\tr1 #Li\n";
   | (NonTail(x), FLi(Id.L(l))) ->
       let s = load_label reg_tmp l in
-      Printf.fprintf oc "#%s\tlfd\t%s, 0(%s)\n" s (reg x) reg_tmp
+      let n = i lsr 16 in
+      let m = i lxor (n lsl 16) in
+      let r = reg x in
+    Printf.fprintf oc "\tPUSH\tr1 #FLi\n";
+    Printf.fprintf oc "\tPUSH\tr2 #FLi\n";
+    Printf.fprintf oc "\tADDI\tr1\tr0\t16 #FLi\n";
+    Printf.fprintf oc "\tADDI\tr2\tr0\t%d #FLi\n" n;
+    Printf.fprintf oc "\tADDI\t%s\tr0\t%d #FLi\n" r m;
+    Printf.fprintf oc "\tSHL\t%s\t%s\tr1 #FLi\n" r r;
+    Printf.fprintf oc "\tSHR\t%s\t%s\tr1 #FLi\n" r r;
+    Printf.fprintf oc "\tADD\r%s\tr2\t%s #FLi\n" r r;
+    Printf.fprintf oc "\tPOP\tr2 #FLi\n";
+    Printf.fprintf oc "\tPOP\tr1 #FLi\n";
   | (NonTail(x), SetL(Id.L(y))) -> 
       let s = load_label x y in
       Printf.fprintf oc "%s" s
@@ -160,7 +172,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "#\tmtctr\t%s\n\tbctr #CALLCLS\n" (reg reg_sw);
   | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
       g'_args oc [] ys;
-      Printf.fprintf oc "#\tb\t%s #CALLCLS\n" x
+      Printf.fprintf oc "\nJSUB\t%s #CALLCLS\n" x
   | (NonTail(a), CallCls(x, ys)) ->
       g'_args oc [(x, reg_cl)] ys;
       let ss = stacksize () in
@@ -207,7 +219,7 @@ and g'_args oc x_reg_cl ys =
       (fun (i, yrs) y -> (i + 1, (y, regs.(i)) :: yrs))
       (0, x_reg_cl) ys in
     List.iter
-      (fun (y, r) -> Printf.fprintf oc "\tADD\t%s\tr0\t%s\n" (reg r) (reg y))
+      (fun (y, r) -> Printf.fprintf oc "\tADD\t%s\tr0\t%s #ARGS\n" (reg r) (reg y))
       (shuffle reg_sw yrs)
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =

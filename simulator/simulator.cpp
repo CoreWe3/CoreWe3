@@ -28,6 +28,7 @@ const char* reg2name(unsigned int reg);
 
 FILE* iofpr = NULL;
 FILE* iofpw = NULL;
+FILE* ramout = NULL;
 
 //Debugger
 unsigned int d_insnum = 0;
@@ -55,6 +56,17 @@ void debuginfo(){
 		}
 	}
 
+	if(ramout!=NULL){
+		for(unsigned int i = 0; i < RAMSIZE; i++){
+			if(fwrite(&ram[i],sizeof(unsigned int),1,ramout) <= 0){
+				printf("File Write Error\n");
+				debuginfo();
+				exit(1);
+			}
+		}
+		fclose(ramout);
+	}
+
 	printf("\n");
 	printf("Number of Instruction : %u\n",d_insnum);
 }
@@ -71,8 +83,7 @@ int main(int argc, char* argv[])
 		reg[i].u = 0;
 	}
 
-
-	while((result=getopt(argc,argv,"a:i:o:l:b:"))!=-1){
+	while((result=getopt(argc,argv,"a:i:o:l:b:r:"))!=-1){
 		switch(result){
 			case 'a':
 				fpr = fopen(optarg,"rb");
@@ -91,6 +102,13 @@ int main(int argc, char* argv[])
 			case 'o':
 				iofpw = fopen(optarg,"wb");
 				if (iofpr == NULL){
+					printf("Can't open %s\n",optarg);
+					return 1;
+				}
+				break;
+			case 'r':
+				ramout = fopen(optarg,"wb");
+				if (ramout == NULL){
 					printf("Can't open %s\n",optarg);
 					return 1;
 				}
