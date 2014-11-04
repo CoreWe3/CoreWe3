@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.std_logic_signed.all;
 
 entity core_main is
   generic (
@@ -19,8 +19,10 @@ end core_main;
 
 architecture arch_core_main of core_main is
 
-  component code_rom
-    generic ( CODE : string := CODE);
+  component init_code_rom
+    generic ( CODE : string := CODE;
+              SIZE : integer := 16384;
+              WIDTH : integer := 14);
     port (
       clk : in std_logic;
       en : in std_logic;
@@ -124,8 +126,8 @@ begin
               reg_addr2 <= instr(15 downto 12);
             when x"04" => --addi
               reg_addr1 <= instr(19 downto 16);
-            when x"05" | x"06" | x"07" | x"08" =>
-              --and or shl shr
+            when x"05" | x"06" | x"07" | x"08" | x"10"=>
+              --and or shl shr xor
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
             when x"09" | x"0A" | x"0B" => -- branch
@@ -189,6 +191,10 @@ begin
               alu_iw2 <= reg_ow2;
             when x"08" => --shr
               ctrl <= "110";
+              alu_iw1 <= reg_ow1;
+              alu_iw2 <= reg_ow2;
+            when x"10" => --xor
+              ctrl <= "100";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
             when x"09" => --branch eq
@@ -362,7 +368,7 @@ begin
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
-            when x"05" | x"06" | x"07" | x"08" =>
+            when x"05" | x"06" | x"07" | x"08" | x"10"=>
               reg_addr1 <= instr(23 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
@@ -395,7 +401,7 @@ begin
     end if;
   end process;
 
-  rom : code_rom port map (
+  rom : init_code_rom port map (
     clk => clk,
     en => '1',
     addr => instr_addr,
