@@ -133,7 +133,7 @@ begin
     rom : bootload_code_rom port map (
       clk => clk,
       RS_RX => RS_RX_load,
-      RS_TX => RS_TX, --debug
+      RS_TX => open, --debug
       ready => ready,
       addr => pc,
       instr => instr);

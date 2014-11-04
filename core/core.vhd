@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/loopback.tbin";
+      CODE : string := "bootload";
       wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
