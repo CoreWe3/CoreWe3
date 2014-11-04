@@ -121,6 +121,8 @@ begin
             when x"01" => --store
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(23 downto 20);
+            when x"11" | x"12" => --load immediate
+              reg_addr1 <= instr(23 downto 20);
             when x"02" | x"03" => --add
               reg_addr1 <= instr(19 downto 16);
               reg_addr2 <= instr(15 downto 12);
@@ -161,6 +163,7 @@ begin
                 alu_iw2 <= x"FFFF" & instr(15 downto 0);
               end if;
               buf <= reg_ow2;
+            when x"11" | x"12" => --load immediate
             when x"02" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -357,6 +360,16 @@ begin
               reg_we <= '1';
               pc <= next_pc;
             when x"01" => --store
+              pc <= next_pc;
+            when x"11" => --load immediate high
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= instr(15 downto 0) & reg_ow1(15 downto 0);
+              reg_we <= '1';
+              pc <= next_pc;
+            when x"12" => --load immediate low
+              reg_addr1 <= instr(23 downto 20);
+              reg_iw <= reg_ow1(31 downto 16) & instr(15 downto 0);
+              reg_we <= '1';
               pc <= next_pc;
             when x"02" | x"03" => --add sub
               reg_addr1 <= instr(23 downto 20);
