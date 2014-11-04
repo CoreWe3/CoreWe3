@@ -42,11 +42,7 @@ void debuginfo(){
 	printf("pc:%d, sp:%d\n", pc, sp);
 
 	for(int i = 0; i < REGNUM; i++){
-		printf("%s:0x%x, ", reg2name(i), reg[i].u);
-	}
-	printf("\n");
-	for(int i = 0; i < REGNUM; i++){
-		printf("%s:%d, ", reg2name(i), reg[i].d);
+		printf("%s:%d (0x%x), ", reg2name(i), reg[i].d, reg[i].u);
 	}
 	printf("\n");
 	for(int i = 0; i < ISANUM; i++){
