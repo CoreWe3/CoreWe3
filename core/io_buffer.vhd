@@ -42,9 +42,9 @@ architecture arch_io_buffer of IO_buffer is
   end component;
 
   signal rgo : std_logic := '0';
-  signal sgo : std_logic := '0';
+  signal tgo : std_logic := '0';
   signal rbusy : std_logic;
-  signal sbusy : std_logic;
+  signal tbusy : std_logic;
 
 begin
 
@@ -58,15 +58,15 @@ begin
   transmit : transmit_buffer port map (
     clk => clk,
     RS_TX => RS_TX,
-    go => sgo,
+    go => tgo,
     data => transmit_data,
-    busy => sbusy);
+    busy => tbusy);
 
-  sgo <= '1' when go = '1' and we = '1' else
+  tgo <= '1' when go = '1' and we = '1' else
          '0';
   rgo <= '1' when go = '1' and we = '0' else
          '0';
-  busy <= '1' when sbusy = '1' or rbusy = '1' else
+  busy <= '1' when tbusy = '1' or rbusy = '1' else
           '0';
   
 end arch_io_buffer;                 

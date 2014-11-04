@@ -2,11 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity send_buffer_tb is
-end send_buffer_tb;
+entity transmit_buffer_tb is
+end transmit_buffer_tb;
 
-architecture tb of send_buffer_tb is
-  component send_buffer is
+architecture tb of transmit_buffer_tb is
+  component transmit_buffer is
     generic(
       wtime : std_logic_vector(15 downto 0) := x"0001");
     port (
@@ -27,7 +27,7 @@ architecture tb of send_buffer_tb is
 
 begin
 
-  main : send_buffer port map (
+  main : transmit_buffer port map (
     clk => clk,
     RS_TX => RS_TX,
     go => go,
