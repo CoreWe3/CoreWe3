@@ -8,6 +8,8 @@
 
 unsigned int ld(unsigned int ra, unsigned int rb, int cx);
 unsigned int st(unsigned int ra, unsigned int rb, int cx);
+unsigned int ldih(unsigned int ra, unsigned int cx);
+unsigned int ldil(unsigned int ra, unsigned int cx);
 unsigned int add(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc);
 unsigned int addi(unsigned int ra, unsigned int rb, int cx);
@@ -103,6 +105,16 @@ int main(int argc, char* argv[])
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						code = st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						break;
+					case LDIH:
+						ra = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						code = ldih(name2reg(ra),strtol(cx,NULL,0));
+						break;
+					case LDIL:
+						ra = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						code = ldil(name2reg(ra),strtol(cx,NULL,0));
 						break;
 					case ADD:
 						ra = strtok(NULL,tokens);
@@ -246,6 +258,22 @@ unsigned int st(unsigned int ra, unsigned int rb, int cx){
 	ins.L.cx = cx;
 	return ins.data;
 }
+unsigned int ldih(unsigned int ra, unsigned int cx){
+	INS ins;
+	ins.data = 0;
+	ins.LX.op = LDIH;
+	ins.LX.ra = ra;
+	ins.LX.cx = cx;
+	return ins.data;
+}
+unsigned int ldil(unsigned int ra, unsigned int cx){
+	INS ins;
+	ins.data = 0;
+	ins.LX.op = LDIL;
+	ins.LX.ra = ra;
+	ins.LX.cx = cx;
+	return ins.data;
+}
 unsigned int add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
@@ -372,8 +400,6 @@ unsigned int pop(unsigned int ra){
 	ins.A.ra = ra;
 	return ins.data;
 }
-
-
 unsigned int name2op(char* op){
 	int num = 10000;
 	for(int i = 0; i < ISANUM; i++){

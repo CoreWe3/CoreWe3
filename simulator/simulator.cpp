@@ -4,9 +4,10 @@
 #include <getopt.h>
 #include "isa.h"
 
-
 void ld(unsigned int ra, unsigned int rb, int cx);
 void st(unsigned int ra, unsigned int rb, int cx);
+void ldih(unsigned int ra, unsigned int cx);
+void ldil(unsigned int ra, unsigned int cx);
 void add(unsigned int ra, unsigned int rb, unsigned int rc);
 void sub(unsigned int ra, unsigned int rb, unsigned int rc);
 void addi(unsigned int ra, unsigned int rb, int cx);
@@ -36,10 +37,12 @@ unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
 
+
+
 	printf("pc:%d, sp:%d\n", pc, sp);
 
 	for(int i = 0; i < REGNUM; i++){
-		printf("%s:%u, ", reg2name(i), reg[i].u);
+		printf("%s:0x%x, ", reg2name(i), reg[i].u);
 	}
 	printf("\n");
 	for(int i = 0; i < REGNUM; i++){
@@ -50,12 +53,14 @@ void debuginfo(){
 		printf("%s:%u, ", names[i], counter[i]);
 	}
 	printf("\n");
-	for(int i = 0; i < 10; i++){
+	/*for(int i = 0; i < 10; i++){
 		if(sp+i<RAMSIZE){
 			printf("%d:%d, ", sp+i, ram[sp+i]);
 		}
-	}
-
+	}*/
+	printf("Number of Instruction : %u\n",d_insnum);
+	
+	//Dump RAM
 	if(ramout!=NULL){
 		for(unsigned int i = 0; i < RAMSIZE; i++){
 			if(fwrite(&ram[i],sizeof(unsigned int),1,ramout) <= 0){
@@ -66,9 +71,6 @@ void debuginfo(){
 		}
 		fclose(ramout);
 	}
-
-	printf("\n");
-	printf("Number of Instruction : %u\n",d_insnum);
 }
 
 
@@ -169,6 +171,12 @@ int main(int argc, char* argv[])
 				break;
 			case ST:
 				st(ins.L.ra,ins.L.rb,ins.L.cx);
+				break;
+			case LDIH:
+				ldih(ins.LX.ra, ins.LX.cx);
+				break;
+			case LDIL:
+				ldil(ins.LX.ra, ins.LX.cx);
 				break;
 			case ADD:
 				add(ins.A.ra,ins.A.rb,ins.A.rc);
@@ -272,6 +280,12 @@ void st(unsigned int ra, unsigned int rb, int cx){
 			exit(1);
 		}
 	}
+}
+void ldih(unsigned int ra, unsigned int cx){
+	reg[ra].u = (cx << 16) + (reg[ra].u & 0xFFFF);
+}
+void ldil(unsigned int ra, unsigned int cx){
+	reg[ra].u = (reg[ra].u & 0xFFFF0000) + cx ;
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].d = reg[rb].d + reg[rc].d;
