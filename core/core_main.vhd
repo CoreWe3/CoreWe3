@@ -4,7 +4,7 @@ use ieee.std_logic_signed.all;
 
 entity core_main is
   generic (
-    CODE : string := "code.bin";
+    CODE  : string := "code.bin";
     wtime : std_logic_vector(15 downto 0) := x"023D";
     debug : boolean := false);
   port (
@@ -14,19 +14,34 @@ entity core_main is
     ZD    : inout std_logic_vector(31 downto 0);
     ZA    : out   std_logic_vector(19 downto 0);
     XWA   : out   std_logic);
-
 end core_main;
 
 architecture arch_core_main of core_main is
+  constant SIZE : integer := 256;
+  constant WIDTH : integer := 8;
+
+  constant zero : std_logic_vector(31 downto 0) := (others => '0');
 
   component init_code_rom
-    generic ( CODE : string := CODE;
-              SIZE : integer := 16384;
-              WIDTH : integer := 14);
+    generic ( CODE  : string := CODE;
+              SIZE  : integer := SIZE;
+              WIDTH : integer := WIDTH);
     port (
-      clk : in std_logic;
-      en : in std_logic;
-      addr : in std_logic_vector(13 downto 0);
+      clk   : in  std_logic;
+      en    : in  std_logic;
+      addr  : in  std_logic_vector(WIDTH-1 downto 0);
+      instr : out std_logic_vector(31 downto 0));
+  end component;
+
+  component bootload_code_rom
+    generic ( wtime : std_logic_vector(15 downto 0) := wtime;
+              SIZE  : integer := SIZE;
+              WIDTH : integer := WIDTH);
+    port (
+      clk   : in std_logic;
+      RS_RX : in std_logic;
+      ready : out std_logic;
+      addr  : in std_logic_vector(WIDTH-1 downto 0);
       instr : out std_logic_vector(31 downto 0));
   end component;
 
@@ -59,7 +74,6 @@ architecture arch_core_main of core_main is
       ZD         : inout std_logic_vector(31 downto 0);
       ZA         : out   std_logic_vector(19 downto 0);
       XWA        : out   std_logic;
-      --バーストとか使うならピン追加可
       store_word : in    std_logic_vector(31 downto 0);
       load_word  : out   std_logic_vector(31 downto 0);
       addr       : in   std_logic_vector(19 downto 0);
@@ -68,50 +82,102 @@ architecture arch_core_main of core_main is
       busy       : out   std_logic);
   end component;
 
-  signal pc : std_logic_vector(13 downto 0) :=
-    "00000000000000";
-  signal next_pc : std_logic_vector(13 downto 0);
+
+  signal pc : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+  signal next_pc : std_logic_vector(WIDTH-1 downto 0);
   signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
   
-  signal instr_addr : std_logic_vector(13 downto 0);
   signal instr : std_logic_vector(31 downto 0);
-  signal state : std_logic_vector(3 downto 0) :=
-    (others => '0');
+  signal state : std_logic_vector(3 downto 0) := x"F";
 
-  signal alu_iw1 : std_logic_vector(31 downto 0);
-  signal alu_iw2 : std_logic_vector(31 downto 0);
+  signal alu_iw1 : std_logic_vector(31 downto 0) := (others => '0');
+  signal alu_iw2 : std_logic_vector(31 downto 0) := (others => '0');
   signal alu_ow : std_logic_vector(31 downto 0);
-  signal ctrl : std_logic_vector(2 downto 0);
+  signal ctrl : std_logic_vector(2 downto 0) := (others => '0');
 
-  signal reg_addr1 : std_logic_vector(3 downto 0);
-  signal reg_addr2 : std_logic_vector(3 downto 0);
-  signal reg_we : std_logic;
-  signal reg_iw : std_logic_vector(31 downto 0);
+  signal reg_addr1 : std_logic_vector(3 downto 0):= (others => '0');
+  signal reg_addr2 : std_logic_vector(3 downto 0) := (others => '0');
+  signal reg_we : std_logic := '0';
+  signal reg_iw : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_ow1 : std_logic_vector(31 downto 0);
   signal reg_ow2 : std_logic_vector(31 downto 0);
 
   signal buf : std_logic_vector(31 downto 0);
-  signal mem_store : std_logic_vector(31 downto 0);
+  signal mem_store : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_load : std_logic_vector(31 downto 0);
-  signal mem_addr : std_logic_vector(19 downto 0);
+  signal mem_addr : std_logic_vector(19 downto 0) := (others => '0');
   signal mem_we : std_logic := '0';
   signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 
   signal branch_f : std_logic;
-    
+
+  signal ready : std_logic;
+  signal RS_RX_exec : std_logic;
+  signal RS_RX_load : std_logic;
+
+  
 begin
+
+  file_initialize : if (CODE /= "bootload") generate
+    rom : init_code_rom port map (
+      clk => clk,
+      en => '1',
+      addr => pc,
+      instr => instr);
+    ready <= '1';
+  end generate;
+  
+  bootload : if (CODE = "bootload") generate
+    rom : bootload_code_rom port map (
+      clk => clk,
+      RS_RX => RS_RX_load,
+      ready => ready,
+      addr => pc,
+      instr => instr);
+  end generate;
+
+  alu0 : alu port map (
+    in_word1 => alu_iw1,
+    in_word2 => alu_iw2,
+    out_word => alu_ow,
+    ctrl => ctrl);
+
+  reg : registers port map (
+    clk => clk,
+    we => reg_we,
+    addr1 => reg_addr1,
+    addr2 => reg_addr2,
+    in_word => reg_iw,
+    out_word1 => reg_ow1,
+    out_word2 => reg_ow2);
+
+  mem : memory_io port map (
+    clk => clk,
+    RS_RX => RS_RX_exec,
+    RS_TX => RS_TX,
+    ZD => ZD,
+    ZA => ZA,
+    XWA => XWA,
+    store_word => mem_store,
+    load_word => mem_load,
+    addr => mem_addr,
+    load_store => mem_we,
+    go => mem_go,
+    busy => mem_busy);
+
+  RS_RX_exec <= RS_RX when state /= x"F" else
+                '1';
+  RS_RX_load <= RS_RX when state = x"F" else
+                '1';
 
   process(clk)
   begin
     if rising_edge(clk) then
       case state is
         when x"0" => --fetch
-          instr_addr <= pc;
-          state <= state+1;
+          state <= x"2";
           reg_we <= '0';
-        when x"1" => --
-          state <= state+1;
 
         when x"2" => --decode 
           
@@ -202,7 +268,7 @@ begin
               alu_iw2 <= reg_ow2;
             when x"09" => --branch eq
               ctrl <= "000";
-              alu_iw1 <= x"0000" & "00" & pc;
+              alu_iw1 <= zero(31 downto WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -215,7 +281,7 @@ begin
               end if;
             when x"0A" => --ble
               ctrl <= "000";
-              alu_iw1 <= x"0000" & "00" & pc;
+              alu_iw1 <= zero(31 downto WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -228,7 +294,7 @@ begin
               end if;
             when x"0B" => --blt
               ctrl <= "000";
-              alu_iw1 <= x"0000" & "00" & pc;
+              alu_iw1 <= zero(31 downto WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -241,7 +307,7 @@ begin
               end if;
             when x"0C" => --jump subroutine
               ctrl <= "000";
-              alu_iw1 <= x"0000" & "00" & pc;
+              alu_iw1 <= zero(31 downto WIDTH) & pc;
               if instr(23) = '0' then
                 alu_iw2 <= x"00" & instr(23 downto 0);
               else
@@ -288,7 +354,7 @@ begin
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= sp;
-                mem_store <= x"0000" & "00" & next_pc;
+                mem_store <= zero(31 downto WIDTH) & next_pc;
                 state <= state+1;
               end if;
             when x"0D" => --return
@@ -337,7 +403,7 @@ begin
               end if;
             when x"0D" => --ret
               if mem_busy = '0' and mem_go = '0' then
-                pc <= mem_load(13 downto 0);
+                pc <= mem_load(WIDTH-1 downto 0);
                 state <= state+1;
               end if;
             when x"0E" => --push
@@ -388,12 +454,12 @@ begin
               pc <= next_pc;
             when x"09" | x"0A" | x"0B" => --beq
               if branch_f = '1' then
-                pc <= alu_ow(13 downto 0);
+                pc <= alu_ow(WIDTH-1 downto 0);
               else
                 pc <= next_pc;
               end if;
             when x"0C" => --jsub
-              pc <= alu_ow(13 downto 0);
+              pc <= alu_ow(WIDTH-1 downto 0);
             when x"0D" => --ret
               sp <= alu_ow(19 downto 0);
             when x"0E" => --push
@@ -407,46 +473,16 @@ begin
             when others =>
           end case;
           state <= x"0";
+        when x"F" => --setupping 
+          if ready = '1' then
+            state <= x"0";
+            pc <= (others => '0');
+          end if;
         when others =>
           state <= x"0";
           pc <= (others => '0');
       end case;
     end if;
   end process;
-
-  rom : init_code_rom port map (
-    clk => clk,
-    en => '1',
-    addr => instr_addr,
-    instr => instr);
-
-  alu0 : alu port map (
-    in_word1 => alu_iw1,
-    in_word2 => alu_iw2,
-    out_word => alu_ow,
-    ctrl => ctrl);
-
-  reg : registers port map (
-    clk => clk,
-    we => reg_we,
-    addr1 => reg_addr1,
-    addr2 => reg_addr2,
-    in_word => reg_iw,
-    out_word1 => reg_ow1,
-    out_word2 => reg_ow2);
-
-  mem : memory_io port map (
-    clk => clk,
-    RS_RX => RS_RX,
-    RS_TX => RS_TX,
-    ZD => ZD,
-    ZA => ZA,
-    XWA => XWA,
-    store_word => mem_store,
-    load_word => mem_load,
-    addr => mem_addr,
-    load_store => mem_we,
-    go => mem_go,
-    busy => mem_busy);
 
 end arch_core_main;

@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
   
   component core_main
     generic (
-      CODE : string := "test.tbin";
+      CODE : string := "bootload";
       wtime : std_logic_vector(15 downto 0) := wtime;
       debug : boolean := false);
     port (
@@ -70,13 +70,13 @@ begin
     ZA => ZA,
     XWA => XWA);
 
-  --input_sim : input_simulator port map (
-  --  clk => clk,
-  --  RS_RX => RS_RX);
+  input_sim : input_simulator port map (
+    clk => clk,
+    RS_RX => RS_RX);
 
-  --output_sim : output_simulator port map (
-  --  clk => clk,
-  --  RS_TX => RS_TX);
+  output_sim : output_simulator port map (
+    clk => clk,
+    RS_TX => RS_TX);
     
   process
   begin

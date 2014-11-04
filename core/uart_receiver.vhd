@@ -44,6 +44,7 @@ begin  -- structure
             countdown<=countdown-1;
           end if;
         when others =>
+          complete <= '0';
           if countdown=0 then
             receivebuf<=rx&receivebuf(7 downto 1);
             countdown<=wtime;

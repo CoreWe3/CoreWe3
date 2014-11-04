@@ -8,7 +8,7 @@ entity transmit_buffer is
     clk : in std_logic;
     RS_TX : out std_logic;
     go : in std_logic;
-    data : in std_logic_vector(31 downto 0);
+    data : in std_logic_vector(7 downto 0);
     busy : out std_logic);
 end transmit_buffer;
 
