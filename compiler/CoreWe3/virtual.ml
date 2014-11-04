@@ -27,16 +27,7 @@ let expand xts ini addi =
 let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.Unit -> Ans (Nop)
   | Closure.Int (i) -> Ans (Li (i))
-  | Closure.Float (d) -> 
-      let l = 
-	try
-	  let (l, _) = List.find (fun (_, d') -> d = d') !data in
-	    l
-	with Not_found ->
-	  let l = Id.L (Id.genid "l") in
-	    data := (l, d) :: !data;
-	    l in
-	Ans (FLi (l))
+  | Closure.Float (d) -> Ans (FLi (d))
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, V (y)))

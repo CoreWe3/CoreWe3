@@ -8,14 +8,13 @@ let pp_id_or_imm ii =
     | C i ->
             Format.sprintf "%d" i
 
-
 type t = (* 命令の列 *)
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
 and exp = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Li of int
-  | FLi of Id.l
+  | FLi of float
   | SetL of Id.l
   | Mr of Id.t
   | Neg of Id.t
@@ -110,8 +109,8 @@ and pp_exp e i =
     | Nop -> ""
     | Li im ->
             Format.sprintf "%sLi %d" (indent i) im
-    | FLi (Id.L(id)) ->
-            Format.sprintf "%sFLi %s" (indent i) id
+    | FLi fl ->
+            Format.sprintf "%sFLi %f" (indent i) fl
     | SetL (Id.L(id)) ->
             Format.sprintf "%sSetL %s" (indent i) id
     | Mr id ->
@@ -150,7 +149,6 @@ let pp_fundef f i =
     let Id.L(name) = f.name in
     let args = f.args in
     let body = f.body in
-    let ret = f.ret in
     Format.sprintf "%s %s\n%s\n" name  (String.concat ", " (List.map (fun t -> Id.pp_t t) args)) (pp_t body (i+1))
 
 let pp_prog p = 
