@@ -16,7 +16,7 @@ entity receive_buffer is
     clk : in std_logic;
     RS_RX : in std_logic;
     go : in std_logic;
-    data : out std_logic_vector(31 downto 0);
+    data : out std_logic_vector(7 downto 0);
     busy : out std_logic);
 end receive_buffer;
 
@@ -62,9 +62,6 @@ architecture arch_receive_buffer of receive_buffer is
   signal io_complete : std_logic;
   signal bdata : std_logic_vector(7 downto 0);
 
-  signal inbuf : std_logic_vector(31 downto 8);
-
-  signal enq_state : std_logic_vector(2 downto 0) := "000";
   signal deq_state : std_logic_vector(1 downto 0) := "00";
 
 begin
@@ -130,7 +127,7 @@ begin
           ogo <= '0';
           deq_state <= "11";
         when "11" =>
-          data <= x"000000" & odata;
+          data <= odata;
           deq_state <= "00";
         when others =>
           ogo <= '0';

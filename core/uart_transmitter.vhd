@@ -4,11 +4,11 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity uart_transmitter is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
-  Port ( clk  : in  STD_LOGIC;
-         data : in  STD_LOGIC_VECTOR (7 downto 0);
-         go   : in  STD_LOGIC;
-         busy : out STD_LOGIC;
-         tx   : out STD_LOGIC);
+  port ( clk  : in  std_logic;
+         data : in  std_logic_vector(7 downto 0);
+         go   : in  std_logic;
+         busy : out std_logic;
+         tx   : out std_logic);
 end uart_transmitter;
 
 architecture arch_uart_transmitter of uart_transmitter is
