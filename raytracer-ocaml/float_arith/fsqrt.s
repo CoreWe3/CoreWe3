@@ -32,7 +32,7 @@
 	JSUB	:div2
 	ADD	r15	r3	r0
 	POP	r3
-	ADDI	r14	r0	10
+	ADDI	r14	r0	4
 :loop_fsqrt
 	BEQ	r14	r0	:break_loop	#newton methods loop
 	ADDI	r14	r14	-1
