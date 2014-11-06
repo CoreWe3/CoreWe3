@@ -30,6 +30,8 @@
 *.x86_64
 *.hex
 */bin/*
+*.cw3
+*.tbin
 
 # Emacs backup files
 *~
