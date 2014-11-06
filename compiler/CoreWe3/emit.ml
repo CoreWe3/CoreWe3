@@ -70,10 +70,9 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
     Printf.fprintf oc "\tADD\r%s\tr2\t%s #Li\n" r r;
     Printf.fprintf oc "\tPOP\tr2 #Li\n";
     Printf.fprintf oc "\tPOP\tr1 #Li\n";
-  | (NonTail(x), FLi(Id.L(l))) ->
-      let s = load_label reg_tmp l in
-      let n = i lsr 16 in
-      let m = i lxor (n lsl 16) in
+  | (NonTail(x), FLi(d)) ->
+      let n = Int32.to_int (gethi d) in
+      let m = Int32.to_int (getlo d) in
       let r = reg x in
     Printf.fprintf oc "\tPUSH\tr1 #FLi\n";
     Printf.fprintf oc "\tPUSH\tr2 #FLi\n";
@@ -172,7 +171,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "#\tmtctr\t%s\n\tbctr #CALLCLS\n" (reg reg_sw);
   | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
       g'_args oc [] ys;
-      Printf.fprintf oc "\nJSUB\t%s #CALLCLS\n" x
+      Printf.fprintf oc "\tJSUB\t:%s #CALLCLS\n" x
   | (NonTail(a), CallCls(x, ys)) ->
       g'_args oc [(x, reg_cl)] ys;
       let ss = stacksize () in
