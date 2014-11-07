@@ -15,7 +15,6 @@ end transmit_buffer;
 architecture arch_transmit_buffer of transmit_buffer is
   component FIFO is
     generic (
-      SIZE : integer := 1024;
       WIDTH : integer := 10);
     port (
       clk : in std_logic;

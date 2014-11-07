@@ -15,7 +15,6 @@ use ieee.std_logic_unsigned.all;
 
 entity FIFO is
   generic (
-    SIZE : integer := 256;
     WIDTH : integer := 8);
   port (
     clk : in std_logic;
@@ -28,13 +27,13 @@ entity FIFO is
 end FIFO;
 
 architecture arch_fifo of FIFO is
+  constant SIZE : integer := 2 ** WIDTH;
   type ram_t is array(0 to SIZE-1) of std_logic_vector(7 downto 0);
   signal QUE : ram_t;
   signal enq_addr : std_logic_vector(WIDTH-1 downto 0)
     := (others => '0'); --enque addr
   signal deq_addr : std_logic_vector(WIDTH-1 downto 0)
     := (others => '0'); --deque addr
-  
   
 begin
   

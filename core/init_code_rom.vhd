@@ -6,7 +6,6 @@ use ieee.std_logic_textio.all;
 
 entity init_code_rom is
   generic(CODE  : string := "code.bin";
-          SIZE  : integer := 16384;
           WIDTH : integer := 14);
   
   port (clk   : in  std_logic;
@@ -16,6 +15,7 @@ entity init_code_rom is
 end init_code_rom;
 
 architecture arch_code_rom of init_code_rom is
+  constant SIZE : integer := 2 ** WIDTH;
   type rom_t is array (0 to SIZE-1) of bit_vector(31 downto 0);
   --type rom_t is array (0 to SIZE-1) of std_logic_vector(31 downto 0);
   impure function init_rom (file_name : in string) return rom_t is

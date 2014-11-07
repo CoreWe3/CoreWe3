@@ -31,7 +31,9 @@ architecture arch_core of core is
   component core_main
     generic (
       CODE : string := "bootload";
-      wtime : std_logic_vector(15 downto 0) := x"023D";
+      ADDR_WIDTH : integer := 15;
+      wtime : std_logic_vector(15 downto 0) := x"047A";
+      --wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
       clk   : in    std_logic;
@@ -43,15 +45,38 @@ architecture arch_core of core is
   end component;
 
   signal iclk : std_logic;
+  signal gclk : std_logic;
+  signal fbclk : std_logic;
+  signal bfbclk : std_logic;
   signal clk : std_logic;
 begin  -- arch_core
 
   ib : IBUFG port map (
     i => MCLK1,
     o => iclk);
-  bg : BUFG port map (
-    i => iclk,
+
+  bg0 : BUFG port map (
+    i => gclk,
     o => clk);
+
+  bg1 : BUFG port map (
+    i => bfbclk,
+    o => fbclk);
+
+  dcm : DCM_BASE port map (
+    CLKIN => iclk,
+    CLKFB => fbclk,
+    RST => '0',
+    CLK0 => bfbclk,
+    CLK90 => open,
+    CLK180 => open,
+    CLK270 => open,
+    CLK2X => gclk,
+    CLK2X180 => open,
+    CLKDV => open,
+    CLKFX => open,
+    CLKFX180 => open,
+    LOCKED => open);
 
   main : core_main port map (
     clk   => clk,

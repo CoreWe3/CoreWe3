@@ -23,7 +23,6 @@ end receive_buffer;
 architecture arch_receive_buffer of receive_buffer is
   component FIFO is
     generic (
-      SIZE : integer := 1024;
       WIDTH : integer := 10);
     port (
       clk : in std_logic;

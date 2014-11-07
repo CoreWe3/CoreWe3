@@ -5,6 +5,7 @@ use ieee.std_logic_signed.all;
 entity core_main is
   generic (
     CODE  : string := "code.bin";
+    ADDR_WIDTH : integer := 8;
     wtime : std_logic_vector(15 downto 0) := x"023D";
     debug : boolean := false);
   port (
@@ -17,31 +18,26 @@ entity core_main is
 end core_main;
 
 architecture arch_core_main of core_main is
-  constant SIZE : integer := 256;
-  constant WIDTH : integer := 8;
-
   constant zero : std_logic_vector(31 downto 0) := (others => '0');
 
   component init_code_rom
     generic ( CODE  : string := CODE;
-              SIZE  : integer := SIZE;
-              WIDTH : integer := WIDTH);
+              WIDTH : integer := ADDR_WIDTH);
     port (
       clk   : in  std_logic;
       en    : in  std_logic;
-      addr  : in  std_logic_vector(WIDTH-1 downto 0);
+      addr  : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
       instr : out std_logic_vector(31 downto 0));
   end component;
 
   component bootload_code_rom
     generic ( wtime : std_logic_vector(15 downto 0) := wtime;
-              SIZE  : integer := SIZE;
-              WIDTH : integer := WIDTH);
+              WIDTH : integer := ADDR_WIDTH);
     port (
       clk   : in std_logic;
       RS_RX : in std_logic;
       ready : out std_logic;
-      addr  : in std_logic_vector(WIDTH-1 downto 0);
+      addr  : in std_logic_vector(ADDR_WIDTH-1 downto 0);
       instr : out std_logic_vector(31 downto 0));
   end component;
 
@@ -83,8 +79,8 @@ architecture arch_core_main of core_main is
   end component;
 
 
-  signal pc : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
-  signal next_pc : std_logic_vector(WIDTH-1 downto 0);
+  signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
   signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
   
   signal instr : std_logic_vector(31 downto 0);
@@ -268,7 +264,7 @@ begin
               alu_iw2 <= reg_ow2;
             when x"09" => --branch eq
               ctrl <= "000";
-              alu_iw1 <= zero(31 downto WIDTH) & pc;
+              alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -281,7 +277,7 @@ begin
               end if;
             when x"0A" => --ble
               ctrl <= "000";
-              alu_iw1 <= zero(31 downto WIDTH) & pc;
+              alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -294,7 +290,7 @@ begin
               end if;
             when x"0B" => --blt
               ctrl <= "000";
-              alu_iw1 <= zero(31 downto WIDTH) & pc;
+              alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(15) = '0' then
                 alu_iw2 <= x"0000" & instr(15 downto 0);
               else
@@ -307,7 +303,7 @@ begin
               end if;
             when x"0C" => --jump subroutine
               ctrl <= "000";
-              alu_iw1 <= zero(31 downto WIDTH) & pc;
+              alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(23) = '0' then
                 alu_iw2 <= x"00" & instr(23 downto 0);
               else
@@ -354,7 +350,7 @@ begin
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= sp;
-                mem_store <= zero(31 downto WIDTH) & next_pc;
+                mem_store <= zero(31 downto ADDR_WIDTH) & next_pc;
                 state <= state+1;
               end if;
             when x"0D" => --return
@@ -403,7 +399,7 @@ begin
               end if;
             when x"0D" => --ret
               if mem_busy = '0' and mem_go = '0' then
-                pc <= mem_load(WIDTH-1 downto 0);
+                pc <= mem_load(ADDR_WIDTH-1 downto 0);
                 state <= state+1;
               end if;
             when x"0E" => --push
@@ -454,12 +450,12 @@ begin
               pc <= next_pc;
             when x"09" | x"0A" | x"0B" => --beq
               if branch_f = '1' then
-                pc <= alu_ow(WIDTH-1 downto 0);
+                pc <= alu_ow(ADDR_WIDTH-1 downto 0);
               else
                 pc <= next_pc;
               end if;
             when x"0C" => --jsub
-              pc <= alu_ow(WIDTH-1 downto 0);
+              pc <= alu_ow(ADDR_WIDTH-1 downto 0);
             when x"0D" => --ret
               sp <= alu_ow(19 downto 0);
             when x"0E" => --push

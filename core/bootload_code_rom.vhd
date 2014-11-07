@@ -1,5 +1,5 @@
 --code rom with boot loader
---WIDTH > 1 and SIZE must be 2^WIDTH
+--WIDTH > 1
 
 
 library ieee;
@@ -10,7 +10,6 @@ use ieee.std_logic_textio.all;
 
 entity bootload_code_rom is
   generic(wtime : std_logic_vector(15 downto 0) := x"1ADB";
-          SIZE  : integer := 16384;
           WIDTH : integer := 14);
   
   port (clk   : in  std_logic;
@@ -21,6 +20,7 @@ entity bootload_code_rom is
 end bootload_code_rom;
 
 architecture arch_code_rom of bootload_code_rom is
+  constant SIZE : integer := 2 ** WIDTH;  
 
   component uart_receiver is
     generic ( wtime : std_logic_vector(15 downto 0) := wtime);

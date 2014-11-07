@@ -117,7 +117,6 @@ begin
           XWA <= '1';
           state <= x"A";
         when  x"A" => --sram store
-          XWA <= '1';
           ZD <= store_word_tmp;
           state <= x"0";
 
@@ -126,8 +125,10 @@ begin
         when x"B" => --sram load
           state <= x"C";
         when x"C" => --sram load
-          load_word <= ZD;
+          state <= x"D";
+        when x"D" =>
           state <= x"0";
+          load_word <= ZD;
         when others =>
           state <= x"0";
       end case;
