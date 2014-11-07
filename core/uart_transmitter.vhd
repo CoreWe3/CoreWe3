@@ -4,23 +4,23 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity uart_transmitter is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
-  Port ( clk  : in  STD_LOGIC;
-         data : in  STD_LOGIC_VECTOR (7 downto 0);
-         go   : in  STD_LOGIC;
-         busy : out STD_LOGIC;
-         tx   : out STD_LOGIC);
+  port ( clk  : in  std_logic;
+         data : in  std_logic_vector(7 downto 0);
+         go   : in  std_logic;
+         busy : out std_logic;
+         tx   : out std_logic);
 end uart_transmitter;
 
 architecture arch_uart_transmitter of uart_transmitter is
   signal countdown: std_logic_vector(15 downto 0) := (others=>'0');
   signal sendbuf: std_logic_vector(8 downto 0) := (others=>'1');
-  signal state: std_logic_vector(3 downto 0) := "1011";
+  signal state: std_logic_vector(3 downto 0) := "1100";
 begin
   statemachine: process(clk)
   begin
     if rising_edge(clk) then
       case state is
-        when "1011"=>
+        when "1100"=>
           if go='1' then
             sendbuf<=data&"0";
             state<=state-1;
@@ -40,7 +40,7 @@ begin
           if countdown=0 then
             sendbuf<="1"&sendbuf(8 downto 1);
             countdown<=wtime;
-            state<="1011";
+            state<="1100";
           else
             countdown<=countdown-1;
           end if;
@@ -56,6 +56,5 @@ begin
     end if;
   end process;
   tx<=sendbuf(0);
-  busy<= '0' when state="1011" else '1';
+  busy<= '0' when state="1100" else '1';
 end arch_uart_transmitter;
-

@@ -16,19 +16,19 @@ entity receive_buffer is
     clk : in std_logic;
     RS_RX : in std_logic;
     go : in std_logic;
-    data : out std_logic_vector(31 downto 0);
+    data : out std_logic_vector(7 downto 0);
     busy : out std_logic);
 end receive_buffer;
 
 architecture arch_receive_buffer of receive_buffer is
   component FIFO is
     generic (
-      SIZE : integer := 256;
-      WIDTH : integer := 8);
+      SIZE : integer := 1024;
+      WIDTH : integer := 10);
     port (
       clk : in std_logic;
-      idata : in std_logic_vector(31 downto 0);
-      odata : out std_logic_vector(31 downto 0);
+      idata : in std_logic_vector(7 downto 0);
+      odata : out std_logic_vector(7 downto 0);
       igo : in std_logic;
       ogo : in std_logic;
       empty : out std_logic;
@@ -53,8 +53,8 @@ architecture arch_receive_buffer of receive_buffer is
       data : out std_logic_vector(7 downto 0));
   end component;
 
-  signal idata : std_logic_vector(31 downto 0);
-  signal odata : std_logic_vector(31 downto 0);
+  signal idata : std_logic_vector(7 downto 0);
+  signal odata : std_logic_vector(7 downto 0);
   signal igo : std_logic := '0';
   signal ogo : std_logic := '0';
   signal empty : std_logic;
@@ -62,9 +62,6 @@ architecture arch_receive_buffer of receive_buffer is
   signal io_complete : std_logic;
   signal bdata : std_logic_vector(7 downto 0);
 
-  signal inbuf : std_logic_vector(31 downto 8);
-
-  signal enq_state : std_logic_vector(2 downto 0) := "000";
   signal deq_state : std_logic_vector(1 downto 0) := "00";
 
 begin
@@ -96,33 +93,12 @@ begin
   enque : process(clk)
   begin
     if rising_edge(clk) then
-      case enq_state is
-        when "000" => -- get first byte
-          igo <= '0';
-          if io_complete = '1' then
-            inbuf(31 downto 24) <= bdata;
-            enq_state <= "001";
-          end if;
-        when "001" => --get second byte
-          if io_complete = '1' then
-            inbuf(23 downto 16) <= bdata;
-            enq_state <= "010";
-          end if;
-        when "010" => --get third byte
-          if io_complete = '1' then
-            inbuf(15 downto 8) <= bdata;
-            enq_state <= "011";
-          end if;
-        when "011" => --get forth byte and enque
-          if io_complete = '1' then
-            enq_state <= "000";
-            idata <= inbuf(31 downto 8) & bdata;
-            igo <= '1';
-          end if;
-        when others =>
-          enq_state <= "000";
-          igo <= '0';
-      end case;
+      if io_complete = '1' then
+        idata <= bdata;
+        igo <= '1';
+      else
+        igo <= '0';
+      end if;
     end if;
   end process;
 
