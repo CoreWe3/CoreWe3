@@ -18,7 +18,6 @@ entity memory_io is
     ZD         : inout std_logic_vector(31 downto 0);
     ZA         : out   std_logic_vector(19 downto 0);
     XWA        : out   std_logic;
-    --バーストとか使うならピン追加可
     store_word : in    std_logic_vector(31 downto 0);
     load_word  : out   std_logic_vector(31 downto 0);
     addr       : in   std_logic_vector(19 downto 0);
@@ -84,7 +83,7 @@ begin
                 iowe <= '0';
                 state <= x"2";
               end if;
-            else                      --sram
+            else     --ram
               iogo <= '0';              
               if load_store = '1' then  --store
                 XWA <= '0';
