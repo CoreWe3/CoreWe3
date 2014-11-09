@@ -15,5 +15,5 @@ let read_int () =
       else 
 	let temp = ch - 48
 	in
-	read_int_sub () ((ret lsl 1) + (ret lsl 3) + temp) 1
+	read_int_sub ((ret lsl 1) + (ret lsl 3) + temp) 1
   in read_int_sub 0 0
