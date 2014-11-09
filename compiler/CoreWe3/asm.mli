@@ -5,7 +5,7 @@ type t =
 and exp = 
   | Nop
   | Li of int
-  | FLi of Id.l
+  | FLi of float
   | SetL of Id.l
   | Mr of Id.t
   | Neg of Id.t
@@ -38,10 +38,12 @@ val reg_cl : Id.t
 val reg_sw : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
-val reg_tmp: Id.t
+val reg_tmp : Id.t
 val is_reg : Id.t -> bool
 
 val fv : t -> Id.t list
 val concat : t -> Id.t * Type.t -> t -> t
 
 val align : int -> int
+val pp_prog : prog -> string
+

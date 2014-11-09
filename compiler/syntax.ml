@@ -10,6 +10,7 @@ and ast = (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *)
   | Sub of t * t
   | Mul of t * t
   | Div of t * t
+  | Xor of t * t
   | Lsl of t * t
   | Lsr of t * t
   | FNeg of t
@@ -60,6 +61,8 @@ let rec pp_t t =
        Format.sprintf "%sMul\t#%s\n%s%s" sps rng (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
     | Div (t1, t2) -> 
        Format.sprintf "%sDiv\t#%s\n%s%s" sps rng (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
+    | Xor (t1, t2) -> 
+       Format.sprintf "%sXor\t#%s\n%s%s" sps rng (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
     | Lsl (t1, t2) -> 
        Format.sprintf "%sLsl\t#%s\n%s%s" sps rng (pp_t' (d + 1) t1) (pp_t' (d + 1) t2)
     | Lsr (t1, t2) -> 

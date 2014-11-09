@@ -12,8 +12,8 @@ entity IO_buffer is
     RS_TX : out std_logic;
     we : in std_logic;
     go : in std_logic;
-    transmit_data : in std_logic_vector(31 downto 0);
-    receive_data : out std_logic_vector(31 downto 0);
+    transmit_data : in std_logic_vector(7 downto 0);
+    receive_data : out std_logic_vector(7 downto 0);
     busy : out std_logic);
 end IO_buffer;
 
@@ -26,7 +26,7 @@ architecture arch_io_buffer of IO_buffer is
       clk : in std_logic;
       RS_RX : in std_logic;
       go : in std_logic;
-      data : out std_logic_vector(31 downto 0);
+      data : out std_logic_vector(7 downto 0);
       busy : out std_logic);
   end component;
 
@@ -37,14 +37,14 @@ architecture arch_io_buffer of IO_buffer is
       clk : in std_logic;
       RS_TX : out std_logic;
       go : in std_logic;
-      data : in std_logic_vector(31 downto 0);
+      data : in std_logic_vector(7 downto 0);
       busy : out std_logic);
   end component;
 
   signal rgo : std_logic := '0';
-  signal sgo : std_logic := '0';
+  signal tgo : std_logic := '0';
   signal rbusy : std_logic;
-  signal sbusy : std_logic;
+  signal tbusy : std_logic;
 
 begin
 
@@ -58,15 +58,15 @@ begin
   transmit : transmit_buffer port map (
     clk => clk,
     RS_TX => RS_TX,
-    go => sgo,
+    go => tgo,
     data => transmit_data,
-    busy => sbusy);
+    busy => tbusy);
 
-  sgo <= '1' when go = '1' and we = '1' else
+  tgo <= '1' when go = '1' and we = '1' else
          '0';
   rgo <= '1' when go = '1' and we = '0' else
          '0';
-  busy <= '1' when sbusy = '1' or rbusy = '1' else
+  busy <= '1' when tbusy = '1' or rbusy = '1' else
           '0';
   
 end arch_io_buffer;                 

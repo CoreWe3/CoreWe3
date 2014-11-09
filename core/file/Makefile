@@ -1,11 +1,16 @@
+AS = ../../simulator/bin/assembler
 
-%.bin: %.hex
-	./hex2bin.pl < $< > $@
+%.tbin: %.hex
+	./hex2tbin.pl < $< > $@
 
-%.hex: %.s ../../simulator/assembler
-	../../simulator/assembler $(basename $<) < $< && \
-	./bin2hex.pl < $(basename $<) > $@
-../../simulator/assembler:
+%.hex: %.bin
+	./bin2hex.pl < $< > $@
+
+%.bin: %.s $(AS)
+	$(AS) $(basename $<) < $< && \
+	./swap.pl < $(basename $<) > $@
+
+$(AS):
 	cd ../../simulator && \
-	LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:`echo $LD_LIBRARY_PATH` make && \
+	make && \
 	cd ../core/file/

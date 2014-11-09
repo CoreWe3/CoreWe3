@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 			case SUB:
 			case AND:
 			case OR:
+			case XOR:
 			case SHL:
 			case SHR:
 				printf("%s\t%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb),reg2name(ins.A.rc));
@@ -48,6 +49,10 @@ int main(int argc, char* argv[])
 			case PUSH:
 			case POP:
 				printf("%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra));
+				break;
+			case LDIH:
+			case LDIL:
+				printf("%s\t%s\t%d\n",op2name(ins.LX.op),reg2name(ins.LX.ra), ins.LX.cx);
 				break;
 			default:
 				printf("no such instruction \"%d\" : line %d\n",ins.A.op,num);

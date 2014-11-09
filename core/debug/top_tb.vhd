@@ -7,9 +7,7 @@ entity top_tb is
 end top_tb;
 
 architecture arch of top_tb is
-  component IO_buffer_loopback is
-    generic (wtime : std_logic_vector(15 downto 0) := x"0003";
-             debug : boolean := true);
+  component loopback is
     port (
       clk : in std_logic;
       RS_RX : in std_logic;
@@ -17,11 +15,11 @@ architecture arch of top_tb is
   end component;
 
   signal clk : std_logic;
-  signal RS_RX : std_logic;
+  signal RS_RX : std_logic := '1';
   signal RS_TX : std_logic;
 begin
 
-  main : IO_buffer_loopback port map
+  main : loopback port map
     (clk => clk,
      RS_RX => RS_RX,
      RS_TX => RS_TX);

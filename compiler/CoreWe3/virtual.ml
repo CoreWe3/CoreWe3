@@ -27,16 +27,7 @@ let expand xts ini addi =
 let rec g env = function (* 式の仮想マシンコード生成 *)
   | Closure.Unit -> Ans (Nop)
   | Closure.Int (i) -> Ans (Li (i))
-  | Closure.Float (d) -> 
-      let l = 
-	try
-	  let (l, _) = List.find (fun (_, d') -> d = d') !data in
-	    l
-	with Not_found ->
-	  let l = Id.L (Id.genid "l") in
-	    data := (l, d) :: !data;
-	    l in
-	Ans (FLi (l))
+  | Closure.Float (d) -> Ans (FLi (d))
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, V (y)))
@@ -110,7 +101,7 @@ let rec g env = function (* 式の仮想マシンコード生成 *)
 	       Let ((offset, Type.Int), Slw (y, C (2)), 
 		    Ans (Stw (z, x, V (offset)))) 
 	   | _ -> assert false)
-  | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
+  | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L(":min_caml_" ^ x)))
 
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 
@@ -131,4 +122,9 @@ let f (Closure.Prog (fundefs, e)) =
   data := [];
   let fundefs = List.map h fundefs in
   let e = g M.empty e in
+    print_string "\nVirtual ===============\n";
+    print_string (pp_prog (Prog (!data, fundefs, e)));
     Prog (!data, fundefs, e)
+
+
+

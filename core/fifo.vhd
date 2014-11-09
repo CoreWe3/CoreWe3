@@ -19,8 +19,8 @@ entity FIFO is
     WIDTH : integer := 8);
   port (
     clk : in std_logic;
-    idata : in std_logic_vector(31 downto 0);
-    odata : out std_logic_vector(31 downto 0);
+    idata : in std_logic_vector(7 downto 0);
+    odata : out std_logic_vector(7 downto 0);
     igo : in std_logic;
     ogo : in std_logic;
     empty : out std_logic;
@@ -28,7 +28,7 @@ entity FIFO is
 end FIFO;
 
 architecture arch_fifo of FIFO is
-  type ram_t is array(0 to SIZE-1) of std_logic_vector(31 downto 0);
+  type ram_t is array(0 to SIZE-1) of std_logic_vector(7 downto 0);
   signal QUE : ram_t;
   signal enq_addr : std_logic_vector(WIDTH-1 downto 0)
     := (others => '0'); --enque addr

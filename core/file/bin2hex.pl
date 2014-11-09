@@ -7,7 +7,6 @@ my $ite = 0;
 my $s = 4;
 while(read(STDIN, $instr, 4)){
     my @a = unpack("CCCC", $instr);
-    @a = reverse(@a);
     foreach my $bit (@a) {
 	printf("%02x", $bit);
     }
