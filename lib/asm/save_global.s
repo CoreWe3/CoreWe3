@@ -1,0 +1,33 @@
+:min_caml_save_global0
+:min_caml_save_global1
+:min_caml_save_global2
+:min_caml_save_global3
+:min_caml_save_global4
+:min_caml_save_global5
+:min_caml_save_global6
+:min_caml_save_global7
+:min_caml_save_global8
+:min_caml_save_global9
+:min_caml_save_global10
+:min_caml_save_global11
+:min_caml_save_global12
+:min_caml_save_global13
+:min_caml_save_global14
+:min_caml_save_global15
+:min_caml_save_global16
+:min_caml_save_global17
+:min_caml_save_global18
+:min_caml_save_global19
+:min_caml_save_global20
+:min_caml_save_global21
+:min_caml_save_global22
+:min_caml_save_global23
+:min_caml_save_global24
+:min_caml_save_global25
+:min_caml_save_global26
+:min_caml_save_global27
+:min_caml_save_global28
+:min_caml_save_global29
+	ADD	r6	r3	r4
+	ST	r5	r6	0
+	RET
