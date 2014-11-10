@@ -70,10 +70,10 @@ architecture arch_core_main of core_main is
       ZD         : inout std_logic_vector(31 downto 0);
       ZA         : out   std_logic_vector(19 downto 0);
       XWA        : out   std_logic;
-      store_word : in    std_logic_vector(31 downto 0);
-      load_word  : out   std_logic_vector(31 downto 0);
+      store_data : in    std_logic_vector(31 downto 0);
+      load_data  : out   std_logic_vector(31 downto 0);
       addr       : in   std_logic_vector(19 downto 0);
-      load_store : in   std_logic;
+      we         : in   std_logic;
       go         : in    std_logic;
       busy       : out   std_logic);
   end component;
@@ -155,10 +155,10 @@ begin
     ZD => ZD,
     ZA => ZA,
     XWA => XWA,
-    store_word => mem_store,
-    load_word => mem_load,
+    store_data => mem_store,
+    load_data => mem_load,
     addr => mem_addr,
-    load_store => mem_we,
+    we => mem_we,
     go => mem_go,
     busy => mem_busy);
 

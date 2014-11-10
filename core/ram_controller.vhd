@@ -68,6 +68,7 @@ begin
                 state <= "0100";
               end if;
             end if;
+            ZA <= addr;
           else
             bwe <= '0';
             XWA <= '1';
@@ -90,8 +91,6 @@ begin
         when "0110" => --read sram
           state <= "0111";
         when "0111" => --read sram
-          state <= "1000";
-        when "1000" => --read sram
           output <= ZD;
           state <= "0000";
         when others =>
