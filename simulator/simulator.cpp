@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 			case 'a':
 				fpr = fopen(optarg,"rb");
 				if (fpr == NULL){
-					printf("Can't open %s\n",argv[1]);
+					printf("Can't open %s\n",optarg);
 					return 1;
 				}
 				break;
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 				break;
 			case 'o':
 				iofpw = fopen(optarg,"wb");
-				if (iofpr == NULL){
+				if (iofpw == NULL){
 					printf("Can't open %s\n",optarg);
 					return 1;
 				}

@@ -1921,7 +1921,7 @@ in
 let rec write_ppm_header _ =
   ( 
     print_char 80; (* 'P' *)
-    print_char (48 + 3); (* +6 if binary *) (* 48 = '0' *)
+    print_char (48 + 6); (* +6 if binary *) (* 48 = '0' *)
     print_char 10;
     print_int image_size.(0);
     print_char 32;
