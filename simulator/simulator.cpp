@@ -302,14 +302,14 @@ void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].u = reg[rb].u ^ reg[rc].u;
 }
 void shl(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 31 ){
+	if ( reg[rc].u < 32 ){
 		reg[ra].u = reg[rb].u << reg[rc].u;
 	}else{
 		reg[ra].u = 0;
 	}
 }
 void shr(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 31 ){
+	if ( reg[rc].u < 32 ){
 		reg[ra].u = reg[rb].u >> reg[rc].u;
 	}else{
 		reg[ra].u = 0;
