@@ -1,5 +1,5 @@
 :finvtableb
-	ADDI	r6	r0	16
+	ADDI	r6	r0	4
 	ADDI	r3	r0	11000	#b init 
 	ADDI	r4	r0	16383
 	SHL	r4	r4	r6
