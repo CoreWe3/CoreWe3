@@ -1,4 +1,3 @@
-
 :fadd
 	ADDI	r15	r0	1	#frequently used constants
 	ADDI	r14	r0	23
