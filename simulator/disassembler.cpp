@@ -26,9 +26,12 @@ int main(int argc, char* argv[])
 			case LD:
 			case ST:
 			case ADDI:
+			case SHLI:
+			case SHRI:
 			case BEQ:
 			case BLE:
 			case BLT:
+			case BFLE:
 				printf("%s\t%s\t%s\t%d\n",op2name(ins.L.op),reg2name(ins.L.ra),reg2name(ins.L.rb),ins.L.cx);
 				break;
 			case ADD:
@@ -40,19 +43,24 @@ int main(int argc, char* argv[])
 			case SHR:
 				printf("%s\t%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb),reg2name(ins.A.rc));
 				break;
+			case FNEG:
+				printf("%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb));
+				break;
+			case PUSH:
+			case POP:
+				printf("%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra));
+				break;
 			case JSUB:
 				printf("%s\t%d\n",op2name(ins.J.op),ins.L.cx);
 				break;
 			case RET:
 				printf("%s\n",op2name(ins.J.op));
 				break;
-			case PUSH:
-			case POP:
-				printf("%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra));
-				break;
+			case LDA:
+			case STA:
 			case LDIH:
 			case LDIL:
-				printf("%s\t%s\t%d\n",op2name(ins.LX.op),reg2name(ins.LX.ra), ins.LX.cx);
+				printf("%s\t%s\t%d\n",op2name(ins.X.op),reg2name(ins.X.ra), ins.X.cx);
 				break;
 			default:
 				printf("no such instruction \"%d\" : line %d\n",ins.A.op,num);

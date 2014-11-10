@@ -6,28 +6,54 @@
 #include <list>
 #include "isa.h"
 
-unsigned int ld(unsigned int ra, unsigned int rb, int cx);
-unsigned int st(unsigned int ra, unsigned int rb, int cx);
-unsigned int ldih(unsigned int ra, unsigned int cx);
-unsigned int ldil(unsigned int ra, unsigned int cx);
-unsigned int add(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int addi(unsigned int ra, unsigned int rb, int cx);
-unsigned int _and(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int _xor(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc);
-unsigned int beq(unsigned int ra, unsigned int rb, int cx);
-unsigned int ble(unsigned int ra, unsigned int rb, int cx);
-unsigned int blt(unsigned int ra, unsigned int rb, int cx);
-unsigned int jsub(int cx);
-unsigned int ret();
-unsigned int push(unsigned int ra);
-unsigned int pop(unsigned int ra);
+void ld(unsigned int ra, unsigned int rb, int cx);
+void st(unsigned int ra, unsigned int rb, int cx);
+void lda(unsigned int ra, unsigned int cx);
+void sta(unsigned int ra, unsigned int cx);
+void ldih(unsigned int ra, unsigned int cx);
+void ldil(unsigned int ra, unsigned int cx);
+void ldi(unsigned int ra, unsigned int cx);
+void add(unsigned int ra, unsigned int rb, unsigned int rc);
+void sub(unsigned int ra, unsigned int rb, unsigned int rc);
+void fneg(unsigned int ra, unsigned int rb);
+void addi(unsigned int ra, unsigned int rb, int cx);
+void _and(unsigned int ra, unsigned int rb, unsigned int rc);
+void _or(unsigned int ra, unsigned int rb, unsigned int rc);
+void _xor(unsigned int ra, unsigned int rb, unsigned int rc);
+void shl(unsigned int ra, unsigned int rb, unsigned int rc);
+void shr(unsigned int ra, unsigned int rb, unsigned int rc);
+void shli(unsigned int ra, unsigned int rb, int cx);
+void shri(unsigned int ra, unsigned int rb, int cx);
+void beq(unsigned int ra, unsigned int rb, unsigned int cx);
+void ble(unsigned int ra, unsigned int rb, unsigned int cx);
+void blt(unsigned int ra, unsigned int rb, unsigned int cx);
+void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
+void jsub(unsigned int cx);
+void ret();
+void push(unsigned int ra);
+void pop(unsigned int ra);
 
-unsigned int name2op(char* op);
-unsigned int name2reg(char* reg);
+unsigned int name2op(char* op){
+	int num = 10000;
+	for(int i = 0; i < ISANUM; i++){
+		if(strcmp(names[i], op)==0){
+			num = i;
+			break;
+		}
+	}
+	return num;
+}
+
+unsigned int name2reg(char* reg){
+	int num = 10000;
+	for(int i = 0; i < REGNUM; i++){
+		if(strcmp(rnames[i], reg)==0){
+			num = i;
+			break;
+		}
+	}
+	return num;
+}
 
 void print_L(unsigned int x) {
     int i;
@@ -38,6 +64,10 @@ void print_L(unsigned int x) {
     printf("\n");
 }
 
+
+
+FILE *fpw = NULL;
+
 int main(int argc, char* argv[])
 {
 	if(argc < 2){
@@ -45,7 +75,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	FILE *fpw = fopen(argv[1],"wb");
+	fpw = fopen(argv[1],"wb");
 	if(fpw == NULL){
 		printf("Can't open %s\n",argv[1]);
 		return 1;
@@ -57,7 +87,6 @@ int main(int argc, char* argv[])
 	const char *tokens = "\t \n";
 	std::list<std::string> data;
 	while(fgets(buffer,256,stdin)!=NULL){
-		if(buffer==NULL) continue;
 		strcpy(buffer2,buffer);
 		char* tmp = strtok(buffer2, tokens);
 		if(tmp==NULL) continue;
@@ -91,78 +120,109 @@ int main(int argc, char* argv[])
 		if(op!=NULL){
 			if(op[0]!=':'){
 				num = name2op(op);
-				unsigned int code;
 				char *ra, *rb, *rc, *cx;
 				switch(num){
 					case LD:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = ld(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						ld(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						break;
 					case ST:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						break;
+					case LDA:
+						ra = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						lda(name2reg(ra),strtol(cx,NULL,0));
+						break;
+					case STA:
+						ra = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						sta(name2reg(ra),strtol(cx,NULL,0));
 						break;
 					case LDIH:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = ldih(name2reg(ra),strtol(cx,NULL,0));
+						ldih(name2reg(ra),strtol(cx,NULL,0));
 						break;
 					case LDIL:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = ldil(name2reg(ra),strtol(cx,NULL,0));
+						ldil(name2reg(ra),strtol(cx,NULL,0));
+						break;
+					case LDI:
+						ra = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						ldi(name2reg(ra),strtol(cx,NULL,0));
 						break;
 					case ADD:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = add(name2reg(ra),name2reg(rb),name2reg(rc));
+						add(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case SUB:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = sub(name2reg(ra),name2reg(rb),name2reg(rc));
+						sub(name2reg(ra),name2reg(rb),name2reg(rc));
+						break;
+					case FNEG:
+						ra = strtok(NULL,tokens);
+						rb = strtok(NULL,tokens);
+						fneg(name2reg(ra),name2reg(rb));
 						break;
 					case ADDI:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						code = addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						break;
 					case AND:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = _and(name2reg(ra),name2reg(rb),name2reg(rc));
+						_and(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case OR:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = _or(name2reg(ra),name2reg(rb),name2reg(rc));
+						_or(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case XOR:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = _xor(name2reg(ra),name2reg(rb),name2reg(rc));
+						_xor(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case SHL:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = shl(name2reg(ra),name2reg(rb),name2reg(rc));
+						shl(name2reg(ra),name2reg(rb),name2reg(rc));
 						break;
 					case SHR:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						rc = strtok(NULL,tokens);
-						code = shr(name2reg(ra),name2reg(rb),name2reg(rc));
+						shr(name2reg(ra),name2reg(rb),name2reg(rc));
+						break;
+					case SHLI:
+						ra = strtok(NULL,tokens);
+						rb = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						shli(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						break;
+					case SHRI:
+						ra = strtok(NULL,tokens);
+						rb = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						shri(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						break;
 					case BEQ:
 						ra = strtok(NULL,tokens);
@@ -172,9 +232,9 @@ int main(int argc, char* argv[])
 							if(label.count(cx) == 0){
 								printf("WARN: Invalid Label\n");
 							}
-							code = beq(name2reg(ra),name2reg(rb),label[cx]-line);
+							beq(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+							beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case BLE:
@@ -185,9 +245,9 @@ int main(int argc, char* argv[])
 							if(label.count(cx) == 0){
 								printf("WARN: Invalid Label\n");
 							}
-							code = ble(name2reg(ra),name2reg(rb),label[cx]-line);
+							ble(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+							ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case BLT:
@@ -198,9 +258,22 @@ int main(int argc, char* argv[])
 							if(label.count(cx) == 0){
 								printf("WARN: Invalid Label\n");
 							}
-							code = blt(name2reg(ra),name2reg(rb),label[cx]-line);
+							blt(name2reg(ra),name2reg(rb),label[cx]-line);
 						}else{
-							code = blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+							blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						}
+						break;
+					case BFLE:
+						ra = strtok(NULL,tokens);
+						rb = strtok(NULL,tokens);
+						cx = strtok(NULL,tokens);
+						if(cx[0] == ':') {
+							if(label.count(cx) == 0){
+								printf("WARN: Invalid Label\n");
+							}
+							bfle(name2reg(ra),name2reg(rb),label[cx]-line);
+						}else{
+							bfle(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
 						}
 						break;
 					case JSUB:
@@ -209,28 +282,27 @@ int main(int argc, char* argv[])
 							if(label.count(cx) == 0){
 								printf("WARN: Invalid Label\n");
 							}
-							code = jsub(label[cx]-line);
+							jsub(label[cx]-line);
 						}else{
-							code = jsub(strtol(cx,NULL,0));
+							jsub(strtol(cx,NULL,0));
 						}
 						break;
 					case RET:
-						code = ret();
+						ret();
 						break;
 					case PUSH:
 						ra = strtok(NULL,tokens);
-						code = push(name2reg(ra));
+						push(name2reg(ra));
 						break;
 					case POP:
 						ra = strtok(NULL,tokens);
-						code = pop(name2reg(ra));
+						pop(name2reg(ra));
 						break;
 					default:
 						printf("no such instruction \"%s\" : line %d\n",op,line);
 						return 1;
 				}
 				line++;
-				fwrite(&code,sizeof(unsigned int),1,fpw);
 			}}
 		it++;
 	}
@@ -238,185 +310,160 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+void write(unsigned int code){
+	fwrite(&code,sizeof(unsigned int),1,fpw);
+}
 
-
-unsigned int ld(unsigned int ra, unsigned int rb, int cx){
+void ld(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = LD;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.L.op = LD; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int st(unsigned int ra, unsigned int rb, int cx){
+void st(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = ST;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.L.op = ST; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int ldih(unsigned int ra, unsigned int cx){
+void lda(unsigned int ra, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.LX.op = LDIH;
-	ins.LX.ra = ra;
-	ins.LX.cx = cx;
-	return ins.data;
+	ins.X.op = LDA; ins.X.ra = ra; ins.X.cx = cx;
+	write(ins.data);
 }
-unsigned int ldil(unsigned int ra, unsigned int cx){
+void sta(unsigned int ra, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.LX.op = LDIL;
-	ins.LX.ra = ra;
-	ins.LX.cx = cx;
-	return ins.data;
+	ins.X.op = STA; ins.X.ra = ra; ins.X.cx = cx;
+	write(ins.data);
 }
-unsigned int add(unsigned int ra, unsigned int rb, unsigned int rc){
+void ldih(unsigned int ra, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = ADD;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.X.op = LDIH; ins.X.ra = ra; ins.X.cx = cx;
+	write(ins.data);
 }
-unsigned int sub(unsigned int ra, unsigned int rb, unsigned int rc){
+void ldil(unsigned int ra, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = SUB;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.X.op = LDIL; ins.X.ra = ra; ins.X.cx = cx;
+	write(ins.data);
 }
-unsigned int addi(unsigned int ra, unsigned int rb, int cx){
+void ldi(unsigned int ra, unsigned int cx){
+	ldih(ra, cx >> 16);
+	ldil(ra, cx << 16 >> 16);
+}
+void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = ADDI;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.A.op = ADD; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int _and(unsigned int ra, unsigned int rb, unsigned int rc){
+void sub(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = AND;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.A.op = SUB; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int _or(unsigned int ra, unsigned int rb, unsigned int rc){
+void addi(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = OR;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.L.op = ADDI; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int _xor(unsigned int ra, unsigned int rb, unsigned int rc){
+void fneg(unsigned int ra, unsigned int rb){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = XOR;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.A.op = FNEG; ins.A.ra = ra; ins.A.rb = rb;
+	write(ins.data);
 }
-unsigned int shl(unsigned int ra, unsigned int rb, unsigned int rc){
+void _and(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = SHL;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.A.op = AND; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int shr(unsigned int ra, unsigned int rb, unsigned int rc){
+void _or(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = SHR;
-	ins.A.ra = ra;
-	ins.A.rb = rb;
-	ins.A.rc = rc;
-	return ins.data;
+	ins.A.op = OR; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int beq(unsigned int ra, unsigned int rb, int cx){
+void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = BEQ;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.A.op = XOR; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int ble(unsigned int ra, unsigned int rb, int cx){
+void shl(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = BLE;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.A.op = SHL; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int blt(unsigned int ra, unsigned int rb, int cx){
+void shr(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
 	ins.data = 0;
-	ins.L.op = BLT;
-	ins.L.ra = ra;
-	ins.L.rb = rb;
-	ins.L.cx = cx;
-	return ins.data;
+	ins.A.op = SHR; ins.A.ra = ra;  ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
 }
-unsigned int jsub(int cx){
+void shli(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.J.op = JSUB;
-	ins.J.cx = cx;
-	return ins.data;
+	ins.L.op = SHLI; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int ret(){
+void shri(unsigned int ra, unsigned int rb, int cx){
 	INS ins;
 	ins.data = 0;
-	ins.J.op = RET;
-	return ins.data;
+	ins.L.op = SHRI; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int push(unsigned int ra){
+void beq(unsigned int ra, unsigned int rb, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = PUSH;
-	ins.A.ra = ra;
-	return ins.data;
+	ins.L.op = BEQ; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int pop(unsigned int ra){
+void ble(unsigned int ra, unsigned int rb, unsigned int cx){
 	INS ins;
 	ins.data = 0;
-	ins.A.op = POP;
-	ins.A.ra = ra;
-	return ins.data;
+	ins.L.op = BLE; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int name2op(char* op){
-	int num = 10000;
-	for(int i = 0; i < ISANUM; i++){
-		if(strcmp(names[i], op)==0){
-			num = i;
-			break;
-		}
-	}
-	return num;
+void blt(unsigned int ra, unsigned int rb, unsigned int cx){
+	INS ins;
+	ins.data = 0;
+	ins.L.op = BLT; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
 }
-unsigned int name2reg(char* reg){
-	int num = 10000;
-	for(int i = 0; i < REGNUM; i++){
-		if(strcmp(rnames[i], reg)==0){
-			num = i;
-			break;
-		}
-	}
-	return num;
+void bfle(unsigned int ra, unsigned int rb, unsigned int cx){
+	INS ins;
+	ins.data = 0;
+	ins.L.op = BFLE; ins.L.ra = ra; ins.L.rb = rb; ins.L.cx = cx;
+	write(ins.data);
+}
+void jsub(unsigned int cx){
+	INS ins;
+	ins.data = 0;
+	ins.J.op = JSUB; ins.J.cx = cx;
+	write(ins.data);
+}
+void ret(){
+	INS ins;
+	ins.data = 0; ins.J.op = RET;
+	write(ins.data);
+}
+void push(unsigned int ra){
+	INS ins;
+	ins.data = 0;
+	ins.A.op = PUSH; ins.A.ra = ra;
+	write(ins.data);
+}
+void pop(unsigned int ra){
+	INS ins;
+	ins.data = 0;
+	ins.A.op = POP; ins.A.ra = ra;
+	write(ins.data);
 }
