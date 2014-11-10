@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 			case 'a':
 				fpr = fopen(optarg,"rb");
 				if (fpr == NULL){
-					printf("Can't open %s\n",argv[1]);
+					printf("Can't open %s\n",optarg);
 					return 1;
 				}
 				break;
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
 				break;
 			case 'o':
 				iofpw = fopen(optarg,"wb");
-				if (iofpr == NULL){
+				if (iofpw == NULL){
 					printf("Can't open %s\n",optarg);
 					return 1;
 				}
@@ -302,10 +302,18 @@ void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].u = reg[rb].u ^ reg[rc].u;
 }
 void shl(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].u = reg[rb].u << reg[rc].d;
+	if ( reg[rc].u < 31 ){
+		reg[ra].u = reg[rb].u << reg[rc].u;
+	}else{
+		reg[ra].u = 0;
+	}
 }
 void shr(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].u = reg[rb].u >> reg[rc].d;
+	if ( reg[rc].u < 31 ){
+		reg[ra].u = reg[rb].u >> reg[rc].u;
+	}else{
+		reg[ra].u = 0;
+	}
 }
 void beq(unsigned int ra, unsigned int rb, int cx){
 	if(reg[ra].d == reg[rb].d){ 
