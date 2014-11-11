@@ -172,10 +172,10 @@ begin
     if rising_edge(clk) then
       case state is
         when x"0" => --fetch
-          state <= x"2";
+          state <= x"1";
           reg_we <= '0';
 
-        when x"2" => --decode 
+        when x"1" => --decode 
           case instr(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr(19 downto 14);
@@ -210,7 +210,7 @@ begin
           end case;
           state <= state+1;
 
-        when x"3" => --exec
+        when x"2" => --exec
           case instr(31 downto 26) is
             when "000000" => --load
               ctrl <= "000";
@@ -356,7 +356,7 @@ begin
           next_pc <= pc+1;
           state <= state+1;
 
-        when x"4" => --memory request
+        when x"3" => --memory request
           case instr(31 downto 26) is
             when "000000" => --load
               if mem_busy = '0' and mem_go = '0' then
@@ -422,7 +422,7 @@ begin
               state <= state+2;
           end case;
 
-        when x"5" => -- memory complete
+        when x"4" => -- memory complete
           mem_we <= '0';
           mem_go <= '0';
           case instr(31 downto 26) is
@@ -465,7 +465,7 @@ begin
             when others =>
           end case;
                        
-        when x"6" => --write
+        when x"5" => --write
           case instr(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr(25 downto 20);

@@ -1,11 +1,13 @@
 AS = ../../simulator/bin/assembler
+SIM = $(HOME)/cpu_core/core_main_tb/
 SOURCE = $(wildcard *.s)
 TARGET = $(SOURCE:.s=.tbin) $(SOURCE:.s=.cw3)
 
 all: $(TARGET)
 
 %.tbin: %.hex
-	./hex2tbin.pl < $< > $@
+	./hex2tbin.pl < $< > $@ && \
+	cp $@ $(SIM)
 
 %.hex: %.cw3
 	./cw32hex.pl < $< > $@
