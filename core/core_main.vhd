@@ -191,14 +191,14 @@ begin
               reg_addr1 <= instr(19 downto 14);
               reg_addr2 <= instr(13 downto 8);
             when "001000" => --fneg
-              reg_addr1 <= instr(25 downto 20);
+              reg_addr1 <= instr(19 downto 14);
             when "001001" => --addi
               reg_addr1 <= instr(19 downto 14);
             when "001010" | "001011" | "001100" | "001101" | "001110" =>
               --and or shl shr xor
               reg_addr1 <= instr(19 downto 14);
               reg_addr2 <= instr(13 downto 8);
-            when "001111" | "010000" =>
+            when "001111" | "010000" => --shri shli
               reg_addr1 <= instr(19 downto 14);
             when "010001" | "010010" | "010011" | "010100" =>
               -- branch
@@ -270,11 +270,11 @@ begin
             when "001111" => --shl imm
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= reg_ow2;
+              alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
             when "010000" => --shr imm
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= reg_ow2;
+              alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
             when "010001" => --branch eq
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
