@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/stack_test.tbin";
+      CODE : string := "file/fib_rec.tbin";
       ADDR_WIDTH : integer := 8;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";

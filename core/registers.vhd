@@ -19,18 +19,19 @@ architecture arch_registers of registers is
   signal RAM : ram_t;
        
 begin
-  
   process(clk)
   begin
     if rising_edge(clk) then
-      if we = '1' and addr1 /= "0000" then
+      if we = '1' and addr1 /= "000000" then
         RAM(conv_integer(addr1)) <= in_word;
       end if;
     end if;
   end process;
 
-  out_word1 <= RAM(conv_integer(addr1));
-  out_word2 <= RAM(conv_integer(addr2));
+  out_word1 <= RAM(conv_integer(addr1)) when addr1 /= "000000" else
+               (others => '0');
+  out_word2 <= RAM(conv_integer(addr2)) when addr2 /= "000000" else
+               (others => '0');
 
 end arch_registers;
   
