@@ -9,4 +9,3 @@ ADDI	r2	r3	0
 ADDI	r4	r4	1
 BEQ	r0	r0	-5
 ST	r2	r0	0xffff
-BEQ	r0	r0	-11

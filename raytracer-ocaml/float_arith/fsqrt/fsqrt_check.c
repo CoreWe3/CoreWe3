@@ -1,6 +1,11 @@
 #include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<fcntl.h>
 #include<stdint.h>
 #include<math.h>
+#include<sys/types.h>
+#include<sys/stat.h>
 #include"float_arith.h"
 
 extern uint32_t fadd(uint32_t, uint32_t);
@@ -15,30 +20,34 @@ int normal_pos(uint32_t a){
 }
 
 int main(){
-  union {
-    uint32_t i;
-    float f;
-  } ua, ub, uc;
   
   uint32_t diff;
-  ua.i = 0x00800010;
-  for(ua.i = 0; ua.i<=0x7fffffff; ua.i++){
-    if((ua.i & 0xfffff) == 0) printf("%x\n", ua.i);
-    if(normal_pos(ua.i)){
-      ub.f = sqrtf(ua.f);
-      uc.i = fsqrt(ua.i);
-      diff = ub.i > uc.i ? ub.i - uc.i : uc.i - ub.i;
-      if(diff > 2){ 
-	printf("%x\n", ua.i);
-	printf("sqrtf: 0x%x %e\n", ub.i, ub.f);
-	printf("fsqrt: 0x%x %e\n", uc.i, uc.f);
-	printf("diff: %x\n", diff);
-	return 0;
-      }
+  uint32_t ua, ub, uc;
+
+  int fd;
+
+  if((fd = open("c_output", O_WRONLY | O_CREAT, S_IWRITE)) < 0){
+    printf("open error\n");
+  }
+  
+  for(ua = 0x00800000; ua<=0x7f7fffff; ua++){
+    if((ua & 0xffffff) == 0) printf("%x\n", ua);
+    ub = ftoui(sqrtf(uitof(ua)));
+    uc = fsqrt(ua);
+    diff = ub > uc ? ub - uc : uc - ub;
+    write(fd, (void *)&ub, 4);
+    if(diff > 2){ 
+      printf("%x\n", ua);
+      printf("sqrtf: 0x%x %e\n", ub, uitof(ub));
+      printf("fsqrt: 0x%x %e\n", uc, uitof(uc));
+      printf("diff: %x\n", diff);
+      return 0;
     }
   }
 
   printf("ok\n");
+  close(fd);
+  chmod("c_output", S_IRWXU);
 
   return 0;
 

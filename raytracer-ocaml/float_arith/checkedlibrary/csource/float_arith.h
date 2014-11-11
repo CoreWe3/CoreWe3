@@ -1,5 +1,6 @@
 #ifndef _FLOAT_ARITH_H
 #define _FLOAT_ARITH_H
+#include<stdint.h>
 
 #define SHL(a, b) (b < 32? a << b: 0)
 #define SHR(a, b) (b < 32? a >> b: 0)

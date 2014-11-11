@@ -73,7 +73,7 @@ uint32_t fsqrt(uint32_t a){
   r[3] = div2(r[3]);
   r[15] = r[3]; //r15 is b/2
   POP(3);  //r3 = x0 = b
-  r[14] = 10; //r14 is iterator
+  r[14] = 4; //r14 is iterator
 
   while(1){
     //printf("%x\n", r[3]);
