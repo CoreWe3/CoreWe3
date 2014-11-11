@@ -106,8 +106,8 @@ int main(int argc, char* argv[])
 			}else{
 				if(name2op(op)==LDI){
 					strtok(NULL,tokens);
-					int t = strtol(strtok(NULL,tokens),NULL,0);
-					if(t>>14 != 0) line++;
+					//int t = strtol(strtok(NULL,tokens),NULL,0);
+					line++;
 				}
 				line++;
 			}
@@ -165,6 +165,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						ldi(name2reg(ra),strtol(cx,NULL,0));
+						line++;
 						break;
 					case ADD:
 						ra = strtok(NULL,tokens);
@@ -358,12 +359,12 @@ void ldil(unsigned int ra, unsigned int cx){
 	write(ins.data);
 }
 void ldi(unsigned int ra, unsigned int cx){
-	if(cx >> 14 == 0){
-		addi(ra,0,cx);
-	}else{
+	//if(cx >> 14 == 0){
+	//	addi(ra,0,cx);
+	//}else{
 		ldih(ra, cx >> 16);
 		ldil(ra, cx << 16 >> 16);
-	}
+	//}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
