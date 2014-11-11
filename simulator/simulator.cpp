@@ -2,24 +2,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <limits.h>
 #include "isa.h"
 
-void ld(unsigned int ra, unsigned int rb, int cx);
-void st(unsigned int ra, unsigned int rb, int cx);
+void ld(unsigned int ra, unsigned int rb, unsigned int cx);
+void st(unsigned int ra, unsigned int rb, unsigned int cx);
+void lda(unsigned int ra,unsigned int cx);
+void sta(unsigned int ra, unsigned int cx);
 void ldih(unsigned int ra, unsigned int cx);
 void ldil(unsigned int ra, unsigned int cx);
 void add(unsigned int ra, unsigned int rb, unsigned int rc);
 void sub(unsigned int ra, unsigned int rb, unsigned int rc);
-void addi(unsigned int ra, unsigned int rb, int cx);
+void fneg(unsigned int ra, unsigned int rb);
+void addi(unsigned int ra, unsigned int rb, unsigned int cx);
 void _and(unsigned int ra, unsigned int rb, unsigned int rc);
 void _or(unsigned int ra, unsigned int rb, unsigned int rc);
 void _xor(unsigned int ra, unsigned int rb, unsigned int rc);
 void shl(unsigned int ra, unsigned int rb, unsigned int rc);
 void shr(unsigned int ra, unsigned int rb, unsigned int rc);
-void beq(unsigned int ra, unsigned int rb, int cx);
-void ble(unsigned int ra, unsigned int rb, int cx);
-void blt(unsigned int ra, unsigned int rb, int cx);
-void jsub(int cx);
+void shli(unsigned int ra, unsigned int rb, unsigned int cx);
+void shri(unsigned int ra, unsigned int rb, unsigned int cx);
+void beq(unsigned int ra, unsigned int rb, unsigned int cx);
+void ble(unsigned int ra, unsigned int rb, unsigned int cx);
+void blt(unsigned int ra, unsigned int rb, unsigned int cx);
+void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
+void jsub(unsigned int cx);
 void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
@@ -32,12 +39,10 @@ FILE* iofpw = NULL;
 FILE* ramout = NULL;
 
 //Debugger
-unsigned int d_insnum = 0;
+unsigned long long d_insnum = 0;
 unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
-
-
 
 	printf("pc:%d, sp:%d\n", pc, sp);
 
@@ -54,7 +59,7 @@ void debuginfo(){
 			printf("%d:%d, ", sp+i, ram[sp+i]);
 		}
 	}*/
-	printf("Number of Instruction : %u\n",d_insnum);
+	printf("Number of Instruction : %lld\n",d_insnum);
 	
 	//Dump RAM
 	if(ramout!=NULL){
@@ -73,8 +78,8 @@ void debuginfo(){
 int main(int argc, char* argv[])
 {
 	FILE *fpr;
-	unsigned int limit = 0xffffffff;
-	unsigned int breakpoint = 0xffffffff;
+	unsigned long long limit = ULLONG_MAX;
+	unsigned long long breakpoint = ULLONG_MAX;
 	char result;
 	
 	for(int i=0; i< REGNUM; i++){
@@ -150,7 +155,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 		if(d_insnum >= limit){
-			printf("The program reached limit instruction process : %d\n", limit);
+			printf("The program reached limit instruction process : %lld\n", limit);
 			break;
 		}
 		if(breakpoint == pc){
@@ -168,17 +173,26 @@ int main(int argc, char* argv[])
 			case ST:
 				st(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
+			case LDA:
+				lda(ins.X.ra,ins.X.cx);
+				break;
+			case STA:
+				sta(ins.X.ra,ins.X.cx);
+				break;
 			case LDIH:
-				ldih(ins.LX.ra, ins.LX.cx);
+				ldih(ins.X.ra, ins.X.cx);
 				break;
 			case LDIL:
-				ldil(ins.LX.ra, ins.LX.cx);
+				ldil(ins.X.ra, ins.X.cx);
 				break;
 			case ADD:
 				add(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
 			case SUB:
 				sub(ins.A.ra,ins.A.rb,ins.A.rc);
+				break;
+			case FNEG:
+				fneg(ins.A.ra,ins.A.rb);
 				break;
 			case ADDI:
 				addi(ins.L.ra,ins.L.rb,ins.L.cx);
@@ -198,6 +212,12 @@ int main(int argc, char* argv[])
 			case SHR:
 				shr(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
+			case SHLI:
+				shli(ins.L.ra,ins.L.rb,ins.L.cx);
+				break;
+			case SHRI:
+				shri(ins.L.ra,ins.L.rb,ins.L.cx);
+				break;
 			case BEQ:
 				beq(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
@@ -206,6 +226,9 @@ int main(int argc, char* argv[])
 				break;
 			case BLT:
 				blt(ins.L.ra,ins.L.rb,ins.L.cx);
+				break;
+			case BFLE:
+				bfle(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case JSUB:
 				jsub(ins.J.cx);
@@ -244,7 +267,7 @@ const char* reg2name(unsigned int reg){
 	return rnames[reg];
 }
 
-void ld(unsigned int ra, unsigned int rb, int cx){
+void ld(unsigned int ra, unsigned int rb, unsigned int cx){
 	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
 	if(tmp != IOADDR ){
 		reg[ra].u = ram[tmp];
@@ -264,8 +287,41 @@ void ld(unsigned int ra, unsigned int rb, int cx){
 		}
 	}
 }
-void st(unsigned int ra, unsigned int rb, int cx){
+void st(unsigned int ra, unsigned int rb, unsigned int cx){
 	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
+	if(tmp != IOADDR ){
+		ram[tmp] = reg[ra].u;
+	}else{
+		unsigned char iotmp = reg[ra].u & 0xFF;
+		if(iofpw!=NULL && fwrite(&iotmp,sizeof(unsigned char),1,iofpw) <= 0){
+			printf("File Write Error\n");
+			debuginfo();
+			exit(1);
+		}
+	}
+}
+void lda(unsigned int ra, unsigned int cx){
+	unsigned int tmp = cx & 0xFFFFF;
+	if(tmp != IOADDR ){
+		reg[ra].u = ram[tmp];
+	}else{
+		if(iofpr == NULL){
+			printf("WARN: NO INPUT FILE\n");
+			reg[ra].u = 0;
+			return;
+		}
+		unsigned char iotmp;
+		if(fread(&iotmp,sizeof(unsigned char),1,iofpr) > 0){
+			reg[ra].u = iotmp;
+		}else{
+			printf("File Read Error\n");
+			debuginfo();
+			exit(1);
+		}
+	}
+}
+void sta(unsigned int ra, unsigned int cx){
+	unsigned int tmp = cx & 0xFFFFF;
 	if(tmp != IOADDR ){
 		ram[tmp] = reg[ra].u;
 	}else{
@@ -289,7 +345,10 @@ void add(unsigned int ra, unsigned int rb, unsigned int rc){
 void sub(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].d = reg[rb].d - reg[rc].d;
 }
-void addi(unsigned int ra, unsigned int rb, int cx){
+void fneg(unsigned int ra, unsigned int rb){
+	reg[ra].f = -reg[rb].f;
+}
+void addi(unsigned int ra, unsigned int rb, unsigned int cx){
 	reg[ra].d = reg[rb].d + cx;
 }
 void _and(unsigned int ra, unsigned int rb, unsigned int rc){
@@ -302,38 +361,58 @@ void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].u = reg[rb].u ^ reg[rc].u;
 }
 void shl(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 31 ){
+	if ( reg[rc].u < 32 ){
 		reg[ra].u = reg[rb].u << reg[rc].u;
 	}else{
 		reg[ra].u = 0;
 	}
 }
 void shr(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 31 ){
+	if ( reg[rc].u < 32 ){
 		reg[ra].u = reg[rb].u >> reg[rc].u;
 	}else{
 		reg[ra].u = 0;
 	}
 }
-void beq(unsigned int ra, unsigned int rb, int cx){
+void shli(unsigned int ra, unsigned int rb, unsigned int cx){
+	if ( cx < 32 ){
+		reg[ra].u = reg[rb].u << cx;
+	}else{
+		reg[ra].u = 0;
+	}
+}
+void shri(unsigned int ra, unsigned int rb, unsigned int cx){
+	if ( cx < 32 ){
+		reg[ra].u = reg[rb].u >> cx;
+	}else{
+		reg[ra].u = 0;
+	}
+}
+void beq(unsigned int ra, unsigned int rb, unsigned int cx){
 	if(reg[ra].d == reg[rb].d){ 
 		pc = pc + cx;
 		pcflag = 0;
 	}
 }
-void ble(unsigned int ra, unsigned int rb, int cx){
+void ble(unsigned int ra, unsigned int rb, unsigned int cx){
 	if(reg[ra].d <= reg[rb].d){
 		pc = pc + cx;
 		pcflag = 0;
 	}
 }
-void blt(unsigned int ra, unsigned int rb, int cx){
+void blt(unsigned int ra, unsigned int rb, unsigned int cx){
 	if(reg[ra].d < reg[rb].d){
 		pc = pc + cx;
 		pcflag = 0;
 	}
 }
-void jsub(int cx){
+void bfle(unsigned int ra, unsigned int rb, unsigned int cx){
+	if(reg[ra].f <= reg[rb].f){
+		pc = pc + cx;
+		pcflag = 0;
+	}
+}
+void jsub(unsigned int cx){
 	sp--;
 	ram[sp] = pc + 1;
 	pc = pc + cx;
