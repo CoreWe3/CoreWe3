@@ -370,6 +370,7 @@ begin
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= alu_ow(19 downto 0);
+                mem_store <= buf;
                 state <= state+1;
               end if;
             when "000010" => --load abs
