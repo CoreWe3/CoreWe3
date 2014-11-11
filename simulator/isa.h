@@ -30,7 +30,7 @@ typedef union{
 } INS;
 
 
-#define ISANUM 0x20
+#define ISANUM 0x1A
 const char* names[] = {"LD","ST","LDA","STA","LDIH","LDIL","ADD","SUB","FNEG","ADDI","AND","OR","XOR","SHL","SHR","SHLI","SHRI","BEQ","BLE","BLT","BFLE","JSUB","RET","PUSH","POP","LDI"};
 #define LD   0x0
 #define ST   0x1
