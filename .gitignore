@@ -32,6 +32,7 @@
 */bin/*
 *.cw3
 *.tbin
+min-caml
 
 # Emacs backup files
 *~
