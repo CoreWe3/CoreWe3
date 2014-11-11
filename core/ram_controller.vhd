@@ -49,7 +49,7 @@ begin
         when "0000" =>
           if go = '1' then
             if we = '1' then --write
-              if addr(19 downto 12) = x"08" then
+              if addr(19 downto 12) = x"EF" then
                 bwe <= '1';
                 XWA <= '1';
                 state <= "0001";
@@ -62,7 +62,7 @@ begin
             else  --read
               XWA <= '1';
               bwe <= '0';
-              if addr(19 downto 12) = x"08" then
+              if addr(19 downto 12) = x"EF" then
                 state <= "0011";
               else
                 state <= "0100";
