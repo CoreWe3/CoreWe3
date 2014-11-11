@@ -3,14 +3,6 @@
 
 #include <stdio.h>
 
-void printbin(uint32_t x) {
-    int i;
-    for (i = 31; i >= 0; --i) {
-        printf("%d", (x >> i) & 1);
-        if (i == 31 || i == 23) printf(" ");
-    }
-    printf("\n");
-}
 #include <stdint.h>
 
 /*
@@ -122,8 +114,8 @@ uint32_t fmul(uint32_t a, uint32_t b){
 
   r11=254;
   if (r13>r11) {
-    r9=255;
-    r13=0;
+    r9=0;
+    r13=255;
     goto END;
   }
   r8=64;

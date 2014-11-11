@@ -3,9 +3,7 @@
 	ADDI	r15	r0	31
 	SHR	r13	r3	r15
 	SHR	r14	r4	r15
-	OR	r10	r13	r14
-	AND	r11	r13	r14
-	SUB	r10	r10	r11
+	XOR	r10	r13	r14
 	ADDI	r13	r0	1
 	ADDI	r14	r0	24
 	ADDI	r15	r0	9
@@ -108,7 +106,7 @@
 	ADDI	r14	r0	23
 	ADDI	r15	r0	31
 	SHL	r13	r13	r14
-	SHR	r10	r10	r15
+	SHL	r10	r10	r15
 	ADD	r3	r13	r10
 	ADD	r3	r3	r9
 	RET
@@ -127,4 +125,4 @@
 	SHL	r5	r5	r7
 	BLT	r0	r6	:loop
 	RET
-
+:EMD
