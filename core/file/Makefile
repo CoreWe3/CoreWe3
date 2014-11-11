@@ -23,4 +23,4 @@ $(AS):
 .PHONY: all clean
 
 clean:
-	rm -rf $(TARGET) $(SOURCE:.s=.bin)
+	rm -rf *.cw3 *.tbin *.bin *.hex
