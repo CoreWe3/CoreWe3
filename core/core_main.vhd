@@ -185,7 +185,7 @@ begin
             when "000010" => --load abs
             when "000011" => --store abs
               reg_addr1 <= instr(25 downto 20);
-            when "000100" | "000101" => --load immediate
+            when "000100" => --load immediate high
               reg_addr1 <= instr(25 downto 20);
             when "000110" | "000111" => --add sub
               reg_addr1 <= instr(19 downto 14);
@@ -481,7 +481,7 @@ begin
               pc <= next_pc;
             when "000101" => --load immediate low
               reg_addr1 <= instr(25 downto 20);
-              reg_iw <= reg_ow1(31 downto 16) & instr(15 downto 0);
+              reg_iw <= x"0000" & instr(15 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "000110" | "000111" => --add sub
