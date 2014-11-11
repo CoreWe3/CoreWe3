@@ -65,7 +65,6 @@ void print_L(unsigned int x) {
 }
 
 
-
 FILE *fpw = NULL;
 
 int main(int argc, char* argv[])
@@ -103,9 +102,17 @@ int main(int argc, char* argv[])
 		if(op != NULL){
 			if(op[0]==':'){
 				label[op] = line;
+				printf("%s to %d\n",op,line);
 			}else{
+				if(name2op(op)==LDI){
+					strtok(NULL,tokens);
+					int t = strtol(strtok(NULL,tokens),NULL,0);
+					if(t>>14 != 0) line++;
+				}
 				line++;
 			}
+		}else{
+			printf("error at line %s\n",buffer);
 		}
 		it++;
 	}
