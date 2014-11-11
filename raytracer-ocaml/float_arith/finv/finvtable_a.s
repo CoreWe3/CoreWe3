@@ -1,6 +1,6 @@
 :finvtablea
-	ADDI	r6	r0	4
-	ADDI	r3	r0	10000	#a init
+	ADDI	r6	r0	16
+	LDI	r3	0x8000	#a init
 	ADDI	r4	r0	16255
 	SHL	r4	r4	r6
 	ADDI	r5	r0	49168

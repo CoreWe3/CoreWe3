@@ -26,7 +26,9 @@
 	ADD	r4	r12	r4
 	SUB	r4	r4	r16
 :finvend
-	LD	r3	temp_a	r6	# from a.txt
+	SHL	r4	r4	r14
+	LDI	r9	0x8000
+	LD	r3	r9	r6	# from a.txt
 	PUSH	r4
 	PUSH	r5
 	PUSH	r6
@@ -37,7 +39,8 @@
 	POP	r6
 	PUSH	r2
 	OR	r4	r3	r3
-	LD	r3	temp_b	r6	# from b.txt
+	LDI	r9	0x8000
+	LD	r3	r9	r6	# from b.txt
 	JSUB	:fsub	# r3 - r4 = r3
 	POP	r2
 	POP	r5
