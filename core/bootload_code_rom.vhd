@@ -1,7 +1,6 @@
 --code rom with boot loader
 --WIDTH > 1
 
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -76,7 +75,7 @@ begin
             state <= x"4";
           end if;
         when x"4" =>
-          if buf = x"09000000" then --end of code
+          if buf = x"54000000" then --end of code
             ROM(conv_integer(in_addr)) <= buf;
             state <= x"5";
           else
