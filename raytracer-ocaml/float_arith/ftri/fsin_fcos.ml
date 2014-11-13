@@ -1,27 +1,5 @@
-(* let fless a b = a < b *)
-(* let fneg a = -1.0 *. a *)
-(* let chekc_sin f = *)
-(*   let eps = 2. ** (-127.) in *)
-(*   let r = 2. ** (-18.) in *)
-(*   let a = min_caml_sin f in *)
-(*   let b = sin f in *)
-(*   let d = abs_float (a -. b) in *)
-(*   let bnd = max ((abs_float a) *. r) eps in *)
-(*   if d > bnd then *)
-(*     (Format.printf "%e %e\n" a b; false) *)
-(*   else *)
-(*     true *)
-(* let chekc_cos f = *)
-(*   let eps = 2. ** (-127.) in *)
-(*   let r = 2. ** (-18.) in *)
-(*   let a = min_caml_cos f in *)
-(*   let b = cos f in *)
-(*   let d = abs_float (a -. b) in *)
-(*   let bnd = max ((abs_float a) *. r) eps in *)
-(*   if d > bnd then *)
-(*     (Format.printf "%e %e\n" a b; false) *)
-(*   else *)
-(*     true *)
+(* let rec fless a b = a < b in *)
+(* let rec fneg a = -.a in *)
 
 let rec reduction f =
   let rec init_p a p =
@@ -59,7 +37,7 @@ let rec kernel_cos f =
   1.0 +. ((c2 *. f2) +. ((c4 *. f4) +. (c6 *. f6)))
 in
 
-let rec min_caml_sin f = 
+let rec sin f = 
   let s = if fless f 0.0 then 1 else 0 in
   let a = if s = 0 then f else fneg f in
   let a = reduction a in
@@ -78,7 +56,7 @@ let rec min_caml_sin f =
     if fless a 0.0 then a else fneg a 
 in
 
-let rec min_caml_cos f = 
+let rec cos f = 
   let s = 0 in
   let a = if s = 0 then f else fneg f in
   let a = reduction a in
@@ -96,4 +74,7 @@ let rec min_caml_cos f =
   else 
     if fless a 0.0 then a else fneg a
 in
-()
+print_int32 (sin 0.1);
+print_int32 (sin 0.3);
+print_int32 (cos 0.1);
+print_int32 (cos 0.3)
