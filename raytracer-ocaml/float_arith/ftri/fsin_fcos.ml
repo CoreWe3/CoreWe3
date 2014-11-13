@@ -1,7 +1,7 @@
 (* let rec fless a b = a < b in *)
 (* let rec fneg a = -.a in *)
 
-let rec reduction f =
+let rec sin_cos_reduction f =
   let rec init_p a p =
     if fless a p then p else init_p a (2.0 *. p)
   in
@@ -40,7 +40,7 @@ in
 let rec sin f = 
   let s = if fless f 0.0 then 1 else 0 in
   let a = if s = 0 then f else fneg f in
-  let a = reduction a in
+  let a = sin_cos_reduction a in
   let pi = 3.141592653589793 in
   let (a, s) = if fless a pi then (a, s) else (a -. pi, 1 - s) in
   let pio2 = 1.5707963267948966 in
@@ -59,7 +59,7 @@ in
 let rec cos f = 
   let s = 0 in
   let a = if s = 0 then f else fneg f in
-  let a = reduction a in
+  let a = sin_cos_reduction a in
   let pi = 3.141592653589793 in
   let (a, s) = if fless a pi then (a, s) else (a -. pi, 1 - s) in
   let pio2 = 1.5707963267948966 in

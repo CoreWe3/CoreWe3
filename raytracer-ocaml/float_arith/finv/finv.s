@@ -1,4 +1,4 @@
-:finv
+:min_caml_finv
 	ADDI	r16	r0	1
 	ADDI	r15	r0	30
 	ADDI	r14	r0	23
@@ -16,16 +16,16 @@
 	SHL	r4	r3	r16
 	SHR	r4	r4	r16
 	SHR	r4	r4	r14
-	BLT	r4	r12	:finvelse
+	BLT	r4	r12	:min_caml_finvelse
 	SUB	r4	r4	r12
 	SUB	r4	r12	r4
 	SUB	r4	r4	r16
-	BEQ	r0	r0	:finvend
-:finvelse
+	BEQ	r0	r0	:min_caml_finvend
+:min_caml_finvelse
 	SUB	r4	r12	r4
 	ADD	r4	r12	r4
 	SUB	r4	r4	r16
-:finvend
+:min_caml_finvend
 	SHL	r4	r4	r14
 	LDI	r9	0x8000
 	LD	r3	r9	r6	# from a.txt
@@ -34,14 +34,14 @@
 	PUSH	r6
 	OR	r4	r7	r7
 	PUSH	r2
-	JSUB	:fmul	# r3 * r4 = r3
+	JSUB	:min_caml_fmul	# r3 * r4 = r3
 	POP	r2
 	POP	r6
 	PUSH	r2
 	OR	r4	r3	r3
 	LDI	r9	0x8000
 	LD	r3	r9	r6	# from b.txt
-	JSUB	:fsub	# r3 - r4 = r3
+	JSUB	:min_caml_fsub	# r3 - r4 = r3
 	POP	r2
 	POP	r5
 	POP	r4
@@ -50,4 +50,4 @@
 	OR	r3	r5	r4
 	OR	r3	r3	r10
 	RET
-	
+

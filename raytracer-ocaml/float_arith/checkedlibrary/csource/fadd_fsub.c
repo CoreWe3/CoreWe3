@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include "float_arith.h"
 
-//書きなおすのが面倒だったので、レジスタ利用規約を守っていません。
 uint32_t fadd(uint32_t a, uint32_t b){
     uint32_t r[16];//, s[16], m[16];
 //    int sp;
