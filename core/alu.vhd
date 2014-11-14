@@ -15,32 +15,25 @@ end alu;
 architecture arch_alu of alu is
   signal shiftl : std_logic_vector(31 downto 0);
   signal shiftr : std_logic_vector(31 downto 0);
+  signal out_word_d : std_logic_vector(31 downto 0);
   constant zero : std_logic_vector(31 downto 0) := (others => '0');
 begin
 
   process(clk)
   begin
     if rising_edge(clk) then
-      case ctrl is
-        when "000" =>
-          out_word <= in_word1 + in_word2;
-        when "001" =>
-          out_word <= in_word1 - in_word2;
-        when "010" =>
-          out_word <= in_word1 and in_word2;
-        when "011" =>
-          out_word <= in_word1 or in_word2;
-        when "100" =>
-          out_word <= in_word1 xor in_word2;
-        when "101" =>
-          out_word <= shiftl;
-        when "110" =>
-          out_word <= shiftr;
-        when others =>
-          out_word <= zero;
-      end case;
+      out_word <= out_word_d;
     end if;
   end process;
+
+  out_word_d <= in_word1 + in_word2 when ctrl = "000" else
+               in_word1 - in_word2 when ctrl = "001" else
+               in_word1 and in_word2 when ctrl = "010" else
+               in_word1 or in_word2 when ctrl = "011" else
+               in_word1 xor in_word2 when ctrl = "100" else
+               shiftl when ctrl = "101" else
+               shiftr when ctrl = "110" else
+               zero;
 
   shiftl <= in_word1 when in_word2 = x"0000000" else
             in_word1(30 downto 0) & zero(31 downto 31) when in_word2 =  x"00000001" else
