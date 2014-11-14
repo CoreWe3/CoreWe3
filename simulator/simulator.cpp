@@ -337,7 +337,7 @@ void ldih(unsigned int ra, unsigned int cx){
 	reg[ra].u = (cx << 16) + (reg[ra].u & 0xFFFF);
 }
 void ldil(unsigned int ra, unsigned int cx){
-	reg[ra].u = (reg[ra].u & 0xFFFF0000) + cx ;
+	reg[ra].u = cx ;
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].d = reg[rb].d + reg[rc].d;
