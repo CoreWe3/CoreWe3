@@ -74,6 +74,17 @@ void debuginfo(){
 	}
 }
 
+void initram(char* filename){
+	FILE *fp = fopen(filename, "rb");
+	int tmp;
+	for(int i = 0; i < RAMSIZE; i++){
+		if(fread(&tmp,sizeof(int),1,fp) > 0){
+			ram[i] = tmp;
+		}
+	}
+	fclose(fp);
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -86,15 +97,9 @@ int main(int argc, char* argv[])
 		reg[i].u = 0;
 	}
 
-	while((result=getopt(argc,argv,"a:i:o:l:b:r:"))!=-1){
+
+	while((result=getopt(argc,argv,"i:o:l:b:r:s:"))!=-1){
 		switch(result){
-			case 'a':
-				fpr = fopen(optarg,"rb");
-				if (fpr == NULL){
-					printf("Can't open %s\n",optarg);
-					return 1;
-				}
-				break;
 			case 'i':
 				iofpr = fopen(optarg,"rb");
 				if (iofpr == NULL){
@@ -116,6 +121,9 @@ int main(int argc, char* argv[])
 					return 1;
 				}
 				break;
+			case 's':
+				initram(optarg);
+				break;
 			case 'l':
 				limit = atoi(optarg);
 				break;
@@ -129,6 +137,16 @@ int main(int argc, char* argv[])
 				fprintf(stdout,"unknown\n");
 				return 1;
 		}
+	}
+
+	if(optind < argc){
+		fpr = fopen(argv[optind++],"rb");
+		if (fpr == NULL){
+			printf("Can't open %s\n",optarg);
+			return 1;
+		}
+	}else{
+		return 1;
 	}
 
 	if(fpr == NULL){
