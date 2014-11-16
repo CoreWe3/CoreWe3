@@ -33,8 +33,8 @@ void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
 
-unsigned int name2op(char* op){
-	int num = 10000;
+int name2op(char* op){
+	int num = -1;
 	for(int i = 0; i < ISANUM; i++){
 		if(strcmp(names[i], op)==0){
 			num = i;
@@ -44,8 +44,8 @@ unsigned int name2op(char* op){
 	return num;
 }
 
-unsigned int name2reg(char* reg){
-	int num = 10000;
+int name2reg(char* reg){
+	int num = -1;
 	for(int i = 0; i < REGNUM; i++){
 		if(strcmp(rnames[i], reg)==0){
 			num = i;
@@ -59,10 +59,29 @@ unsigned int name2reg(char* reg){
 void print_L(unsigned int x) {
     int i;
     for (i = 31; i >= 0; --i) {
-        printf("%d", (x >> i) & 1);
-        if (i == 24  || i == 20  || i== 16) printf(" ");
-    }
-    printf("\n");
+		printf("%d", (x >> i) & 1);
+		if (i == 24  || i == 20  || i== 16) printf(" ");
+	}
+	printf("\n");
+}
+
+
+std::map<std::string,int> label;
+
+int getimmediate(char* str, int l){
+	if(str[0]=='.'){
+		if(label.count(str) == 0){
+			printf("WARN: Invalid Label : %s\n",str);
+		}
+		return label[str]-l;
+	}else if (str[0]==':'){
+		if(label.count(str) == 0){
+			printf("WARN: Invalid Label : %s\n",str);
+		}
+		return label[str];
+	}else{
+		return strtol(str,NULL,0);
+	}
 }
 
 
@@ -85,18 +104,44 @@ int main(int argc, char* argv[])
 	char buffer[256];
 	char buffer2[256];
 	const char *tokens = "\t \n";
-	std::list<std::string> data;
+	std::list<std::string> fdata;
 	while(fgets(buffer,256,stdin)!=NULL){
 		strcpy(buffer2,buffer);
 		char* tmp = strtok(buffer2, tokens);
 		if(tmp==NULL) continue;
-		data.push_back(buffer);
+		fdata.push_back(buffer);
+	}
+	
+	std::list<std::string>::iterator it;
+	std::list<std::string> data;
+	
+	//Preprocess
+	it = fdata.begin();
+	while(it != fdata.end()){
+		strncpy(buffer,(*it).c_str(),256);
+		strcpy(buffer2,buffer);
+		int vop = name2op(strtok(buffer, tokens));
+		char *ra, *rb, *rc, *cx;
+		if(vop == ADDI){
+			ra = strtok(NULL,tokens);
+			rb = strtok(NULL,tokens);
+			cx = strtok(NULL,tokens);
+			if (strcmp(rb,"r0")==0){
+				sprintf(buffer,"LDI\t%s\t%s\t",ra,cx);
+				data.push_back(buffer);
+			}else{
+				data.push_back(buffer2);
+			}
+		}else{
+			data.push_back(buffer2);
+		}
+
+		it++;
 	}
 
 	//Detect Label
 	int line = 1;
-	std::map<std::string,int> label;
-	std::list<std::string>::iterator it = data.begin();
+	it = data.begin();
 	while(it != data.end()){
 		strncpy(buffer,(*it).c_str(),256);
 		char* op = strtok(buffer, tokens);
@@ -111,7 +156,6 @@ int main(int argc, char* argv[])
 			}else{
 				if(name2op(op)==LDI){
 					strtok(NULL,tokens);
-					//int t = strtol(strtok(NULL,tokens),NULL,0);
 					line++;
 				}
 				line++;
@@ -138,66 +182,37 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							ld(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							ld(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						ld(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case ST:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							st(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						st(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case LDA:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							lda(name2reg(ra),label[cx]);
-						}else{
-							lda(name2reg(ra),strtol(cx,NULL,0));
-						}
+						lda(name2reg(ra),getimmediate(cx,line));
 						break;
 					case STA:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							sta(name2reg(ra),label[cx]);
-						}else{
-							sta(name2reg(ra),strtol(cx,NULL,0));
-						}
+						sta(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDIH:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							ldih(name2reg(ra),label[cx]);
-						}else{
-							ldih(name2reg(ra),strtol(cx,NULL,0));
-						}
+						ldih(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDIL:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						ldil(name2reg(ra),strtol(cx,NULL,0));
-						if(cx[0]=='.'){
-							ldil(name2reg(ra),label[cx]);
-						}else{
-							ldil(name2reg(ra),strtol(cx,NULL,0));
-						}
+						ldil(name2reg(ra),getimmediate(cx,line));
 					case LDI:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							ldi(name2reg(ra),label[cx]);
-						}else{
-							ldi(name2reg(ra),strtol(cx,NULL,0));
-						}
+						ldi(name2reg(ra),getimmediate(cx,line));
 						line++;
 						break;
 					case ADD:
@@ -221,11 +236,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-							addi(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						addi(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case AND:
 						ra = strtok(NULL,tokens);
@@ -261,94 +272,41 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-						shli(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-						shli(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						shli(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case SHRI:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0]=='.'){
-						shri(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-						shri(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						shri(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BEQ:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							beq(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else if (cx[0] == '.'){
-							beq(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						beq(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BLE:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							ble(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else if (cx[0] == '.'){
-							ble(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						ble(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BLT:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							blt(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else if (cx[0] == '.'){
-							blt(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						blt(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BFLE:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							bfle(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else if (cx[0] == '.'){
-							bfle(name2reg(ra),name2reg(rb),label[cx]);
-						}else{
-							bfle(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						bfle(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case JSUB:
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							jsub(label[cx]-line);
-						}else if (cx[0] == '.'){
-							jsub(label[cx]);
-						}else{
-							jsub(strtol(cx,NULL,0));
-						}
+						jsub(getimmediate(cx,line));
 						break;
 					case RET:
 						ret();
@@ -414,11 +372,11 @@ void ldil(unsigned int ra, unsigned int cx){
 	write(ins.data);
 }
 void ldi(unsigned int ra, unsigned int cx){
-	//if(cx >> 14 == 0){
-	//	addi(ra,0,cx);
+	//if((cx & 0xffff0000) == 0){
+	//	ldil(ra, cx & 0xffff);
 	//}else{
+		ldil(ra, cx & 0xffff);
 		ldih(ra, cx >> 16);
-		ldil(ra, cx << 16 >> 16);
 	//}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
