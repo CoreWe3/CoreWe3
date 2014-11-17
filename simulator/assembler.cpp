@@ -33,7 +33,13 @@ void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
 
+int dline = 1;
+
 int name2op(char* op){
+	if(op==NULL){
+		printf("error at line : %d\n",dline);
+		exit(1);
+	}
 	int num = -1;
 	for(int i = 0; i < ISANUM; i++){
 		if(strcmp(names[i], op)==0){
@@ -45,6 +51,10 @@ int name2op(char* op){
 }
 
 int name2reg(char* reg){
+	if(reg==NULL){
+		printf("error at line : %d\n",dline);
+		exit(1);
+	}
 	int num = -1;
 	for(int i = 0; i < REGNUM; i++){
 		if(strcmp(rnames[i], reg)==0){
@@ -69,6 +79,10 @@ void print_L(unsigned int x) {
 std::map<std::string,int> label;
 
 int getimmediate(char* str, int l){
+	if(str==NULL){
+		printf("error on %d\n",dline);
+		exit(1);
+	}
 	if(str[0]=='.'){
 		if(label.count(str) == 0){
 			printf("WARN: Invalid Label : %s\n",str);
@@ -135,7 +149,6 @@ int main(int argc, char* argv[])
 		}else{
 			data.push_back(buffer2);
 		}
-
 		it++;
 	}
 
@@ -326,6 +339,7 @@ int main(int argc, char* argv[])
 				line++;
 			}}
 		it++;
+		dline++;
 	}
 	fclose(fpw);
 	return 0;
