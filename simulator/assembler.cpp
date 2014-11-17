@@ -83,12 +83,12 @@ int getimmediate(char* str, int l){
 		printf("error on %d\n",dline);
 		exit(1);
 	}
-	if(str[0]=='.'){
+	if(str[0]==':'){
 		if(label.count(str) == 0){
 			printf("WARN: Invalid Label : %s\n",str);
 		}
 		return label[str]-l;
-	}else if (str[0]==':'){
+	}else if (str[0]=='.'){
 		if(label.count(str) == 0){
 			printf("WARN: Invalid Label : %s\n",str);
 		}
