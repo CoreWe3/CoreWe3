@@ -124,4 +124,4 @@
 	SHL	r5	r5	r7
 	BLT	r0	r6	:min_caml_mul_loop
 	RET
-:min_caml_mul_EMD
+
