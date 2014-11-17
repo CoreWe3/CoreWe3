@@ -44,7 +44,7 @@ unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
 
-	printf("pc:%d, sp:%d\n", pc, sp);
+	printf("pc:%d, sp:%x\n", pc, sp);
 
 	for(int i = 0; i < REGNUM; i++){
 		printf("%s:%d (0x%x), ", reg2name(i), reg[i].d, reg[i].u);
@@ -166,8 +166,8 @@ int main(int argc, char* argv[])
 
 	//MAIN ROUTINE
 	INS ins;
-	while(true){
 
+	while(true){
 		if(pc >= num){
 			printf("The program successfully done.\n");
 			break;
@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 			printf("The program reached break point. : %d\n", pc);
 			break;
 		}
-
+		
 		ins.data = rom[pc];
 		pcflag = 1;
 		counter[ins.A.op]++;
@@ -444,9 +444,17 @@ void ret(){
 void push(unsigned int ra){
 	sp--;
 	ram[sp] = reg[ra].u;
+	if(sp>=RAMSIZE){
+		printf("Stack Pointer is out of range\n");
+		exit(1);
+	}
 }
 void pop(unsigned int ra){
 	reg[ra].u = ram[sp];
 	sp++;
+	if(sp>=RAMSIZE){
+		printf("Stack Pointer is out of range\n");
+		exit(1);
+	}
 }
 

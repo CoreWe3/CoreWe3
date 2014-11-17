@@ -73,7 +73,7 @@ REG reg[REGNUM];
 #define ROMSIZE 0x100000
 unsigned int pc=0;
 unsigned int pcflag;
-unsigned int sp=0xfffffe;
+unsigned int sp=0xffffe;
 unsigned int ram[RAMSIZE];
 unsigned int rom[ROMSIZE];
 #define IOADDR 0xfffff
