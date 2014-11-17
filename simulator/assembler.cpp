@@ -222,6 +222,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						ldil(name2reg(ra),getimmediate(cx,line));
+						break;
 					case LDI:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
