@@ -53,13 +53,7 @@ void debuginfo(){
 	for(int i = 0; i < ISANUM; i++){
 		printf("%s:%u, ", names[i], counter[i]);
 	}
-	printf("\n");
-	/*for(int i = 0; i < 10; i++){
-		if(sp+i<RAMSIZE){
-			printf("%d:%d, ", sp+i, ram[sp+i]);
-		}
-	}*/
-	printf("Number of Instruction : %lld\n",d_insnum);
+	printf("\nNumber of Instruction : %lld\n",d_insnum);
 	
 	//Dump RAM
 	if(ramout!=NULL){
