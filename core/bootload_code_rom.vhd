@@ -11,11 +11,11 @@ entity bootload_code_rom is
   generic(wtime : std_logic_vector(15 downto 0) := x"1ADB";
           WIDTH : integer := 14);
   
-  port (clk   : in  std_logic;
-        RS_RX : in  std_logic;
-        ready : out std_logic;
-        addr  : in  std_logic_vector(WIDTH-1 downto 0);
-        instr : out std_logic_vector(31 downto 0));
+  port (sysclk : in  std_logic;
+        RS_RX  : in  std_logic;
+        ready  : out std_logic;
+        addr   : in  std_logic_vector(WIDTH-1 downto 0);
+        instr  : out std_logic_vector(31 downto 0));
 end bootload_code_rom;
 
 architecture arch_code_rom of bootload_code_rom is
@@ -45,14 +45,14 @@ architecture arch_code_rom of bootload_code_rom is
 begin
 
   recieve : uart_receiver port map (
-    clk => clk,
+    clk => sysclk,
     rx => RS_RX,
     complete => complete,
     data => data);
 
-  process(clk)
+  process(sysclk)
   begin
-    if rising_edge(clk) then
+    if rising_edge(sysclk) then
       case state is
         when x"0" =>
           if complete = '1' then

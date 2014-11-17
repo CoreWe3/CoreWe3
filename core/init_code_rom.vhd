@@ -8,10 +8,10 @@ entity init_code_rom is
   generic(CODE  : string := "code.bin";
           WIDTH : integer := 14);
   
-  port (clk   : in  std_logic;
-        en    : in  std_logic;
-        addr  : in  std_logic_vector(WIDTH-1 downto 0);
-        instr : out std_logic_vector(31 downto 0));
+  port (sysclk : in  std_logic;
+        en     : in  std_logic;
+        addr   : in  std_logic_vector(WIDTH-1 downto 0);
+        instr  : out std_logic_vector(31 downto 0));
 end init_code_rom;
 
 architecture arch_code_rom of init_code_rom is
@@ -39,9 +39,9 @@ architecture arch_code_rom of init_code_rom is
   attribute rom_style of ROM : signal is "block";
 begin
 
-  process(clk)
+  process(sysclk)
   begin
-    if rising_edge(clk) then
+    if rising_edge(sysclk) then
       if en = '1' then
         --instr <= ROM(conv_integer(addr));
         instr <= to_stdLogicVector(ROM(conv_integer(addr)));

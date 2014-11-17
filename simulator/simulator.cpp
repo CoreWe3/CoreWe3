@@ -444,7 +444,7 @@ void ret(){
 void push(unsigned int ra){
 	sp--;
 	ram[sp] = reg[ra].u;
-	if(sp>=RAMSIZE){
+	if(sp<STACKLIMIT){
 		printf("Stack Pointer is out of range\n");
 		exit(1);
 	}
