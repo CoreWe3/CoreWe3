@@ -1,12 +1,10 @@
 :main
 	LDI	r3	0x8000
 	JSUB	:finvtablea
-	LDI	r3	0x88FF
+	LDI	r3	0x8800
 	JSUB	:finvtableb
 	ADDI	r3	r0	0x0000
-	ADDI	r4	r0	0x61A8
-	ADDI	r1	r0	2
-	SHL	r4	r4	r1	#r4=100000
+	LDI	r4	100000
 :main_loop
 	PUSH	r4
 	PUSH	r3
@@ -63,31 +61,33 @@
 	ADD	r4	r12	r4
 	SUB	r4	r4	r16
 :finvend
-	SHL	r4	r4	r14	#modified
-	LDI	r14	0x8000
-	ADD	r14	r6	r14
-	LD	r3	r14	0	# from a.txt
+	SHL	r4	r4	r14
+	LDI	r9	0x8000
+	ADD	r3	r9	r6	# from a.txt
+	LDA	r3	r3
 	PUSH	r4
 	PUSH	r5
 	PUSH	r6
 	OR	r4	r7	r7
-	PUSH	r8
+	PUSH	r2
 	JSUB	:fmul	# r3 * r4 = r3
-	POP	r8
+	POP	r2
 	POP	r6
-	PUSH	r8
+	PUSH	r2
 	OR	r4	r3	r3
-	LDI	r14	0x8800
-	ADD	r14	r6	r14
-	LD	r3	r14	0	# from b.txt
+	LDI	r9	0x8800
+	ADD	r3	r9	r6	# from b.txt
+	LD	r3	r3
 	JSUB	:fsub	# r3 - r4 = r3
-	POP	r8
+	POP	r2
 	POP	r5
 	POP	r4
 	SHL	r10	r3	r13
 	SHR	r10	r10	r13
 	OR	r3	r5	r4
 	OR	r3	r3	r10
+	RET
+	
 	RET
 :fadd
 	ADDI	r15	r0	1	#frequently used constants
@@ -293,7 +293,7 @@
 	RET
 :finvtablea
 	ADDI	r6	r0	16
-	ADDI	r3	r0	10000	#a init
+	LDI	r3	0x8000	#a init
 	ADDI	r4	r0	16255
 	SHL	r4	r4	r6
 	ADDI	r5	r0	49168
@@ -5415,9 +5415,9 @@
 	OR	r4	r4	r5
 	ST	r4	r3	1023
 	RET
-	:finvtableb
+:finvtableb
 	ADDI	r6	r0	16
-	ADDI	r3	r0	11000	#b init 
+	LDI	r3	0x8400	#b init 
 	ADDI	r4	r0	16383
 	SHL	r4	r4	r6
 	ADDI	r5	r0	57351
@@ -10540,4 +10540,5 @@
 	ST	r4	r3	1023
 	RET
 :main_end
-	ADD	r10	r0	r0
+	ADDI	r5	r0	r0
+	
