@@ -75,10 +75,9 @@ void print_L(unsigned int x) {
 	printf("\n");
 }
 
-
 std::map<std::string,int> label;
 
-int getimmediate(char* str, int l){
+int getimmediate(char* str, int l=0){
 	if(str==NULL){
 		printf("error on %d\n",dline);
 		exit(1);
@@ -95,6 +94,23 @@ int getimmediate(char* str, int l){
 		return label[str];
 	}else{
 		return strtol(str,NULL,0);
+	}
+}
+
+void copylist(std::list<std::string> *a, std::list<std::string> *b){
+	(*a).clear();
+	std::list<std::string>::iterator it = (*b).begin();
+	while(it != b->end()){
+		a->push_back(*it);
+		it++;
+	}
+}
+
+void printlist(std::list<std::string> *a){
+	std::list<std::string>::iterator it = (*a).begin();
+	while(it != a->end()){
+		printf("%s",(*it).c_str());
+		it++;
 	}
 }
 
@@ -116,41 +132,79 @@ int main(int argc, char* argv[])
 
 	//Get Data
 	char buffer[256];
-	char buffer2[256];
 	const char *tokens = "\t \n";
-	std::list<std::string> fdata;
+	std::list<std::string> data;
 	while(fgets(buffer,256,stdin)!=NULL){
+		char buffer2[256];
 		strcpy(buffer2,buffer);
 		char* tmp = strtok(buffer2, tokens);
 		if(tmp==NULL) continue;
-		fdata.push_back(buffer);
+		data.push_back(buffer);
 	}
 	
 	std::list<std::string>::iterator it;
-	std::list<std::string> data;
+	std::list<std::string> tdata;
 	
-	//Preprocess
-	it = fdata.begin();
-	while(it != fdata.end()){
+	//Preprocess1 (ADDI to LDI)
+	it = data.begin();
+	tdata.clear();
+	while(it != data.end()){
 		strncpy(buffer,(*it).c_str(),256);
-		strcpy(buffer2,buffer);
 		int vop = name2op(strtok(buffer, tokens));
-		char *ra, *rb, *rc, *cx;
+		char *ra, *rb, *cx;
 		if(vop == ADDI){
 			ra = strtok(NULL,tokens);
 			rb = strtok(NULL,tokens);
 			cx = strtok(NULL,tokens);
 			if (strcmp(rb,"r0")==0){
-				sprintf(buffer,"LDI\t%s\t%s\t",ra,cx);
-				data.push_back(buffer);
+				char tmp[256];
+				sprintf(tmp,"LDI\t%s\t%s\n",ra,cx);
+				tdata.push_back(tmp);
 			}else{
-				data.push_back(buffer2);
+				tdata.push_back((*it).c_str());
 			}
 		}else{
-			data.push_back(buffer2);
+			tdata.push_back((*it).c_str());
 		}
 		it++;
 	}
+	copylist(&data,&tdata);
+	printf("=========\n");
+	printlist(&data);
+	
+	//Preprocess2 (LDI to LDIH, LDIL)
+	it = data.begin();
+	tdata.clear();
+	while(it != data.end()){
+		strncpy(buffer,(*it).c_str(),256);
+		int vop = name2op(strtok(buffer, tokens));
+		char *ra, *cx;
+		if(vop == LDI){
+			ra = strtok(NULL,tokens);
+			cx = strtok(NULL,tokens);
+			if (cx[0] != ':'){
+				int t = getimmediate(cx);
+				char tmp[256];
+				if(t>0xffff){
+					sprintf(tmp,"LDIL\t%s\t%d\n", ra, t & 0xffff);
+					tdata.push_back(tmp);
+					sprintf(tmp,"LDIH\t%s\t%d\n", ra, t >> 16);
+					tdata.push_back(tmp);
+				}else{
+					sprintf(tmp,"LDIL\t%s\t%d\n", ra, t & 0xffff);
+					tdata.push_back(tmp);
+				}
+			}else{
+				tdata.push_back((*it).c_str());
+			}
+		}else{
+			tdata.push_back((*it).c_str());
+		}
+		it++;
+	}
+	copylist(&data,&tdata);
+	printf("=========\n");
+	printlist(&data);
 
 	//Detect Label
 	int line = 1;
@@ -173,6 +227,8 @@ int main(int argc, char* argv[])
 				}
 				line++;
 			}
+		}else{
+			printf("error at line %s\n",buffer);
 		}
 		it++;
 	}
@@ -181,7 +237,9 @@ int main(int argc, char* argv[])
 	line = 1;
 	it = data.begin();
 	while(it != data.end()){
+		printf("x = %s",(*it).c_str());
 		strcpy(buffer,(*it).c_str());
+		printf("x = %s",buffer);
 		int num = 0;
 		char* op = strtok(buffer, tokens);
 		if(op!=NULL){
@@ -214,6 +272,7 @@ int main(int argc, char* argv[])
 					case LDIH:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
+						printf("LDIH ra = %s cx = %s",ra,cx);
 						ldih(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDIL:
