@@ -83,12 +83,12 @@ int getimmediate(char* str, int l){
 		printf("error on %d\n",dline);
 		exit(1);
 	}
-	if(str[0]=='.'){
+	if(str[0]==':'){
 		if(label.count(str) == 0){
 			printf("WARN: Invalid Label : %s\n",str);
 		}
 		return label[str]-l;
-	}else if (str[0]==':'){
+	}else if (str[0]=='.'){
 		if(label.count(str) == 0){
 			printf("WARN: Invalid Label : %s\n",str);
 		}
@@ -173,8 +173,6 @@ int main(int argc, char* argv[])
 				}
 				line++;
 			}
-		}else{
-			printf("error at line %s\n",buffer);
 		}
 		it++;
 	}
@@ -222,6 +220,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
 						ldil(name2reg(ra),getimmediate(cx,line));
+						break;
 					case LDI:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
