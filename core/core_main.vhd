@@ -94,7 +94,7 @@ architecture arch_core_main of core_main is
   
   signal instr : std_logic_vector(31 downto 0);
   signal instr_reg : std_logic_vector(31 downto 0);
-  signal state : std_logic_vector(3 downto 0) := x"F";
+  signal state : std_logic_vector(3 downto 0) := x"0";
 
   signal alu_iw1 : std_logic_vector(31 downto 0) := (others => '0');
   signal alu_iw2 : std_logic_vector(31 downto 0) := (others => '0');
@@ -182,13 +182,19 @@ begin
   begin
     if rising_edge(sysclk) then
       case state is
-        when x"0" => --fetch
-          state <= x"1";
+        when x"0" => --setupping 
+          if ready = '1' then
+            state <= x"1";
+            pc <= (others => '0');
+          end if;
+
+        when x"1" => --fetch
+          state <= state+1;
           reg_we <= '0';
           pc_buf <= pc;
           instr_reg <= instr;
           
-        when x"1" => --decode
+        when x"2" => --decode
           case instr_reg(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr_reg(19 downto 14);
@@ -264,7 +270,7 @@ begin
           end case;
           state <= state+1;
 
-        when x"2" => --exec
+        when x"3" => --exec
           case instr_reg(31 downto 26) is
             when "000000" => --load
               ctrl <= "000";
@@ -378,7 +384,7 @@ begin
           next_pc <= pc_buf+1;
           state <= state+1;
 
-        when x"3" => --memory request
+        when x"4" => --memory request
           case instr_reg(31 downto 26) is
             when "000000" => --load
               if mem_busy = '0' and mem_go = '0' then
@@ -444,14 +450,14 @@ begin
               state <= state+3;
           end case;
           mem_wait <= conv_std_logic_vector(CLKR,8);
-        when x"4" =>
+        when x"5" =>
           if mem_wait = x"00" then
             state <= state+1;
           else
             mem_wait <= mem_wait-1;
           end if;
 
-        when x"5" => -- memory complete
+        when x"6" => -- memory complete
           mem_we <= '0';
           mem_go <= '0';
           case instr_reg(31 downto 26) is
@@ -494,7 +500,7 @@ begin
             when others =>
           end case;
                        
-        when x"6" => --write
+        when x"7" => --write
           case instr_reg(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr_reg(25 downto 20);
@@ -557,13 +563,8 @@ begin
               pc <= next_pc;
             when others =>
           end case;
-          state <= x"7";
+          state <= x"1";
 
-        when x"F" => --setupping 
-          if ready = '1' then
-            state <= x"0";
-            pc <= (others => '0');
-          end if;
         when others =>
           state <= x"0";
           pc <= (others => '0');
