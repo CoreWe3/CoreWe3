@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-ln -sf CoreWe3/{*.ml{,i},libmincaml.S} .
-cd shootout; ln -sf CoreWe3/Makefile .
-cd ../bytemark; ln -sf CoreWe3/Makefile .
-cd ../min-rt; ln -sf CoreWe3/globals.s .
-cd ..
