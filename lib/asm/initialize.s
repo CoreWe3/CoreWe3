@@ -31,7 +31,8 @@
 	LDI	r2	489471	#init sp
 	LDI	r1	0	#init hp
 	JSUB	:_min_caml_initialize
-	BEQ	r0	r0	:_min_caml_start
+	JSUB	:_min_caml_start
+	BEQ	r0	r0	0
 :min_caml_save_global0
 :min_caml_save_global1
 :min_caml_save_global2
