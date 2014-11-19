@@ -4,6 +4,8 @@
 
 #define SHL(a, b) (b < 32? a << b: 0)
 #define SHR(a, b) (b < 32? a >> b: 0)
+#define PUSH(n) push((n), r, s, &sp)
+#define POP(n) pop((n), r, s, &sp)
 
 void push(int rn, uint32_t r[], uint32_t s[], int *sp);
 void pop(int rn, uint32_t r[], uint32_t s[], int *sp);
