@@ -129,8 +129,7 @@ begin
           data <= odata;
           deq_state <= "00";
         when others =>
-          ogo <= '0';
-          deq_state <= "00";
+          -- not enter this case
       end case;
     end if;
   end process;
