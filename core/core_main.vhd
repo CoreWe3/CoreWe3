@@ -8,7 +8,7 @@ entity core_main is
     CODE       : string := "code.bin";
     ADDR_WIDTH : integer := 8;
     CLKR       : integer := 1; 
-    memCPB        : integer := 573;
+    wtime      : std_logic_vector(15 downto 0) := x"047A";
     debug      : boolean := false);
   port (
     sysclk : in    std_logic;
@@ -35,7 +35,7 @@ architecture arch_core_main of core_main is
 
   -- watch out clk and wtime it doesnt work
   component bootload_code_rom
-    generic ( wtime : std_logic_vector(15 downto 0) := (others => '0'); 
+    generic ( wtime : std_logic_vector(15 downto 0) := wtime;
               WIDTH : integer := ADDR_WIDTH);
     port (
       sysclk   : in  std_logic;
@@ -67,10 +67,10 @@ architecture arch_core_main of core_main is
 
   component memory_io
     generic (
-      CPB   : integer := memCPB;
+      wtime : std_logic_vector(15 downto 0) := wtime;
       debug : boolean := debug);
     port (
-      memclk     : in    std_logic;
+      clk     : in    std_logic;
       RS_RX      : in    std_logic;
       RS_TX      : out   std_logic;
       ZD         : inout std_logic_vector(31 downto 0);
@@ -88,7 +88,7 @@ architecture arch_core_main of core_main is
   signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
   signal pc_buf : std_logic_vector(ADDR_WIDTH-1 downto 0);
   signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
-  signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
+  signal sp : std_logic_vector(19 downto 0) := x"FFFFE";
 
   signal immediate : std_logic_vector(31 downto 0);
   
@@ -115,9 +115,9 @@ architecture arch_core_main of core_main is
   signal mem_we : std_logic := '0';
   signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
-  signal mem_wait : std_logic_vector(7 downto 0);
+  signal mem_wait : std_logic_vector(1 downto 0);
 
-  signal branch_f : std_logic;
+  signal branch : std_logic;
 
   signal ready : std_logic;
   signal RS_RX_exec : std_logic;
@@ -160,7 +160,7 @@ begin
     out_word2 => reg_ow2);
 
   mem : memory_io port map (
-    memclk => memclk,
+    clk => memclk,
     RS_RX => RS_RX_exec,
     RS_TX => RS_TX,
     ZD => ZD,
@@ -192,9 +192,12 @@ begin
           state <= state+1;
           reg_we <= '0';
           pc_buf <= pc;
+
+        when x"2" => --fetch wait
           instr_reg <= instr;
+          state <= state+1;
           
-        when x"2" => --decode
+        when x"3" => --decode
           case instr_reg(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr_reg(19 downto 14);
@@ -270,7 +273,10 @@ begin
           end case;
           state <= state+1;
 
-        when x"3" => --exec
+        when x"4" =>
+          state <= state+1;
+
+        when x"5" => --exec
           case instr_reg(31 downto 26) is
             when "000000" => --load
               ctrl <= "000";
@@ -328,38 +334,38 @@ begin
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc_buf;
               alu_iw2 <= immediate;
               if reg_ow1 = reg_ow2 then
-                branch_f <= '1';
+                branch <= '1';
               else
-                branch_f <= '0';
+                branch <= '0';
               end if;
             when "010010" => --ble
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc_buf;
               alu_iw2 <= immediate;
               if reg_ow1 <= reg_ow2 then
-                branch_f <= '1';
+                branch <= '1';
               else
-                branch_f <= '0';
+                branch <= '0';
               end if;
             when "010011" => --blt
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc_buf;
               alu_iw2 <= immediate;
               if reg_ow1 < reg_ow2 then
-                branch_f <= '1';
+                branch <= '1';
               else
-                branch_f <= '0';
+                branch <= '0';
               end if;
             when "010100" => --bfle
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc_buf;
               alu_iw2 <= immediate;
               if reg_ow1(31) = '1' and reg_ow2(31) = '0' then
-                branch_f <= '1';
+                branch <= '1';
               elsif reg_ow1(30 downto 0) <= reg_ow2(30 downto 0) then
-                branch_f <= '1';
+                branch <= '1';
               else
-                branch_f <= '0';
+                branch <= '0';
               end if;
             when "010101" => --jump subroutine
               ctrl <= "000";
@@ -384,7 +390,10 @@ begin
           next_pc <= pc_buf+1;
           state <= state+1;
 
-        when x"4" => --memory request
+        when x"6" =>
+          state <= state+1;
+
+        when x"7" => --memory request
           case instr_reg(31 downto 26) is
             when "000000" => --load
               if mem_busy = '0' and mem_go = '0' then
@@ -449,15 +458,15 @@ begin
             when others =>
               state <= state+3;
           end case;
-          mem_wait <= conv_std_logic_vector(CLKR,8);
-        when x"5" =>
-          if mem_wait = x"00" then
+          mem_wait <= conv_std_logic_vector(CLKR,2);
+        when x"8" =>
+          if mem_wait = "00" then
             state <= state+1;
           else
             mem_wait <= mem_wait-1;
           end if;
 
-        when x"6" => -- memory complete
+        when x"9" => -- memory complete
           mem_we <= '0';
           mem_go <= '0';
           case instr_reg(31 downto 26) is
@@ -500,7 +509,7 @@ begin
             when others =>
           end case;
                        
-        when x"7" => --write
+        when x"A" => --write
           case instr_reg(31 downto 26) is
             when "000000" => --load
               reg_addr1 <= instr_reg(25 downto 20);
@@ -543,7 +552,7 @@ begin
               pc <= next_pc;
             when "010001" | "010010" | "010011" | "010100" =>
               --branch
-              if branch_f = '1' then
+              if branch = '1' then
                 pc <= alu_ow(ADDR_WIDTH-1 downto 0);
               else
                 pc <= next_pc;

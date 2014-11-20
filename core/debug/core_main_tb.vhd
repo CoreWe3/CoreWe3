@@ -7,14 +7,15 @@ entity core_main_tb is
 end core_main_tb;
 
 architecture arch_core_main_tb of core_main_tb is
-  constant CPB : integer := 10;
+  constant wtime : std_logic_vector(15 downto 0) := x"000F";
+  constant CLKR : integer := 1;
   
   component core_main
     generic (
-      CODE       : string := "stack_test.tbin";
+      CODE       : string := "fib_rec.tbin";
       ADDR_WIDTH : integer := 8;
-      CLKR       : integer := 2;
-      memCPB     : integer := CPB;
+      CLKR       : integer := CLKR;
+      wtime      : std_logic_vector(15 downto 0) := wtime;
       debug      : boolean := false);
     port (
       sysclk : in    std_logic;
@@ -36,8 +37,7 @@ architecture arch_core_main_tb of core_main_tb is
 
   component input_simulator
     generic (
-      wtime : std_logic_vector(15 downto 0) :=
-      conv_std_logic_vector(CPB,16);
+      wtime : std_logic_vector(15 downto 0) := wtime;
       INPUT_FILE : string := "test.bin");
     port (
       clk  : in  std_logic;
@@ -46,8 +46,7 @@ architecture arch_core_main_tb of core_main_tb is
 
   component output_simulator
     generic (
-      wtime : std_logic_vector(15 downto 0) :=
-      conv_std_logic_vector(CPB,16);
+      wtime : std_logic_vector(15 downto 0) := wtime;
       OUTPUT_FILE : string := "output");
     port (
       clk : std_logic;
@@ -89,17 +88,18 @@ begin
   process
   begin
     sysclk <= '0';
+    memclk <= '0';
     wait for 1 ns;
     sysclk <= '1';
+    memclk <= '0';
+    wait for 1 ns;
+    sysclk <= '0';
+    memclk <= '1';
+    wait for 1 ns;
+    sysclk <= '1';
+    memclk <= '1';
     wait for 1 ns;
   end process;
 
-  process
-  begin
-    memclk <= '0';
-    wait for 2 ns;
-    memclk <= '1';
-    wait for 2 ns;
-  end process;
 
 end arch_core_main_tb;

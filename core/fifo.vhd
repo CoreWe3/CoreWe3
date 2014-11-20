@@ -12,6 +12,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+use ieee.std_logic_arith.all;
 
 entity FIFO is
   generic (
@@ -34,25 +35,30 @@ architecture arch_fifo of FIFO is
     := (others => '0'); --enque addr
   signal deq_addr : std_logic_vector(WIDTH-1 downto 0)
     := (others => '0'); --deque addr
-  
+  signal next_enq_addr : std_logic_vector(WIDTH-1 downto 0)
+    := conv_std_logic_vector(1,WIDTH);
+  signal next_deq_addr : std_logic_vector(WIDTH-1 downto 0)
+    := conv_std_logic_vector(1,WIDTH);
 begin
   
   process(clk)
   begin
     if rising_edge(clk) then
+      next_enq_addr <= enq_addr+1;
+      next_deq_addr <= deq_addr+1;
       if igo = '1' and ogo = '1' and
         enq_addr = deq_addr then --when queue is empty
         odata <= idata;
       elsif igo = '1' then
-        if enq_addr+1 /= deq_addr then
+        if next_enq_addr /= deq_addr then
           --when queue is not full
-          enq_addr <= enq_addr+1;
+          enq_addr <= next_enq_addr;
           QUE(conv_integer(enq_addr)) <= idata;
         end if;
       elsif ogo = '1' then
         if enq_addr /= deq_addr then
           -- when queue is not empty
-          deq_addr <= deq_addr+1;
+          deq_addr <= next_deq_addr;
           odata <= QUE(conv_integer(deq_addr));
         end if;
       end if;
@@ -61,7 +67,7 @@ begin
   
   empty <= '1' when enq_addr = deq_addr else
            '0';
-  full <= '1' when enq_addr+1 = deq_addr else
+  full <= '1' when next_enq_addr = deq_addr else
           '0';
 end arch_fifo;
     

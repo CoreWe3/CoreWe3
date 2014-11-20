@@ -101,7 +101,6 @@ NET XLBO		   LOC=AH34;
 NET  ZZA		   LOC=AA31;
 
 #// = Inputs. =
-
 NET RS_TX			LOC=K11;
 NET RS_RX			LOC=J11;
 
@@ -219,12 +218,14 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 # Clock constraints                                                        #
 ############################################################################
 NET "MCLK1" TNM_NET = MCLK1;
-TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;
+TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.50 ns HIGH 50%;
 
 ###############################################################################
 # Define multicycle paths - these paths may take longer because additional
 # time allowed for logic to settle in calibration/initialization FSM
 ###############################################################################
-
 #timing constraint
 NET "ZD[*]" OFFSET = IN 3.2 ns VALID 4.7 ns BEFORE "MCLK1" RISING;
+#Created by Constraints Editor (xc5vlx50t-ff1136-1) - 2014/11/20
+TIMESPEC TS_tig_dffnt_clk1 = FROM "gmemclk" TO "gsysclk" TIG;
+TIMESPEC TS_tig_dffnt_clk2 = FROM "gsysclk" TO "gmemclk" TIG;

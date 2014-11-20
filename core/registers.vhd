@@ -16,7 +16,23 @@ end registers;
 
 architecture arch_registers of registers is
   type ram_t is array(63 downto 0) of std_logic_vector(31 downto 0);
-  signal RAM : ram_t;
+  signal RAM : ram_t := (
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000", 
+    x"00000000", x"00000000", x"00000000", x"00000000");
 
   attribute ram_style : string;
   attribute ram_style of RAM : signal is "distributed";
@@ -28,16 +44,8 @@ begin
       if we = '1' and addr1 /= "000000" then
         RAM(conv_integer(addr1)) <= in_word;
       end if;
-      if addr1 /= "000000" then
-        out_word1 <= RAM(conv_integer(addr1));
-      else
-        out_word1 <= (others => '0');
-      end if;
-      if addr2 /= "000000" then
-        out_word2 <= RAM(conv_integer(addr2));
-      else
-        out_word2 <= (others => '0');
-      end if;
+      out_word1 <= RAM(conv_integer(addr1));
+      out_word2 <= RAM(conv_integer(addr2));
     end if;
   end process;
 

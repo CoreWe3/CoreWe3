@@ -32,8 +32,7 @@ architecture arch_core of core is
       CODE : string := "file/fib_rec.tbin";
       ADDR_WIDTH : integer := 8;
       CLKR : integer := 2;
-      memCPB : integer := 1146;
-      --wtime : std_logic_vector(15 downto 0) := x"047A";
+      wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
