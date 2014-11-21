@@ -1,168 +1,125 @@
 
 
-
 #include <stdio.h>
-
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
 #include <stdint.h>
 
-/*
-仕様まとめ
-NaNは入力として想定していない。
+#define f_max (((1<<7)-1)<<24)
+#define f_min (((1<<9)-1)<<24)
+#define nom_min (1<<23)
+uint32_t getbits(uint32_t a,uint32_t x,uint32_t y){
+  aのxbit目からybit目を返す
+   expなら(a,30,23)と渡す
+  a=a<<(31-x);
+  a=a>>(y+31-x);
+  return a;  
+}
+uint32_t fmul(uint32_t a,uint32_t b){
+/*仕様ややっていることは同ファイル内のfmulv2と同じです*/
+  uint32_t r3=a;
+  uint32_t r4=b;
+  uint32_t r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18;
+  uint32_t r19,r20,r21,r22,r23,r24,r25,r26,r27,r28,r29,r30,r31,r32,r33,r34,r35,r36,r37,r38,r39,r40,r41,r42;
+  /*r3~r8はmulが使う*/
+  r15=r3>>31;
+  r16=r4>>31;
+  r15=r15^r16; /*r15=sign*/
+  	    /*r16=exp,r17=frac*/
+  r18=r3<<1;
+  r19=r4<<1;
+  r18=r18>>24;
+  r19=r19>>24;
+  r20=r3<<9;
+  r21=r4<<9;
+  r20=r20>>20;
+  r21=r21>>20;
+  r22=r3<<21;
+  r23=r4<<21;
+  r22=r22>>21;
+  r23=r23>>21;
+  /*r18=aexp,r19=bexp,r20=ah,r21=bh,r22=al,r23=bl*/
+  r16=r18+r19;
+  r20=r20+(1<<12);
+  r21=r21+(1<<12);
+  /*ここまでOK*/
+  r3=r20;
+  r4=r21;
+  r3=r3*r4;
+  r17=r3+2;
+  r3=r20;
+  r4=r23;
+  r3=r3*r4;
+  r3=r3>>11;
+  r17=r3+r17;
+  r3=r21;
+  r4=r22;
+  r3=r3*r4;
+  r3=r3>>11;
+  r17=r17+r3;
+  /*ok*/
+  r30=(1<<25);
+  if (r17>=r30){
+  r16=r16+1;
+  r17=r17<<7;
+  r17=r17>>9;
+  }else{
+  r17=r17<<8;
+  r17=r17>>9;
+  }
+  r30=127;
+  if (r16<=r30){
+     r3=r15<<31;
+     return r3;
+  }else{
+     r16=r16-r30;
+  }
+  r3=r15<<31;
+  r16=r16<<23;
+  r3=r3+r16;
+  r3=r3+r17;
+  return r3;
 
-∞*なにか=∞
-0や非正規化数*なにか=0
+}
+uint32_t fmulv2(uint32_t a, uint32_t b){
 
-それ以外：
-先人の資料通り。
-
-実装要件を読むに、0や∞の処理も必要ないようなのでカットすれば、大分短くなるかも。
-*/
-
-uint32_t fmul(uint32_t a, uint32_t b){
-  uint32_t r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15;
   uint32_t aexp,afrac,ah,al;
   uint32_t bexp,bfrac,bh,bl;
 
   uint32_t frac;
   uint32_t exp;
-  r10=(a>>31)^(b>>31);
+  uint32_t sign=(a>>31)^(b>>31);
 
+  aexp=getbits(a,30,23);
+  bexp=getbits(b,30,23);
+  bfrac=getbits(b,22,0);
+  afrac=getbits(a,22,0);
+  ah=getbits(afrac,22,11);
+  al=getbits(afrac,10,0);
+  bh=getbits(bfrac,22,11);
+  bl=getbits(bfrac,10,0);
+  exp=aexp+bexp;
+  ah += 1<<12;
+  bh += 1<<12;
 
-  /*使うのは1,24,9*/
-  r13=1;
-  r14=24;
-  r15=9;
-  r12=255;
-  r3=a;
-  r4=b;
-  r5=r3<<r13;
-  r5=r5>>r14;
-  r6=r3<<r15;
-  r6=r6>>r15;
-
-  r7=r4<<r13;
-  r7=r7>>r14;
-  r8=r4<<r15;
-  r8=r8>>r15;
-  /*aexp=r5,afrac=r6,bexp=r7,bfrac=r8*/
-  /*NaNは入力としてこないはず*/
-
-  /*∞のある計算*/
-  if (r5==r12){
- /*
-    if (r7==0 && r8==0){
-      r13=255;
-      r9=1;
-      goto END;
-    }
-  */
-    r13=255;
-    r9=0;
-    goto END;
-  }
-  if (r7==r12){
- /*
-    if (r5==0 && r6==0){
-      r13=255;
-      r9=1;
-      goto END;
-    }
-
- */
-    r13 =255;
-    r9 =0;
-    goto END;
-  }
-
-  /*非正規化数や0がある場合*/
-  if (r5==0 || r7==0){
-    r13=0;
-    r9=0;
-    goto END;
-
-  }
-
-  /*以下通常*/
-  r13=r5+r7;
-  /*r13=exp*/
-
-  /*r3,4は使ってよい*/
-  r14=20;
-  r11=21;
-  r3=r6<<r15;
-  r3=r3>>r14;
-  /*r3=ah*/
-  r4=r6<<r11;
-  r4=r4>>r11;
-  /*r4=al*/
-  /*r5,r6も使ってよい*/
-  
-  r5=r8<<r15;
-  r5=r5>>r14;
-  r6=r8<<r11;
-  r6=r6>>r11;
-  /*r5=bh,r6=bl*/
-  r14=6;
-  r8=127;
-  if (r8>r13) {
-    r9=0;
-    r13=0;
-    goto END;
-  }
-
-  r13 =r13 - r8;
-
-  r11=254;
-  if (r13>r11) {
-    r9=0;
-    r13=255;
-    goto END;
-  }
-  r8=64;
-  r8=r8<<r14;
-  /*r13=1<<12*/
-  r3 += r8;
-  r5 += r8;
-  r9=r3*r5;/*ここ*/
-  r7=r4*r5;
-  r11=11;
-  r7=r7>>r11;
-  r9=r9+r7;
-  r7=r3*r6;
-  r7=r7>>r11;
-  r9=r9+r7;
-  r9=r9+2;
-  r7=13;
-  r8=r8<<r7;
-  if (r9>r8) {
-    /*桁上がりする場合*/
-    r13 +=1;
-    if (r13==r12) {
-    r9=0;
-    goto END;
-    }
-    r14=7;
-    r9=r9<<r14;
-    r9=r9>>r15;
-
+  frac= (ah*bh)+((ah*bl)>>11)+((al*bh)>>11)+2;
+  if (frac>=(1<<25)) {
+    exp +=1;
+    frac=getbits(frac,24,2);
   }else{
-    if (r13==0){
-  /*本当は非正規化数も考える*/
-      r9=0;
-      goto END;
-    }
-    r14=8;
-    r9=r9<<r14;
-    r9=r9>>r15;
+    frac=getbits(frac,23,1);
   }
+ if (exp<=127){
+	exp=0;
+	frac=0;
+ }else{
+	exp-=127;
+ }
+ return sign<<31| exp<<23|frac;
+    
 
-  END:
- 
-  r14=23;
-  r15=31;
-  r13=r13<<r14;
-  r10=r10<<r15;
-  r3=r13+r10;
-  r3=r3+r9;
-  return r3;
 }
+

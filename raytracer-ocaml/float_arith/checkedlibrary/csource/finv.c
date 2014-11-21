@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-
+#include "fmul.c"
+#include "fadd_fsub.c"
 uint32_t binarytouint(char *bin){
   uint32_t ret=0;
   uint32_t temp=1u;
@@ -61,29 +62,27 @@ typedef union u2f{
   float ftemp;
 }u2f;
 
+
 uint32_t finv(uint32_t ui){
   uint32_t r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16;
   r3 = ui;
   r16 = 1;
-  r15 = 30;
-  r14 = 23;
-  r12 = 22;
-  r13 = 9;
 
-  r5 = r3 << r13; // sign とexpを0に
-  r6 = r5 >> r12; // tableのindex用
-  r5 = r5 >> r13; // signとexpを0にしたmantissa
+  r5 = r3 << 9; // sign とexpを0に
+  r6 = r5 >> 22; // tableのindex用
+  r5 = r5 >> 9; // signとexpを0にしたmantissa
 
   r12 = 127;
-  r11 = r12 << r14; // expの最上位bit以外を立てる tableと合わせるため
-  r7 = r5 | r11; //計算用
+  r11 = r12 << 23; // expの最上位bit以外を立てる tableと合わせるため
 
-  r15 = 31; // tuiki
-  r5 = r3 >> r15;
-  r5 = r5 << r15; // sign bit
-  r4 = r3 << r16;
-  r4 = r4 >> r16;
-  r4 = r4 >> r14; // exp bit
+  r7 = r5 | r11; //計算用
+  
+  r5 = r3 >> 31;
+
+  r5 = r5 << 31; // sign bit
+  r4 = r3 << 1;
+  r4 = r4 >> 1;
+  r4 = r4 >> 23; // exp bit
 
   if(r4 >= r12){
     r4 = r4 - r12;
@@ -94,27 +93,26 @@ uint32_t finv(uint32_t ui){
     r4 = r12 + r4;
     r4 = r4 - r16;
   }
-  r4 = r4 << r14;
+/*finvend*/
 
+	/*-ax+b*/
+  r4 = r4 << 23;
 
-  r8 = read_a(r6);
-  r9 = read_b(r6);  // -fmul(r8,ui) + r9
-
-  float a,b,x,ret;
-  u2f temp;
-  temp.utemp = r8;
-  a = temp.ftemp;
-  temp.utemp = r9;
-  b = temp.ftemp;
-  temp.utemp = r7;
-  x = temp.ftemp;
-  ret = -a*x + b;
-
-  temp.ftemp = ret;
-  r10 = temp.utemp; // table計算結果
-  
-  r10 = r10 << r13;
-  r10 = r10 >> r13;  
+  r16=r4;/*pushがわり*/
+  r15=r5;
+  r4 = read_a(r6);  //もとr8
+  r3=r7;
+  /*push r6*/
+  r3=fmul(r3,r4);
+  /*pop r6*/
+  r4=r3;
+  r3 = read_b(r6);
+  r3=fsub(r3,r4);
+  /*pop r4=exp,r5=sign*/
+  r5=r15;/*popがわり*/
+  r4=r16;
+  r10 = r3 << 9;
+  r10 = r10 >> 9;  
   r3 = r5 | r4 | r10;
   return r3;
 }
@@ -136,7 +134,7 @@ char *makebinary(){
   }
   return ret;
 }
-
+/*
 int main(){
   u2f temp,temp2;
   srand(time(NULL));
@@ -191,3 +189,4 @@ int main(){
   printf("ansn : %s\n",ans_min);
   return 0;
 }
+*/

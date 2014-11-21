@@ -86,6 +86,7 @@ int main() {
     /* } */
     
     printf("floor\n");
+    a_min = 0x00100000;
     a_max = 0x7f000000;//abs < 2^31
     for(a = 1; a < a_max; a++) {
    	_floor_judge(a);
