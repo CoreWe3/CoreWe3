@@ -525,7 +525,7 @@ begin
               pc <= next_pc;
             when "000101" => --load immediate low
               reg_addr1 <= instr_reg(25 downto 20);
-              reg_iw <= x"0000" & instr_reg(15 downto 0);
+              reg_iw <= x"000" & instr_reg(19 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "000110" | "000111" => --add sub
