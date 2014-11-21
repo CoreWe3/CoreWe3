@@ -64,7 +64,6 @@ architecture arch_memory_io of memory_io is
   
   signal ramgo : std_logic := '0';
   signal ramwe : std_logic := '0';
-  signal ramload_data : std_logic_vector(31 downto 0);
   signal rambusy : std_logic;
   signal load : std_logic_vector(31 downto 0);
   signal store : std_logic_vector(31 downto 0);
@@ -96,27 +95,6 @@ begin
 
   busy <= '0' when state = x"0" else
           '1';
-
-  --iogo <= go when addr = x"FFFFF" else
-  --        '0';
-  --ramgo <= go when addr /= x"FFFFF" else
-  --         '0';
-  --load_data <= x"000000" & ioload_data when state = '0' else
-  --             ramload_data;
-  --busy <= iobusy or rambusy;
-
-  --process(memclk)
-  --begin
-  --  if rising_edge(memclk) then
-  --    if we = '0' and go = '1' then
-  --      if addr = x"FFFFF" then --io
-  --        state <= '0';
-  --      else --ram
-  --        state <= '1';
-  --      end if;
-  --    end if;
-  --  end if;
-  --end process;
 
   process(clk)
   begin

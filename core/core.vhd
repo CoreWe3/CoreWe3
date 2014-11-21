@@ -72,7 +72,9 @@ begin  -- arch_core
 
   dcm : DCM_BASE
   generic map (
-    CLKFX_MULTIPLY => 3)
+    CLKFX_MULTIPLY => 3,
+    CLKIN_PERIOD => 14.50,
+    DFS_FREQUENCY_MODE => "HIGH")
   port map (
     CLKIN => iclk,
     CLKFB => fbclk,
