@@ -385,12 +385,8 @@ void ldil(unsigned int ra, unsigned int cx){
 	write(ins.data);
 }
 void ldi(unsigned int ra, unsigned int cx){
-	//if((cx & 0xffff0000) == 0){
-	//	ldil(ra, cx & 0xffff);
-	//}else{
-		ldil(ra, cx & 0xffff);
-		ldih(ra, cx >> 16);
-	//}
+	ldil(ra, cx & 0xffff);
+	ldih(ra, cx >> 16);
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;

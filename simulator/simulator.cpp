@@ -161,7 +161,10 @@ int main(int argc, char* argv[])
 	//MAIN ROUTINE
 	INS ins;
 
-	while(true){
+
+	bool flag = true;
+
+	while(flag){
 		if(pc >= num){
 			printf("The program successfully done.\n");
 			break;
@@ -231,9 +234,9 @@ int main(int argc, char* argv[])
 				shri(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BEQ:
-				if(ins.L.ra == 0 && ins.L.rb == 0 && ins.L.cx == 0){
+				if(ins.L.cx == 0){
 					printf("Detect Halt\n");
-					break;
+					flag = false;
 				}
 				beq(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
@@ -260,7 +263,7 @@ int main(int argc, char* argv[])
 				break;
 			default:
 				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
-				break;
+				flag = false;
 		}
 		reg[0].u = 0;
 		pc+=pcflag;
