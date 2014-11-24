@@ -231,6 +231,10 @@ int main(int argc, char* argv[])
 				shri(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BEQ:
+				if(ins.L.ra == 0 && ins.L.rb == 0 && ins.L.cx == 0){
+					printf("Detect Halt\n");
+					goto HALT;
+				}
 				beq(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BLE:
@@ -262,6 +266,7 @@ int main(int argc, char* argv[])
 		pc+=pcflag;
 		d_insnum++;
 	}
+ HALT:
 
 	if(iofpr!=NULL) fclose(iofpr);
 	if(iofpw!=NULL) fclose(iofpw);

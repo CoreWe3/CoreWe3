@@ -1,0 +1,3 @@
+[submodule "compiler"]
+	path = mincaml_compiler
+	url = git@github.com:wtr816/min-caml.git

@@ -1,4 +1,4 @@
-:min_caml_fmul	//mulのサブルーチンの呼び出しが規約にそっていないけど、mulをインライン展開すれば大丈夫になってます
+:min_caml_fmul
 	SHRI	r15	r3	31
 	SHRI	r16	r4	31
 	XOR	r15	r15	r16

@@ -114,7 +114,6 @@ void printlist(std::list<std::string> *a){
 	}
 }
 
-
 FILE *fpw = NULL;
 
 int main(int argc, char* argv[])

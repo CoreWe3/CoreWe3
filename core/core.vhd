@@ -73,7 +73,7 @@ begin  -- arch_core
 
   dcm : DCM_BASE
   generic map (
-    CLKFX_MULTIPLY => 4)
+    CLKFX_MULTIPLY => 3)
   port map (
     CLKIN => iclk,
     CLKFB => fbclk,
