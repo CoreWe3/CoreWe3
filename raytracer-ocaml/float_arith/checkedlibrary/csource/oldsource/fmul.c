@@ -12,8 +12,6 @@
 #define f_min (((1<<9)-1)<<24)
 #define nom_min (1<<23)
 uint32_t getbits(uint32_t a,uint32_t x,uint32_t y){
-  aのxbit目からybit目を返す
-   expなら(a,30,23)と渡す
   a=a<<(31-x);
   a=a>>(y+31-x);
   return a;  
