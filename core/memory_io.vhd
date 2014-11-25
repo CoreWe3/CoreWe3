@@ -57,7 +57,6 @@ architecture arch_memory_io of memory_io is
 
   signal iogo : std_logic := '0';
   signal iowe : std_logic := '0';
-  signal ioload_data : std_logic_vector(7 downto 0);
   signal iobusy : std_logic;
   signal transmit : std_logic_vector(7 downto 0);
   signal receive : std_logic_vector(7 downto 0);

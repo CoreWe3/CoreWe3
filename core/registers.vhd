@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 
 entity registers is
   port (
-    sysclk    : in  std_logic;
+    clk       : in  std_logic;
     we        : in  std_logic;
     addr1     : in  std_logic_vector(5 downto 0);
     addr2     : in  std_logic_vector(5 downto 0);
@@ -38,9 +38,9 @@ architecture arch_registers of registers is
   attribute ram_style of RAM : signal is "distributed";
        
 begin
-  process(sysclk)
+  process(clk)
   begin
-    if rising_edge(sysclk) then
+    if rising_edge(clk) then
       if we = '1' and addr1 /= "000000" then
         RAM(conv_integer(addr1)) <= in_word;
       end if;
@@ -48,6 +48,6 @@ begin
       out_word2 <= RAM(conv_integer(addr2));
     end if;
   end process;
-
+  
 end arch_registers;
   

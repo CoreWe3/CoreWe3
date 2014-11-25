@@ -1,14 +1,15 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
-use std.textio.all;
 use ieee.std_logic_textio.all;
+library std;
+use std.textio.all;
 
 entity init_code_rom is
   generic(CODE  : string := "code.bin";
           WIDTH : integer := 14);
   
-  port (sysclk : in  std_logic;
+  port (clk : in  std_logic;
         en     : in  std_logic;
         addr   : in  std_logic_vector(WIDTH-1 downto 0);
         instr  : out std_logic_vector(31 downto 0));
@@ -39,9 +40,9 @@ architecture arch_code_rom of init_code_rom is
   attribute rom_style of ROM : signal is "block";
 begin
 
-  process(sysclk)
+  process(clk)
   begin
-    if rising_edge(sysclk) then
+    if rising_edge(clk) then
       if en = '1' then
         --instr <= ROM(conv_integer(addr));
         instr <= to_stdLogicVector(ROM(conv_integer(addr)));

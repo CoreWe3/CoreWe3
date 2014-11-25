@@ -27,7 +27,7 @@ architecture arch_core_main of core_main is
     generic ( CODE  : string := CODE;
               WIDTH : integer := ADDR_WIDTH);
     port (
-      sysclk : in  std_logic;
+      clk : in  std_logic;
       en     : in  std_logic;
       addr   : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
       instr  : out std_logic_vector(31 downto 0));
@@ -56,7 +56,7 @@ architecture arch_core_main of core_main is
 
   component registers
     port (
-      sysclk    : in  std_logic;
+      clk    : in  std_logic;
       we        : in  std_logic;
       addr1     : in  std_logic_vector(5 downto 0);
       addr2     : in  std_logic_vector(5 downto 0);
@@ -127,7 +127,7 @@ begin
 
   file_initialize : if (CODE /= "bootload") generate
     rom : init_code_rom port map (
-      sysclk => sysclk,
+      clk => sysclk,
       en => '1',
       addr => pc,
       instr => instr);
@@ -151,7 +151,7 @@ begin
     ctrl => ctrl);
 
   reg : registers port map (
-    sysclk => sysclk,
+    clk => sysclk,
     we => reg_we,
     addr1 => reg_addr1,
     addr2 => reg_addr2,
@@ -189,9 +189,9 @@ begin
           end if;
 
         when x"1" => --fetch
-          state <= state+1;
           reg_we <= '0';
           pc_buf <= pc;
+          state <= state+1;
 
         when x"2" => --fetch wait
           instr_reg <= instr;
