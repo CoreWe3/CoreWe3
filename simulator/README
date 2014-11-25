@@ -5,15 +5,10 @@
 ./disassembler [Binary File] > [Output File]
 
 #Simulate
-./simulator -a [Source Binary File] (-i [Input Binary File]) (-o [Output Binary File]) (-l [Insutruction Limit]) (-b [Break Point]) (-r [RAM dump])
+./simulator [Source Binary File] (-i [Input Binary File]) (-o [Output Binary File]) (-l [Insutruction Limit]) (-b [Break Point]) (-r [RAM Dump Data]) (-s [RAM Initial Data])
 
 #View Binary File
 ./hex.sh [Binary File]
-
-
-#Convert little endian file to big endian file
-#Convert big endian file to little endian file
-./lbconvertor [Input File] [Output File]
 
 # コンパイルにはclangが必要です。aptからインストールすると
 # ライブラリのパスがうまく通らないようなので、

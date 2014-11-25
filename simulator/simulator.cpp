@@ -44,7 +44,7 @@ unsigned int counter[ISANUM] = {0};
 
 void debuginfo(){
 
-	printf("pc:%d, sp:%d\n", pc, sp);
+	printf("pc:%d, sp:%x\n", pc, sp);
 
 	for(int i = 0; i < REGNUM; i++){
 		printf("%s:%d (0x%x), ", reg2name(i), reg[i].d, reg[i].u);
@@ -53,13 +53,7 @@ void debuginfo(){
 	for(int i = 0; i < ISANUM; i++){
 		printf("%s:%u, ", names[i], counter[i]);
 	}
-	printf("\n");
-	/*for(int i = 0; i < 10; i++){
-		if(sp+i<RAMSIZE){
-			printf("%d:%d, ", sp+i, ram[sp+i]);
-		}
-	}*/
-	printf("Number of Instruction : %lld\n",d_insnum);
+	printf("\nNumber of Instruction : %lld\n",d_insnum);
 	
 	//Dump RAM
 	if(ramout!=NULL){
@@ -74,6 +68,17 @@ void debuginfo(){
 	}
 }
 
+void initram(char* filename){
+	FILE *fp = fopen(filename, "rb");
+	int tmp;
+	for(int i = 0; i < RAMSIZE; i++){
+		if(fread(&tmp,sizeof(int),1,fp) > 0){
+			ram[i] = tmp;
+		}
+	}
+	fclose(fp);
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -86,15 +91,9 @@ int main(int argc, char* argv[])
 		reg[i].u = 0;
 	}
 
-	while((result=getopt(argc,argv,"a:i:o:l:b:r:"))!=-1){
+
+	while((result=getopt(argc,argv,"i:o:l:b:r:s:"))!=-1){
 		switch(result){
-			case 'a':
-				fpr = fopen(optarg,"rb");
-				if (fpr == NULL){
-					printf("Can't open %s\n",optarg);
-					return 1;
-				}
-				break;
 			case 'i':
 				iofpr = fopen(optarg,"rb");
 				if (iofpr == NULL){
@@ -116,6 +115,9 @@ int main(int argc, char* argv[])
 					return 1;
 				}
 				break;
+			case 's':
+				initram(optarg);
+				break;
 			case 'l':
 				limit = atoi(optarg);
 				break;
@@ -129,6 +131,16 @@ int main(int argc, char* argv[])
 				fprintf(stdout,"unknown\n");
 				return 1;
 		}
+	}
+
+	if(optind < argc){
+		fpr = fopen(argv[optind++],"rb");
+		if (fpr == NULL){
+			printf("Can't open %s\n",optarg);
+			return 1;
+		}
+	}else{
+		return 1;
 	}
 
 	if(fpr == NULL){
@@ -148,8 +160,8 @@ int main(int argc, char* argv[])
 
 	//MAIN ROUTINE
 	INS ins;
-	while(true){
 
+	while(true){
 		if(pc >= num){
 			printf("The program successfully done.\n");
 			break;
@@ -162,7 +174,7 @@ int main(int argc, char* argv[])
 			printf("The program reached break point. : %d\n", pc);
 			break;
 		}
-
+		
 		ins.data = rom[pc];
 		pcflag = 1;
 		counter[ins.A.op]++;
@@ -219,6 +231,10 @@ int main(int argc, char* argv[])
 				shri(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BEQ:
+				if(ins.L.ra == 0 && ins.L.rb == 0 && ins.L.cx == 0){
+					printf("Detect Halt\n");
+					goto HALT;
+				}
 				beq(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BLE:
@@ -250,6 +266,7 @@ int main(int argc, char* argv[])
 		pc+=pcflag;
 		d_insnum++;
 	}
+ HALT:
 
 	if(iofpr!=NULL) fclose(iofpr);
 	if(iofpw!=NULL) fclose(iofpw);
@@ -337,7 +354,7 @@ void ldih(unsigned int ra, unsigned int cx){
 	reg[ra].u = (cx << 16) + (reg[ra].u & 0xFFFF);
 }
 void ldil(unsigned int ra, unsigned int cx){
-	reg[ra].u = (reg[ra].u & 0xFFFF0000) + cx ;
+	reg[ra].u = cx ;
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	reg[ra].d = reg[rb].d + reg[rc].d;
@@ -426,9 +443,17 @@ void ret(){
 void push(unsigned int ra){
 	sp--;
 	ram[sp] = reg[ra].u;
+	if(sp<STACKLIMIT){
+		printf("Stack Pointer is out of range\n");
+		exit(1);
+	}
 }
 void pop(unsigned int ra){
 	reg[ra].u = ram[sp];
 	sp++;
+	if(sp>=RAMSIZE){
+		printf("Stack Pointer is out of range\n");
+		exit(1);
+	}
 }
 

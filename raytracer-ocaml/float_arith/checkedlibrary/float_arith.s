@@ -1,80 +1,70 @@
-:fadd
-	ADDI	r15	r0	1	#frequently used constants
-	ADDI	r14	r0	23
-	ADDI	r12	r0	31
-	ADDI	r11	r0	9	#ok
-	SHL	r3	r1	r15	#r1 = larger
-	SHL	r4	r2	r15	#19
-	BLE	r4 	r3	:fadd_L1
-	ADDI	r5	r1	r0
-	ADDI	r1	r2	r0
-	ADDI	r2	r5	r0
-:fadd_L1
-	ADDI	r5	r0	24	#r3(4) = exp
-	SHL	r3	r1	r15
-	SHR	r3	r3	r5	#SRL
-	SHL	r4	r2	r15
-	SHR	r4	r4	r5	#SRL
-	SUB	r4	r3	r4	#r4 = shift
-
-	SHL 	r5	r1	r11	#r5(6) = man
-	SHR 	r5	r5	r11
-	SHL 	r6	r2	r11
-	SHR 	r6	r6	r11
-	
-	SHL	r7	r15	r14	#r7 = 0x800000
-	OR	r5	r5	r7
-	OR	r6	r6	r7
-	SHR	r6	r6	r4	#shift man of smaller one
-
-	SHR	r7	r1	r12	#r7(8) = sig
-	SHR	r8	r2	r12
-
-	BEQ	r7	r8	:fadd_L2 	#r9 = man
-	SUB	r9	r5	r6
-	BEQ	r0	r0	:fadd_L3
-:fadd_L2
-	ADD	r9	r5	r6
-:fadd_L3
-	ADDI	r4	r0	25	#priority encoder modified
-:fadd_L4
-	SHL	r10	r15	r4
-	AND	r10	r9	r10
-	BEQ	r10	r0	:fadd_L4_1
-	BEQ	r0	r0	:fadd_L5
-:fadd_L4_1
-	SUB	r4	r4	r15
-	BLE	r4	0	:fadd_L5	
-	BEQ	r0	r0	:fadd_L4	#BLE+BEQmatomerareru?
-:fadd_L5
-	BLE	r14	r4 	:fadd_L6
-	SUB	r4	r14	r4	#borrow
-	SUB	r10	r3	r4
-	SHL	r9	r9	r4
-	BEQ	r0	r0	:fadd_L7
-:fadd_L6
-	SUB	r4	r4	r14	#carry
-	ADD	r10	r3	r4
-	SHR	r9	r9	r4
-:fadd_L7
-	SHL	r10	r10	r14
-	SHL	r9	r9	r11
-	SHR	r9	r9	r11
-	SHL	r1	r7	r12
-	OR	r1	r1	r10
-	OR	r1	r1	r9
+:min_caml_fadd
+	SHLI	r5	r3	1	
+	SHRI	r5	r5	1	
+	SHLI	r6	r4	1
+	SHRI	r6	r6	1
+	BLE	r6 	r5	:min_caml_fadd_L1
+	ADDI	r7	r3	r0
+	ADDI	r3	r4	r0
+	ADDI	r4	r7	r0
+:min_caml_fadd_L1
+	SHLI	r5	r3	1
+	SHRI	r5	r5	24
+	SHLI	r6	r4	1
+	SHRI	r6	r6	24
+	SUB	r6	r5	r6	#r4 = shift
+	SHLI	r7	r3	9	#r5(6) = man
+	SHRI	r7	r7	9
+	SHLI	r8	r4	9
+	SHRI	r8	r8	9
+	LDI	r9	0x800000
+	OR	r7	r9	r7
+	OR	r8	r9	r8
+	SHR	r8	r8	r6	#shift man of smaller one
+	SHRI	r9	r3	31	#r9(10) = sig
+	SHRI	r10	r4	31
+	BEQ	r9	r10	:min_caml_fadd_L2 	#r9 = man
+	SUB	r11	r7	r8
+	BEQ	r0	r0	:min_caml_fadd_L3
+:min_caml_fadd_L2
+	ADD	r11	r7	r8
+:min_caml_fadd_L3
+	LDI	r12	25
+	LDI	r13	1
+:min_caml_fadd_L4
+	SHL	r14	r13	r12
+	AND	r14	r11	r14
+	BEQ	r14	r0	:min_caml_fadd_L4_1
+	BEQ	r0	r0	:min_caml_fadd_L5
+:min_caml_fadd_L4_1
+	ADDI	r12	r12	-1
+	BLE	r12	0	:min_caml_fadd_L5	
+	BEQ	r0	r0	:min_caml_fadd_L4	#BLE+BEQmatomerareru?
+:min_caml_fadd_L5
+	LDI	r14	23
+	BLE	r14	r12 	:min_caml_fadd_L6
+	SUB	r12	r14	r12	#borrow
+	BLT	r12	r5	:min_caml_fadd_L8
+	LDI	r3	0
 	RET
-:fsub
-	ADDI	r15	r0	1	
-	ADDI	r14	r0	31
-	SHL	r13	r15	r14
-	SHR	r3	r2	r14
-	BEQ	r3	r0	:fsub_L1
-	SUB	r13	r13	r15
-	AND	r2	r2	r13
-	BEQ	r0	r0	:fsub_L2
-:fsub_L1
-	OR 	r2	r2	r13
-:fsub_L2
-	JSUB	:fadd
+:min_caml_fadd_L8
+	SUB	r10	r5	r12
+	SHL	r11	r11	r12
+	BEQ	r0	r0	:min_caml_fadd_L7
+:min_caml_fadd_L6
+	SUB	r12	r12	r14	#carry
+	ADD	r10	r5	r12
+	SHR	r11	r11	r12
+:min_caml_fadd_L7
+	SHLI	r10	r10	23
+	SHLI	r11	r11	9
+	SHRI	r11	r11	9
+	SHLI	r3	r9	31
+	OR	r3	r3	r10
+	OR	r3	r3	r11
+	RET
+
+:min_caml_fsub
+	FNEG	r4	r4
+	JSUB	:min_caml_fadd
 	RET

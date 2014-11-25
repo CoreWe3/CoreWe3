@@ -33,8 +33,14 @@ void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
 
-unsigned int name2op(char* op){
-	int num = 10000;
+int dline = 1;
+
+int name2op(char* op){
+	if(op==NULL){
+		printf("error at line : %d\n",dline);
+		exit(1);
+	}
+	int num = -1;
 	for(int i = 0; i < ISANUM; i++){
 		if(strcmp(names[i], op)==0){
 			num = i;
@@ -44,8 +50,12 @@ unsigned int name2op(char* op){
 	return num;
 }
 
-unsigned int name2reg(char* reg){
-	int num = 10000;
+int name2reg(char* reg){
+	if(reg==NULL){
+		printf("error at line : %d\n",dline);
+		exit(1);
+	}
+	int num = -1;
 	for(int i = 0; i < REGNUM; i++){
 		if(strcmp(rnames[i], reg)==0){
 			num = i;
@@ -55,13 +65,37 @@ unsigned int name2reg(char* reg){
 	return num;
 }
 
+
 void print_L(unsigned int x) {
     int i;
     for (i = 31; i >= 0; --i) {
-        printf("%d", (x >> i) & 1);
-        if (i == 24  || i == 20  || i== 16) printf(" ");
-    }
-    printf("\n");
+		printf("%d", (x >> i) & 1);
+		if (i == 24  || i == 20  || i== 16) printf(" ");
+	}
+	printf("\n");
+}
+
+
+std::map<std::string,int> label;
+
+int getimmediate(char* str, int l){
+	if(str==NULL){
+		printf("error on %d\n",dline);
+		exit(1);
+	}
+	if(str[0]==':'){
+		if(label.count(str) == 0){
+			printf("WARN: Invalid Label : %s\n",str);
+		}
+		return label[str]-l;
+	}else if (str[0]=='.'){
+		if(label.count(str) == 0){
+			printf("WARN: Invalid Label : %s\n",str);
+		}
+		return label[str];
+	}else{
+		return strtol(str,NULL,0);
+	}
 }
 
 
@@ -84,18 +118,43 @@ int main(int argc, char* argv[])
 	char buffer[256];
 	char buffer2[256];
 	const char *tokens = "\t \n";
-	std::list<std::string> data;
+	std::list<std::string> fdata;
 	while(fgets(buffer,256,stdin)!=NULL){
 		strcpy(buffer2,buffer);
 		char* tmp = strtok(buffer2, tokens);
 		if(tmp==NULL) continue;
-		data.push_back(buffer);
+		fdata.push_back(buffer);
+	}
+	
+	std::list<std::string>::iterator it;
+	std::list<std::string> data;
+	
+	//Preprocess
+	it = fdata.begin();
+	while(it != fdata.end()){
+		strncpy(buffer,(*it).c_str(),256);
+		strcpy(buffer2,buffer);
+		int vop = name2op(strtok(buffer, tokens));
+		char *ra, *rb, *rc, *cx;
+		if(vop == ADDI){
+			ra = strtok(NULL,tokens);
+			rb = strtok(NULL,tokens);
+			cx = strtok(NULL,tokens);
+			if (strcmp(rb,"r0")==0){
+				sprintf(buffer,"LDI\t%s\t%s\t",ra,cx);
+				data.push_back(buffer);
+			}else{
+				data.push_back(buffer2);
+			}
+		}else{
+			data.push_back(buffer2);
+		}
+		it++;
 	}
 
 	//Detect Label
 	int line = 1;
-	std::map<std::string,int> label;
-	std::list<std::string>::iterator it = data.begin();
+	it = data.begin();
 	while(it != data.end()){
 		strncpy(buffer,(*it).c_str(),256);
 		char* op = strtok(buffer, tokens);
@@ -103,16 +162,17 @@ int main(int argc, char* argv[])
 			if(op[0]==':'){
 				label[op] = line;
 				printf("%s to %d\n",op,line);
+			}else if(op[0]=='.'){
+				int t = strtol(strtok(NULL,tokens),NULL,0);
+				printf("%s is %d\n",op,t);
+				label[op] = t;
 			}else{
 				if(name2op(op)==LDI){
 					strtok(NULL,tokens);
-					int t = strtol(strtok(NULL,tokens),NULL,0);
-					if(t>>14 != 0) line++;
+					line++;
 				}
 				line++;
 			}
-		}else{
-			printf("error at line %s\n",buffer);
 		}
 		it++;
 	}
@@ -125,7 +185,7 @@ int main(int argc, char* argv[])
 		int num = 0;
 		char* op = strtok(buffer, tokens);
 		if(op!=NULL){
-			if(op[0]!=':'){
+			if(op[0]!=':'&&op[0]!='.'){
 				num = name2op(op);
 				char *ra, *rb, *rc, *cx;
 				switch(num){
@@ -133,38 +193,39 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						ld(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						ld(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case ST:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						st(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						st(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case LDA:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						lda(name2reg(ra),strtol(cx,NULL,0));
+						lda(name2reg(ra),getimmediate(cx,line));
 						break;
 					case STA:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						sta(name2reg(ra),strtol(cx,NULL,0));
+						sta(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDIH:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						ldih(name2reg(ra),strtol(cx,NULL,0));
+						ldih(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDIL:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						ldil(name2reg(ra),strtol(cx,NULL,0));
+						ldil(name2reg(ra),getimmediate(cx,line));
 						break;
 					case LDI:
 						ra = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						ldi(name2reg(ra),strtol(cx,NULL,0));
+						ldi(name2reg(ra),getimmediate(cx,line));
+						line++;
 						break;
 					case ADD:
 						ra = strtok(NULL,tokens);
@@ -187,7 +248,7 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						addi(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						addi(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case AND:
 						ra = strtok(NULL,tokens);
@@ -223,76 +284,41 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						shli(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						shli(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case SHRI:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						shri(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
+						shri(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BEQ:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							beq(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else{
-							beq(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						beq(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BLE:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							ble(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else{
-							ble(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						ble(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BLT:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							blt(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else{
-							blt(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						blt(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case BFLE:
 						ra = strtok(NULL,tokens);
 						rb = strtok(NULL,tokens);
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							bfle(name2reg(ra),name2reg(rb),label[cx]-line);
-						}else{
-							bfle(name2reg(ra),name2reg(rb),strtol(cx,NULL,0));
-						}
+						bfle(name2reg(ra),name2reg(rb),getimmediate(cx,line));
 						break;
 					case JSUB:
 						cx = strtok(NULL,tokens);
-						if(cx[0] == ':') {
-							if(label.count(cx) == 0){
-								printf("WARN: Invalid Label\n");
-							}
-							jsub(label[cx]-line);
-						}else{
-							jsub(strtol(cx,NULL,0));
-						}
+						jsub(getimmediate(cx,line));
 						break;
 					case RET:
 						ret();
@@ -312,6 +338,7 @@ int main(int argc, char* argv[])
 				line++;
 			}}
 		it++;
+		dline++;
 	}
 	fclose(fpw);
 	return 0;
@@ -358,12 +385,12 @@ void ldil(unsigned int ra, unsigned int cx){
 	write(ins.data);
 }
 void ldi(unsigned int ra, unsigned int cx){
-	if(cx >> 14 == 0){
-		addi(ra,0,cx);
-	}else{
+	//if((cx & 0xffff0000) == 0){
+	//	ldil(ra, cx & 0xffff);
+	//}else{
+		ldil(ra, cx & 0xffff);
 		ldih(ra, cx >> 16);
-		ldil(ra, cx << 16 >> 16);
-	}
+	//}
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;

@@ -6,7 +6,7 @@
 #include<math.h>
 #include<sys/types.h>
 #include<sys/stat.h>
-#include"float_arith.h"
+#include"../checkedlibrary/csource/float_arith.h"
 
 extern uint32_t fadd(uint32_t, uint32_t);
 extern uint32_t fsqrt(uint32_t);
@@ -37,10 +37,10 @@ int main(){
     diff = ub > uc ? ub - uc : uc - ub;
     write(fd, (void *)&ub, 4);
     if(diff > 2){ 
-      printf("%x\n", ua);
-      printf("sqrtf: 0x%x %e\n", ub, uitof(ub));
-      printf("fsqrt: 0x%x %e\n", uc, uitof(uc));
-      printf("diff: %x\n", diff);
+      printf("0x%08x\n", ua);
+      printf("sqrtf: 0x%08x %e\n", ub, uitof(ub));
+      printf("fsqrt: 0x%08x %e\n", uc, uitof(uc));
+      printf("diff: 0x%08x\n", diff);
       return 0;
     }
   }
