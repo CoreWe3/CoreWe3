@@ -22,13 +22,13 @@
 
 :min_caml_read_int
 	LDA	r3	0xfffff
-	SHLI	r3	r3	4
+	SHLI	r3	r3	8
 	LDA	r4	0xfffff
 	OR	r3	r3	r4
-	SHLI	r3	r3	4
+	SHLI	r3	r3	8
 	LDA	r4	0xfffff
 	OR	r3	r3	r4
-	SHLI	r3	r3	4
+	SHLI	r3	r3	8
 	LDA	r4	0xfffff
 	OR	r3	r3	r4
 	RET
