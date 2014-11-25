@@ -173,9 +173,9 @@ begin
     go => mem_go,
     busy => mem_busy);
 
-  RS_RX_exec <= RS_RX when state /= x"F" else
+  RS_RX_exec <= RS_RX when state /= x"0" else
                 '1';
-  RS_RX_load <= RS_RX when state = x"F" else
+  RS_RX_load <= RS_RX when state = x"0" else
                 '1';
 
   process(sysclk)
@@ -202,30 +202,38 @@ begin
             when "000000" => --load
               reg_addr1 <= instr_reg(19 downto 14);
               if instr_reg(13) = '0' then
-                immediate <= "000000000000000000" & instr_reg(13 downto 0);
+                immediate <= "000000000000000000"
+                             & instr_reg(13 downto 0);
               else
-                immediate <= "111111111111111111" & instr_reg(13 downto 0);
+                immediate <= "111111111111111111"
+                             & instr_reg(13 downto 0);
               end if;
             when "000001" => --store
               reg_addr1 <= instr_reg(19 downto 14);
               reg_addr2 <= instr_reg(25 downto 20);
               if instr_reg(13) = '0' then
-                immediate <= "000000000000000000" & instr_reg(13 downto 0);
+                immediate <= "000000000000000000"
+                             & instr_reg(13 downto 0);
               else
-                immediate <= "111111111111111111" & instr_reg(13 downto 0);
+                immediate <= "111111111111111111"
+                             & instr_reg(13 downto 0);
               end if;
             when "000010" => --load abs
               if instr_reg(19) = '0' then
-                immediate <= "000000000000" & instr_reg(19 downto 0);
+                immediate <= "000000000000"
+                             & instr_reg(19 downto 0);
               else
-                immediate <= "111111111111" & instr_reg(19 downto 0);
+                immediate <= "111111111111"
+                             & instr_reg(19 downto 0);
               end if;
             when "000011" => --store abs
               reg_addr1 <= instr_reg(25 downto 20);
               if instr_reg(19) = '0' then
-                immediate <= "000000000000" & instr_reg(19 downto 0);
+                immediate <= "000000000000"
+                             & instr_reg(19 downto 0);
               else
-                immediate <= "111111111111" & instr_reg(19 downto 0);
+                immediate <= "111111111111"
+                             & instr_reg(19 downto 0);
               end if;
             when "000100" => --load immediate high
               reg_addr1 <= instr_reg(25 downto 20);
@@ -237,29 +245,36 @@ begin
             when "001001" => --addi
               reg_addr1 <= instr_reg(19 downto 14);
               if instr_reg(13) = '0' then
-                immediate <= "000000000000000000" & instr_reg(13 downto 0);
+                immediate <= "000000000000000000"
+                             & instr_reg(13 downto 0);
               else
-                immediate <= "111111111111111111" & instr_reg(13 downto 0);
+                immediate <= "111111111111111111"
+                             & instr_reg(13 downto 0);
               end if;
-            when "001010" | "001011" | "001100" | "001101" | "001110" =>
+            when "001010" | "001011" | "001100"
+              | "001101" | "001110" =>
               --and or shl shr xor
               reg_addr1 <= instr_reg(19 downto 14);
               reg_addr2 <= instr_reg(13 downto 8);
             when "001111" | "010000" => --shri shli
               reg_addr1 <= instr_reg(19 downto 14);
               if instr_reg(13) = '0' then
-                immediate <= "000000000000000000" & instr_reg(13 downto 0);
+                immediate <= "000000000000000000"
+                             & instr_reg(13 downto 0);
               else
-                immediate <= "111111111111111111" & instr_reg(13 downto 0);
+                immediate <= "111111111111111111"
+                             & instr_reg(13 downto 0);
               end if;
             when "010001" | "010010" | "010011" | "010100" =>
               -- branch
               reg_addr1 <= instr_reg(25 downto 20);
               reg_addr2 <= instr_reg(19 downto 14);
               if instr_reg(13) = '0' then
-                immediate <= "000000000000000000" & instr_reg(13 downto 0);
+                immediate <= "000000000000000000"
+                             & instr_reg(13 downto 0);
               else
-                immediate <= "111111111111111111" & instr_reg(13 downto 0);
+                immediate <= "111111111111111111"
+                             & instr_reg(13 downto 0);
               end if;
             when "010101" => --jsub
               if instr_reg(25) = '0' then

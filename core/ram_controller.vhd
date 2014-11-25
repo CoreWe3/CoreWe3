@@ -46,26 +46,26 @@ begin
   begin
     if rising_edge(clk) then
       case state is
-        when "0000" =>
+        when x"0" =>
           if go = '1' then
             if we = '1' then --write
-              if addr(19 downto 12) = x"EF" then
+              if addr(19 downto 12) = x"EF" then -- bram
                 bwe <= '1';
                 XWA <= '1';
-                state <= "0001";
-              else
+                state <= x"1";
+              else -- sram
                 bwe <= '0';
                 XWA <= '0';
                 buf <= input;
-                state <= "0010";
+                state <= x"2";
               end if;
             else  --read
               XWA <= '1';
               bwe <= '0';
-              if addr(19 downto 12) = x"EF" then
-                state <= "0011";
-              else
-                state <= "0100";
+              if addr(19 downto 12) = x"EF" then -- bram
+                state <= x"3";
+              else -- sram
+                state <= x"4";
               end if;
             end if;
             ZA <= addr;
@@ -73,35 +73,35 @@ begin
             bwe <= '0';
             XWA <= '1';
           end if;
-        when "0001" => --write bram
+        when x"1" => --write bram
           bwe <= '0';
-          state <= "0000";
-        when "0010" => --write sram
+          state <= x"0";
+        when x"2" => --write sram
           XWA <= '1';
-          state <= "0101";
-        when "0101" => --write sram
+          state <= x"5";
+        when x"5" => --write sram
           ZD <= buf;
-          state <= "0000";
-        when "0011" => --read bram
+          state <= x"0";
+        when x"3" => --read bram
           output <= boutput;
-          state <= "0000";
-        when "0100" => --read sram
-          state <= "0110";
+          state <= x"0";
+        when x"4" => --read sram
+          state <= x"6";
           ZD <= (others => 'Z');
-        when "0110" => --read sram
-          state <= "0111";
-        when "0111" => --read sram
+        when x"6" => --read sram
+          state <= x"7";
+        when x"7" => --read sram
           output <= ZD;
-          state <= "0000";
+          state <= x"0";
         when others =>
-          state <= "0000";
+          state <= x"0";
           XWA <= '1';
           bwe <= '0';
       end case;
     end if;
   end process;
   
-  busy <= '0' when state = "0000" else
+  busy <= '0' when state = x"0" else
           '1';
 
 end arch_ram_controller;
