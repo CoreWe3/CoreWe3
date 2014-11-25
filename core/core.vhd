@@ -29,15 +29,15 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/fib_rec.tbin";
+      CODE : string := "file/loopback.tbin";
       ADDR_WIDTH : integer := 8;
-      CLKR : integer := 2;
+      CLKR : integer := 1;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
       sysclk : in    std_logic;
-      memclk : in     std_logic;
+      memclk : in    std_logic;
       RS_TX  : out   std_logic;
       RS_RX  : in    std_logic;
       ZD     : inout std_logic_vector(31 downto 0);
@@ -52,6 +52,7 @@ architecture arch_core of core is
   signal bfbclk : std_logic;
   signal sysclk : std_logic;
   signal memclk : std_logic;
+
 begin  -- arch_core
 
   ib : IBUFG port map (
@@ -63,18 +64,17 @@ begin  -- arch_core
     o => memclk);
 
   bg1 : BUFG port map (
-    i => bfbclk,
-    o => fbclk);
-
-  bg2 : BUFG port map (
     i => gsysclk,
     o => sysclk);
 
+  bg2 : BUFG port map (
+    i => bfbclk,
+    o => fbclk);
+
   dcm : DCM_BASE
   generic map (
-    CLKFX_MULTIPLY => 3,
-    CLKIN_PERIOD => 14.50,
-    DFS_FREQUENCY_MODE => "HIGH")
+    CLKFX_MULTIPLY => 2,
+    CLKIN_PERIOD => 14.50)
   port map (
     CLKIN => iclk,
     CLKFB => fbclk,
@@ -89,6 +89,25 @@ begin  -- arch_core
     CLKFX => gsysclk,
     CLKFX180 => open,
     LOCKED => open);
+
+  --pll : PLL_BASE
+  --generic map (
+  --  CLKOUT0_DIVIDE => 4,
+  --  CLKOUT1_DIVIDE => 4,
+  --  CLKFBOUT_MULT => 8,
+  --  CLKIN_PERIOD => 14.50)
+  --port map (
+  --  CLKIN => iclk,
+  --  CLKFBIN => fbclk,
+  --  RST => '0',
+  --  CLKOUT0 => gmemclk,
+  --  CLKOUT1 => gsysclk, 
+  --  CLKOUT2 => open, 
+  --  CLKOUT3 => open, 
+  --  CLKOUT4 => open, 
+  --  CLKOUT5 => open,
+  --  CLKFBOUT => fbclk,
+  --  LOCKED => open);
 
   main : core_main port map (
     sysclk => sysclk,

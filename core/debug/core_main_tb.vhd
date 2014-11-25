@@ -12,7 +12,7 @@ architecture arch_core_main_tb of core_main_tb is
   
   component core_main
     generic (
-      CODE       : string := "fib_rec.tbin";
+      CODE       : string := "test.tbin";
       ADDR_WIDTH : integer := 8;
       CLKR       : integer := CLKR;
       wtime      : std_logic_vector(15 downto 0) := wtime;
@@ -63,7 +63,7 @@ architecture arch_core_main_tb of core_main_tb is
 begin
 
   main : core_main port map (
-    sysclk => sysclk,   
+    sysclk => memclk,   
     memclk => memclk,   
     RS_TX  => RS_TX , 
     RS_RX  => RS_RX , 

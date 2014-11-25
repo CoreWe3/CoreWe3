@@ -122,7 +122,7 @@ architecture arch_core_main of core_main is
   signal ready : std_logic;
   signal RS_RX_exec : std_logic;
   signal RS_RX_load : std_logic;
-  
+
 begin
 
   file_initialize : if (CODE /= "bootload") generate
@@ -302,6 +302,8 @@ begin
               alu_iw1 <= reg_ow1;
               buf <= reg_ow2;
               alu_iw2 <= immediate;
+            when "000011" => --store abs
+              buf <= reg_ow1;
             when "000110" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -437,6 +439,7 @@ begin
                 mem_we <= '1';
                 mem_go <= '1';
                 mem_addr <= immediate(19 downto 0);
+                mem_store <= buf;
                 state <= state+1;
               end if;
             when "010101" => --jsub
@@ -473,7 +476,7 @@ begin
             when others =>
               state <= state+3;
           end case;
-          mem_wait <= conv_std_logic_vector(CLKR,2);
+          mem_wait <= conv_std_logic_vector(CLKR-1,2);
         when x"8" =>
           if mem_wait = "00" then
             state <= state+1;
@@ -532,6 +535,13 @@ begin
               reg_we <= '1';
               pc <= next_pc;
             when "000001" => --store
+              pc <= next_pc;
+            when "000010" => --load abs
+              reg_addr1 <= instr_reg(25 downto 20);
+              reg_iw <= buf;
+              reg_we <= '1';
+              pc <= next_pc;
+            when "000011" => --store abs
               pc <= next_pc;
             when "000100" => --load immediate high
               reg_addr1 <= instr_reg(25 downto 20);
