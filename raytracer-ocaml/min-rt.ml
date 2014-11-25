@@ -1921,13 +1921,22 @@ in
 let rec write_ppm_header _ =
   ( 
     print_char 80; (* 'P' *)
-    print_char (48 + 6); (* +6 if binary *) (* 48 = '0' *)
+    print_char (48 + 6); (* +6 if binary *)
     print_char 10;
-    print_int image_size.(0);
+    (* print_int image_size.(0); *)
+    print_char (48 + 1); (* width fixed to 128px *)
+    print_char (48 + 2);
+    print_char (48 + 8);
     print_char 32;
-    print_int image_size.(1);
-    print_char 32;
-    print_int 255;
+    (* print_int image_size.(1); *)
+    print_char (48 + 1); (* height fixed to 128px *)
+    print_char (48 + 2);
+    print_char (48 + 8);
+    print_char 10;
+    (* print_int 255; *)
+    print_char (48 + 2); 
+    print_char (48 + 5);
+    print_char (48 + 5);
     print_char 10
   )
 in
@@ -1940,11 +1949,11 @@ in
 
 let rec write_rgb _ =
    write_rgb_element rgb.(0); (* Red   *)
-   print_char 32;
+   (* print_char 32; *)
    write_rgb_element rgb.(1); (* Green *)
-   print_char 32;
-   write_rgb_element rgb.(2); (* Blue  *)
-   print_char 10
+   (* print_char 32; *)
+   write_rgb_element rgb.(2)(* ; (\* Blue  *\) *)
+   (* print_char 10 *)
 in
 
 (******************************************************************************
