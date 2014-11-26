@@ -3,6 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <limits.h>
+#include <math.h>
 #include "isa.h"
 
 void ld(unsigned int ra, unsigned int rb, unsigned int cx);
@@ -27,6 +28,7 @@ void ble(unsigned int ra, unsigned int rb, unsigned int cx);
 void blt(unsigned int ra, unsigned int rb, unsigned int cx);
 void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
 void jsub(unsigned int cx);
+void fx86(unsigned int cx);
 void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
@@ -161,7 +163,10 @@ int main(int argc, char* argv[])
 	//MAIN ROUTINE
 	INS ins;
 
-	while(true){
+
+	bool flag = true;
+
+	while(flag){
 		if(pc >= num){
 			printf("The program successfully done.\n");
 			break;
@@ -231,9 +236,10 @@ int main(int argc, char* argv[])
 				shri(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
 			case BEQ:
-				if(ins.L.ra == 0 && ins.L.rb == 0 && ins.L.cx == 0){
+				if(ins.L.cx == 0){
 					printf("Detect Halt\n");
 					goto HALT;
+					flag = false;
 				}
 				beq(ins.L.ra,ins.L.rb,ins.L.cx);
 				break;
@@ -258,9 +264,11 @@ int main(int argc, char* argv[])
 			case POP:
 				pop(ins.A.ra);
 				break;
+			case FX86:
+				fx86(ins.J.cx);
 			default:
 				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
-				break;
+				flag = false;
 		}
 		reg[0].u = 0;
 		pc+=pcflag;
@@ -455,5 +463,37 @@ void pop(unsigned int ra){
 		printf("Stack Pointer is out of range\n");
 		exit(1);
 	}
+}
+void fx86(unsigned int cx){
+	switch (cx){
+
+	/*0から順にfadd,fsub,fmul,fdiv,finv,fsqrt,sin,cos,atan,itof,ftoi,floor*/
+		case 0:
+			reg[3].f=(reg[3].f)+(reg[4].f);
+		case 1:
+			reg[3].f=(reg[3].f)-(reg[4].f);
+		case 2:
+			reg[3].f=(reg[3].f)*(reg[4].f);
+		case 3:
+			reg[3].f=(reg[3].f)/(reg[4].f);
+		case 4:
+			reg[3].f=(1)/(reg[4].f);
+		case 5:
+			reg[3].f=sqrt(reg[3].f);
+		case 6:
+			reg[3].f=sin(reg[3].f);
+		case 7:
+			reg[3].f=cos(reg[3].f);
+		case 8:
+			reg[3].f=atan(reg[3].f);
+		case 9:
+			reg[3].f=static_cast<float>(reg[3].u);
+		case 10:
+			reg[3].f= static_cast<int>(reg[3].f);
+		case 11:
+			reg[3].f= floor(reg[3].f);
+	}
+
+
 }
 
