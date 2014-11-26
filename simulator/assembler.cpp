@@ -29,10 +29,10 @@ void ble(unsigned int ra, unsigned int rb, unsigned int cx);
 void blt(unsigned int ra, unsigned int rb, unsigned int cx);
 void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
 void jsub(unsigned int cx);
+void fx86(unsigned int cx);
 void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
-
 int dline = 1;
 
 int name2op(char* op){
@@ -323,6 +323,10 @@ int main(int argc, char* argv[])
 					case RET:
 						ret();
 						break;
+					case FX86:
+						cx = strtok(NULL,tokens);
+						fx86(getimmediate(cx,line));
+						break;
 					case PUSH:
 						ra = strtok(NULL,tokens);
 						push(name2reg(ra));
@@ -385,12 +389,8 @@ void ldil(unsigned int ra, unsigned int cx){
 	write(ins.data);
 }
 void ldi(unsigned int ra, unsigned int cx){
-	//if((cx & 0xffff0000) == 0){
-	//	ldil(ra, cx & 0xffff);
-	//}else{
-		ldil(ra, cx & 0xffff);
-		ldih(ra, cx >> 16);
-	//}
+	ldil(ra, cx & 0xffff);
+	ldih(ra, cx >> 16);
 }
 void add(unsigned int ra, unsigned int rb, unsigned int rc){
 	INS ins;
@@ -491,6 +491,11 @@ void jsub(unsigned int cx){
 void ret(){
 	INS ins;
 	ins.data = 0; ins.J.op = RET;
+	write(ins.data);
+}
+void fx86(unsigned int cx){
+	INS ins;
+	ins.data = 0; ins.J.op = FX86; ins.J.cx = cx;
 	write(ins.data);
 }
 void push(unsigned int ra){
