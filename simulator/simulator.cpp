@@ -482,7 +482,7 @@ void fx86(unsigned int cx){
 			reg[3].f=(reg[3].f)/(reg[4].f);
 			break;
 		case 4:
-			reg[3].f=(1)/(reg[4].f);
+			reg[3].f=(1)/(reg[3].f);
 			break;
 		case 5:
 			reg[3].f=sqrt(reg[3].f);
