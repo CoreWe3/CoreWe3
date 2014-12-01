@@ -1,18 +1,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
-use ieee.std_logic_textio.all;
-library std;
 use std.textio.all;
+use ieee.std_logic_textio.all;
 
 entity init_code_rom is
   generic(CODE  : string := "code.bin";
           WIDTH : integer := 14);
   
-  port (clk : in  std_logic;
-        en     : in  std_logic;
-        addr   : in  std_logic_vector(WIDTH-1 downto 0);
-        instr  : out std_logic_vector(31 downto 0));
+  port (clk   : in  std_logic;
+        en    : in  std_logic;
+        addr  : in  std_logic_vector(WIDTH-1 downto 0);
+        instr : out std_logic_vector(31 downto 0));
 end init_code_rom;
 
 architecture arch_code_rom of init_code_rom is

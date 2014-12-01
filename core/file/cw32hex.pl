@@ -14,5 +14,5 @@ while(read(STDIN, $instr, 4)){
 }
 
 for(my $s=0; $s < 20000; $s++){
-    print "18000000\n"; #nop
+    print "02000000\n";
 }

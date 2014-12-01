@@ -6,6 +6,7 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity core is
+  
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -29,30 +30,27 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/loopback.tbin";
+      CODE : string := "bootload";
       ADDR_WIDTH : integer := 8;
-      CLKR : integer := 1;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
-      sysclk : in    std_logic;
-      memclk : in    std_logic;
-      RS_TX  : out   std_logic;
-      RS_RX  : in    std_logic;
-      ZD     : inout std_logic_vector(31 downto 0);
-      ZA     : out   std_logic_vector(19 downto 0);
-      XWA    : out   std_logic);
+      clk   : in    std_logic;
+      RS_TX : out   std_logic;
+      RS_RX : in    std_logic;
+      ZD    : inout std_logic_vector(31 downto 0);
+      ZA    : out   std_logic_vector(19 downto 0);
+      XWA   : out   std_logic);
   end component;
 
   signal iclk : std_logic;
-  signal gmemclk : std_logic;
-  signal gsysclk : std_logic;
   signal fbclk : std_logic;
   signal bfbclk : std_logic;
+  signal gsysclk : std_logic;
   signal sysclk : std_logic;
+  signal gmemclk : std_logic;
   signal memclk : std_logic;
-
 begin  -- arch_core
 
   ib : IBUFG port map (
@@ -60,63 +58,54 @@ begin  -- arch_core
     o => iclk);
 
   bg0 : BUFG port map (
-    i => gmemclk,
-    o => memclk);
-
-  bg1 : BUFG port map (
     i => gsysclk,
     o => sysclk);
 
-  bg2 : BUFG port map (
-    i => bfbclk,
-    o => fbclk);
+  bg1 : BUFG port map (
+    i => gmemclk,
+    o => memclk);
 
-  dcm : DCM_BASE
-  generic map (
-    CLKFX_MULTIPLY => 2,
-    CLKIN_PERIOD => 14.50)
-  port map (
-    CLKIN => iclk,
-    CLKFB => fbclk,
-    RST => '0',
-    CLK0 => bfbclk,
-    CLK90 => open,
-    CLK180 => open,
-    CLK270 => open,
-    CLK2X => gmemclk,
-    CLK2X180 => open,
-    CLKDV => open,
-    CLKFX => gsysclk,
-    CLKFX180 => open,
-    LOCKED => open);
-
-  --pll : PLL_BASE
-  --generic map (
-  --  CLKOUT0_DIVIDE => 4,
-  --  CLKOUT1_DIVIDE => 4,
-  --  CLKFBOUT_MULT => 8,
-  --  CLKIN_PERIOD => 14.50)
-  --port map (
+  --dcm : DCM_BASE port map (
   --  CLKIN => iclk,
-  --  CLKFBIN => fbclk,
+  --  CLKFB => fbclk,
   --  RST => '0',
-  --  CLKOUT0 => gmemclk,
-  --  CLKOUT1 => gsysclk, 
-  --  CLKOUT2 => open, 
-  --  CLKOUT3 => open, 
-  --  CLKOUT4 => open, 
-  --  CLKOUT5 => open,
-  --  CLKFBOUT => fbclk,
+  --  CLK0 => bfbclk,
+  --  CLK90 => open,
+  --  CLK180 => open,
+  --  CLK270 => open,
+  --  CLK2X => gclk,
+  --  CLK2X180 => open,
+  --  CLKDV => open,
+  --  CLKFX => open,
+  --  CLKFX180 => open,
   --  LOCKED => open);
 
+  pll : PLL_BASE
+    generic map (
+      CLKOUT0_DIVIDE => 4,
+      CLKOUT0_DIVIDE => 4,
+      CLKFBOUT_MULT => 8,
+      CLKIN_PERIOD => 14.50)
+    port map (
+      CLKIN => iclk,
+      CLKFBIN => fbclk,
+      RST => '0',
+      CLKOUT0 => gsysclk,
+      CLKOUT1 => gmemclk,
+      CLKOUT2 => open,
+      CLKOUT3 => open,
+      CLKOUT4 => open,
+      CLKOUT5 => open,
+      CLKFBOUT => fbclk,
+      LOCKED => open);
+
   main : core_main port map (
-    sysclk => sysclk,
-    memclk => memclk,
-    RS_TX  => RS_TX,
-    RS_RX  => RS_RX,
-    ZD     => ZD,
-    ZA     => ZA,
-    XWA    => XWA);
+    clk   => sysclk,
+    RS_TX => RS_TX,
+    RS_RX => RS_RX,
+    ZD    => ZD,
+    ZA    => ZA,
+    XWA   => XWA);
 
   XE1 <= '0';
   E2A <= '1';
@@ -124,8 +113,8 @@ begin  -- arch_core
   XZBE <= "0000";
   XGA <= '0';
   XZCKE <= '0';
-  ZCLKMA(0) <= memclk;
-  ZCLKMA(1) <= memclk;
+  ZCLKMA(0) <= sysclk;
+  ZCLKMA(1) <= sysclk;
   ADVA <= '0';
   XFT <= '1';
   XLBO <= '1';
