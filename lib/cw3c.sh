@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-    echo "Usage: $0 [OPTIONS] FILE"
+    echo "Usage: $0 FILE [OPTIONS] "
     echo
     echo "FILE:"
     echo "コンパイルしたいmincamlソース"
@@ -20,7 +20,7 @@ usage() {
     echo '$FILE.err   コンパイラのエラーログ'
     echo '_$FILE.s    アセンブリのライブラリとリンクしたアセンブリソース'
     echo '$FILE       アセンブラによって生成されたバイナリファイル'
-    echo '$FILE.label アセンブラによるラベルの出力'
+    echo '$FILE.label アセンブラによって出力されたラベルのリスト'
     echo 
     echo 'CAUTION:'
     echo '--work-dirに$FILEと同じディレクトリを指定するとエラーで落ちます。'
@@ -113,10 +113,14 @@ do
     esac
 done
 
+echo "cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml"
 cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml
 
+echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err"
 ${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err
 
+echo "cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s"
 cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
 
+echo "${REPO_ROOT}/simulator/bin/assembler ${WORK_DIR}/${SOURCE} < ${WORK_DIR}/_${SOURCE}.s 1> ${WORK_DIR}/${SOURCE}.label"
 ${REPO_ROOT}/simulator/bin/assembler ${WORK_DIR}/${SOURCE} < ${WORK_DIR}/_${SOURCE}.s 1> ${WORK_DIR}/${SOURCE}.label
