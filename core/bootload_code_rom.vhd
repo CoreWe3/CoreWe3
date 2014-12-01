@@ -1,6 +1,7 @@
 --code rom with boot loader
 --WIDTH > 1
 
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -11,11 +12,11 @@ entity bootload_code_rom is
   generic(wtime : std_logic_vector(15 downto 0) := x"1ADB";
           WIDTH : integer := 14);
   
-  port (sysclk : in  std_logic;
-        RS_RX  : in  std_logic;
-        ready  : out std_logic;
-        addr   : in  std_logic_vector(WIDTH-1 downto 0);
-        instr  : out std_logic_vector(31 downto 0));
+  port (clk   : in  std_logic;
+        RS_RX : in  std_logic;
+        ready : out std_logic;
+        addr  : in  std_logic_vector(WIDTH-1 downto 0);
+        instr : out std_logic_vector(31 downto 0));
 end bootload_code_rom;
 
 architecture arch_code_rom of bootload_code_rom is
@@ -45,14 +46,14 @@ architecture arch_code_rom of bootload_code_rom is
 begin
 
   recieve : uart_receiver port map (
-    clk => sysclk,
+    clk => clk,
     rx => RS_RX,
     complete => complete,
     data => data);
 
-  process(sysclk)
+  process(clk)
   begin
-    if rising_edge(sysclk) then
+    if rising_edge(clk) then
       case state is
         when x"0" =>
           if complete = '1' then
@@ -75,7 +76,7 @@ begin
             state <= x"4";
           end if;
         when x"4" =>
-          if buf = x"54000000" then --end of code
+          if buf = x"FFFFFFFF" then --end of code
             ROM(conv_integer(in_addr)) <= buf;
             state <= x"5";
           else

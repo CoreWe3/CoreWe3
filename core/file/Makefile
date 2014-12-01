@@ -1,5 +1,5 @@
 AS = ../../simulator/bin/assembler
-SIM = $(HOME)/cpu_core/core_main_tb/
+SIM = ~/cpu_core/core_main_tb
 SOURCE = $(wildcard *.s)
 TARGET = $(SOURCE:.s=.tbin) $(SOURCE:.s=.cw3)
 
