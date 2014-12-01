@@ -42,17 +42,13 @@
 	RET
 
 :min_caml_print_int
-	STA	r3	0xfffff
-	RET
-
-:min_caml_print_int32
 	ADDI	r4	r0	24	
 	ADDI	r5	r3	0
-:min_caml_print_int32_L1
+:min_caml_print_int_L1
 	SHR	r3	r5	r4
 	STA	r3	0xfffff
 	ADDI	r4	r4	-8
-	BLE	r0	r4	:min_caml_print_int32_L1
+	BLE	r0	r4	:min_caml_print_int_L1
 	RET
 
 :min_caml_fadd

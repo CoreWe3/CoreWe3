@@ -1923,17 +1923,14 @@ let rec write_ppm_header _ =
     print_char 80; (* 'P' *)
     print_char (48 + 6); (* +6 if binary *)
     print_char 10;
-    (* print_int image_size.(0); *)
     print_char (48 + 1); (* width fixed to 128px *)
     print_char (48 + 2);
     print_char (48 + 8);
     print_char 32;
-    (* print_int image_size.(1); *)
     print_char (48 + 1); (* height fixed to 128px *)
     print_char (48 + 2);
     print_char (48 + 8);
     print_char 10;
-    (* print_int 255; *)
     print_char (48 + 2); 
     print_char (48 + 5);
     print_char (48 + 5);
@@ -1944,16 +1941,13 @@ in
 let rec write_rgb_element x =
   let ix = int_of_float x in
   let elem = if ix > 255 then 255 else if ix < 0 then 0 else ix in
-  print_int elem
+  print_char elem
 in
 
 let rec write_rgb _ =
    write_rgb_element rgb.(0); (* Red   *)
-   (* print_char 32; *)
    write_rgb_element rgb.(1); (* Green *)
-   (* print_char 32; *)
-   write_rgb_element rgb.(2)(* ; (\* Blue  *\) *)
-   (* print_char 10 *)
+   write_rgb_element rgb.(2)  (* Blue  *)
 in
 
 (******************************************************************************
