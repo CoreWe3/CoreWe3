@@ -10,7 +10,7 @@ cat ${SOURCE_DIR}/${SOURCE}.ml ${LIB_ML} > ${WORK_DIR}/${SOURCE}.ml
 LIB_ML: 特別なことをするのでなければ${REPO_ROOT}/lib/mincaml/libmincaml.ml
 
 2.コンパイル
-${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE}.ml
+${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE}
 
 3.リンク
 ${REPO_ROOT}/lib/cw3_link.sh -head ${REPO_ROOT}/lib/asm/${BOOT_S} -lib ${REPO_ROOT}/lib/asm/${LIB_S} ${WORK_DIR}/${SOURCE}.s
