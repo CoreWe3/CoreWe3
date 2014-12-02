@@ -55,26 +55,48 @@ begin
   begin
     if rising_edge(clk) then
       case state is
+        --when x"0" =>
+        --  if complete = '1' then
+        --    buf(31 downto 24) <= data;
+        --    state <= x"1";
+        --  end if;
+        --when x"1" =>
+        --  if complete = '1' then
+        --    buf(23 downto 16) <= data;
+        --    state <= x"2";
+        --  end if;
+        --when x"2" =>
+        --  if complete = '1' then
+        --    buf(15 downto 8) <= data;
+        --    state <= x"3";
+        --  end if;
+        --when x"3" =>
+        --  if complete = '1' then
+        --    buf(7 downto 0) <= data;
+        --    state <= x"4";
+        --  end if;
+
         when x"0" =>
           if complete = '1' then
-            buf(31 downto 24) <= data;
+            buf(7 downto 0) <= data;
             state <= x"1";
           end if;
         when x"1" =>
           if complete = '1' then
-            buf(23 downto 16) <= data;
+            buf(15 downto 8) <= data;
             state <= x"2";
           end if;
         when x"2" =>
           if complete = '1' then
-            buf(15 downto 8) <= data;
+            buf(23 downto 16) <= data;
             state <= x"3";
           end if;
         when x"3" =>
           if complete = '1' then
-            buf(7 downto 0) <= data;
+            buf(31 downto 24) <= data;
             state <= x"4";
           end if;
+          
         when x"4" =>
           if buf = x"FFFFFFFF" then --end of code
             ROM(conv_integer(in_addr)) <= buf;

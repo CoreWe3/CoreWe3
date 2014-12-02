@@ -1,23 +1,27 @@
-AS = ../../simulator/bin/assembler
+ASM = ../../simulator/bin/assembler
 SIM = ~/cpu_core/core_main_tb
-SOURCE = $(wildcard *.s)
-TARGET = $(SOURCE:.s=.tbin) $(SOURCE:.s=.cw3)
+WORK = ../../simulator/bin
+BUILDER = ../../lib/cw3c.sh
+MLSOURCE = $(wildcard *.ml)
+SSOURCE = $(wildcard *.s) $(MLSOURCE:.ml=.s)
+TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=)
+DEBUG = $(TARGET:=.bin)
 
-all: $(TARGET)
+all: $(TARGET) $(DEBUG)
 
-%.tbin: %.hex
-	./hex2tbin.pl < $< > $@ && \
+%.s: %.ml
+	$(BUILDER) $< && \
+	cp $(WORK)/_$@ $@
+
+$(DEBUG): $(TARGET)
+	./textbin.py < $(@:.bin=) > $@ && \
 	cp $@ $(SIM)
 
-%.hex: %.cw3
-	./cw32hex.pl < $< > $@
-
-%.cw3: %.s $(AS)
-	$(AS) $(<:.s=.bin) < $< && \
-	./swap.pl < $(<:.s=.bin) > $@ && \
+$(SSOURCE:.s=): $(SSOURCE) $(ASM)
+	$(ASM) $@ < $@.s && \
 	cat eof >> $@
 
-$(AS):
+$(ASM):
 	cd ../../simulator && \
 	make && \
 	cd ../core/file/
@@ -25,4 +29,4 @@ $(AS):
 .PHONY: all clean
 
 clean:
-	rm -rf *.cw3 *.tbin *.bin *.hex
+	rm -rf $(DEBUG) $(TARGET) $(MLSOURCE:.ml=.s)

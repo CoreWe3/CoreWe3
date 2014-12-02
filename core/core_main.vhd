@@ -81,7 +81,7 @@ architecture arch_core_main of core_main is
 
   signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
   signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
-  signal sp : std_logic_vector(19 downto 0) := x"F7FFF";
+  signal sp : std_logic_vector(19 downto 0) := x"FFFFE";
   
   signal instr : std_logic_vector(31 downto 0);
   signal state : std_logic_vector(3 downto 0) := x"F";

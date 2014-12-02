@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "bootload";
+      CODE : string := "file/loopback.bin";
       ADDR_WIDTH : integer := 8;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
