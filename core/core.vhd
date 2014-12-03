@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main
     generic (
-      CODE : string := "file/loopback.bin";
+      CODE : string := "bootload";
       ADDR_WIDTH : integer := 8;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
@@ -49,8 +49,8 @@ architecture arch_core of core is
   signal bfbclk : std_logic;
   signal gsysclk : std_logic;
   signal sysclk : std_logic;
-  signal gmemclk : std_logic;
-  signal memclk : std_logic;
+  --signal gmemclk : std_logic;
+  --signal memclk : std_logic;
 begin  -- arch_core
 
   ib : IBUFG port map (
@@ -62,42 +62,42 @@ begin  -- arch_core
     o => sysclk);
 
   bg1 : BUFG port map (
-    i => gmemclk,
-    o => memclk);
+    i => fbclk,
+    o => bfbclk);
 
-  --dcm : DCM_BASE port map (
-  --  CLKIN => iclk,
-  --  CLKFB => fbclk,
-  --  RST => '0',
-  --  CLK0 => bfbclk,
-  --  CLK90 => open,
-  --  CLK180 => open,
-  --  CLK270 => open,
-  --  CLK2X => gclk,
-  --  CLK2X180 => open,
-  --  CLKDV => open,
-  --  CLKFX => open,
-  --  CLKFX180 => open,
-  --  LOCKED => open);
+  dcm : DCM_BASE port map (
+    CLKIN => iclk,
+    CLKFB => bfbclk,
+    RST => '0',
+    CLK0 => fbclk,
+    CLK90 => open,
+    CLK180 => open,
+    CLK270 => open,
+    CLK2X => gsysclk,
+    CLK2X180 => open,
+    CLKDV => open,
+    CLKFX => open,
+    CLKFX180 => open,
+    LOCKED => open);
 
-  pll : PLL_BASE
-    generic map (
-      CLKOUT0_DIVIDE => 4,
-      CLKOUT0_DIVIDE => 4,
-      CLKFBOUT_MULT => 8,
-      CLKIN_PERIOD => 14.50)
-    port map (
-      CLKIN => iclk,
-      CLKFBIN => fbclk,
-      RST => '0',
-      CLKOUT0 => gsysclk,
-      CLKOUT1 => gmemclk,
-      CLKOUT2 => open,
-      CLKOUT3 => open,
-      CLKOUT4 => open,
-      CLKOUT5 => open,
-      CLKFBOUT => fbclk,
-      LOCKED => open);
+  --pll : PLL_BASE
+  --  generic map (
+  --    CLKOUT0_DIVIDE => 4,
+  --    CLKOUT0_DIVIDE => 4,
+  --    CLKFBOUT_MULT => 8,
+  --    CLKIN_PERIOD => 14.50)
+  --  port map (
+  --    CLKIN => iclk,
+  --    CLKFBIN => fbclk,
+  --    RST => '0',
+  --    CLKOUT0 => gsysclk,
+  --    CLKOUT1 => gmemclk,
+  --    CLKOUT2 => open,
+  --    CLKOUT3 => open,
+  --    CLKOUT4 => open,
+  --    CLKOUT5 => open,
+  --    CLKFBOUT => fbclk,
+  --    LOCKED => open);
 
   main : core_main port map (
     clk   => sysclk,
