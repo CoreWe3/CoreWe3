@@ -324,9 +324,7 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
-              if reg_ow1(31) = '1' and reg_ow2(31) = '0' then
-                branch_f <= '1';
-              elsif reg_ow1(30 downto 0) <= reg_ow2(30 downto 0) then
+              if reg_ow1 <= reg_ow2 then --isnt correct when argument is 0
                 branch_f <= '1';
               else
                 branch_f <= '0';

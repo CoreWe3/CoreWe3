@@ -11,7 +11,7 @@ entity SRAM is
 end SRAM;
 
 architecture arch_sram of SRAM is
-  type RAM_t is array (63 downto 0) of std_logic_vector(31 downto 0);
+  type RAM_t is array (2**20 downto 0) of std_logic_vector(31 downto 0);
   signal RAM : RAM_t;
 
   signal xwa1 : std_logic := '1';
@@ -30,10 +30,10 @@ begin
       if xwa1 = '0' then
         ZD <= (others => 'Z');
       else
-        ZD <= RAM(conv_integer(addr1(5 downto 0)));
+        ZD <= RAM(conv_integer(addr1));
       end if;
       if xwa2 = '0' then
-        RAM(conv_integer(addr2(5 downto 0))) <= ZD;
+        RAM(conv_integer(addr2)) <= ZD;
       end if;
     end if;
   end process;

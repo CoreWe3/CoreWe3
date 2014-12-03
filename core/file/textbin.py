@@ -25,7 +25,7 @@ while True :
     else:
         break
 
-while l < 256:
+while l < 1024:
     print '00000000000000000000000000000000'
     l += 1
 
