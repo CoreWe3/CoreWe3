@@ -25,7 +25,7 @@ while True :
     else:
         break
 
-while l < 1024:
+while l < 2 ** int(sys.argv[1]):
     print '00000000000000000000000000000000'
     l += 1
 
