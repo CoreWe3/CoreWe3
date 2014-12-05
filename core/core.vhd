@@ -31,9 +31,9 @@ architecture arch_core of core is
   component core_main
     generic (
       CODE : string := "bootload";
-      ADDR_WIDTH : integer := 10;
-      wtime : std_logic_vector(15 downto 0) := x"047A";
-      --wtime : std_logic_vector(15 downto 0) := x"023D";
+      ADDR_WIDTH : integer := 12;
+      --wtime : std_logic_vector(15 downto 0) := x"047A";
+      wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
       clk   : in    std_logic;
@@ -100,7 +100,7 @@ begin  -- arch_core
   --    LOCKED => open);
 
   main : core_main port map (
-    clk   => sysclk,
+    clk   => bfbclk,
     RS_TX => RS_TX,
     RS_RX => RS_RX,
     ZD    => ZD,
@@ -113,8 +113,8 @@ begin  -- arch_core
   XZBE <= "0000";
   XGA <= '0';
   XZCKE <= '0';
-  ZCLKMA(0) <= sysclk;
-  ZCLKMA(1) <= sysclk;
+  ZCLKMA(0) <= bfbclk;
+  ZCLKMA(1) <= bfbclk;
   ADVA <= '0';
   XFT <= '1';
   XLBO <= '1';

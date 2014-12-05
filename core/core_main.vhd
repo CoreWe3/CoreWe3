@@ -5,7 +5,7 @@ use ieee.std_logic_signed.all;
 entity core_main is
   generic (
     CODE  : string := "code.bin";
-    ADDR_WIDTH : integer := 8;
+    ADDR_WIDTH : integer := 12;
     wtime : std_logic_vector(15 downto 0) := x"023D";
     debug : boolean := false);
   port (
@@ -79,7 +79,8 @@ architecture arch_core_main of core_main is
   end component;
 
 
-  signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0) := (others => '0');
+  signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0)
+    := zero(ADDR_WIDTH-1 downto 0);
   signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
   signal sp : std_logic_vector(19 downto 0) := x"FFFFE";
   
@@ -451,7 +452,7 @@ begin
               end if;
             when "010110" => --ret
               if mem_busy = '0' and mem_go = '0' then
-                pc <= mem_load(ADDR_WIDTH-1 downto 0);
+                buf <= mem_load;
                 state <= state+1;
               end if;
             when "010111" => --push
@@ -525,6 +526,7 @@ begin
               pc <= alu_ow(ADDR_WIDTH-1 downto 0);
             when "010110" => --ret
               sp <= alu_ow(19 downto 0);
+              pc <= buf(ADDR_WIDTH-1 downto 0);
             when "010111" => --push
               pc <= next_pc;
             when "011000" => --pop
@@ -540,11 +542,11 @@ begin
         when x"F" => --setupping 
           if ready = '1' then
             state <= x"0";
-            pc <= (others => '0');
+            pc <= zero(ADDR_WIDTH-1 downto 0);
           end if;
         when others =>
           state <= x"0";
-          pc <= (others => '0');
+          pc <= zero(ADDR_WIDTH-1 downto 0);
       end case;
     end if;
   end process;

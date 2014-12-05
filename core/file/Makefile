@@ -2,7 +2,7 @@ ASM = ../../simulator/bin/assembler
 SIM = ~/cpu_core/core_main_tb
 WORK = ../../simulator/bin
 BUILDER = ../../lib/cw3c.sh
-ADDRWIDTH = 10
+ADDRWIDTH = 12
 MLSOURCE = $(wildcard *.ml)
 SSOURCE = $(wildcard *.s) $(MLSOURCE:.ml=.s)
 TARGET = $(SSOURCE:.s=)

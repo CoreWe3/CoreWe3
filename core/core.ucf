@@ -227,4 +227,7 @@ TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;
 ###############################################################################
 
 #timing constraint
-NET "ZD[*]" OFFSET = IN 3.2 ns VALID 4.7 ns BEFORE "MCLK1" RISING;
+OFFSET = IN 3.2 ns VALID 4.7 ns BEFORE "MCLK1" RISING;
+OFFSET = OUT 6.0 ns VALID 6.5 ns AFTER "MCLK1" RISING;
+NET RS_TX TIG;
+NET RS_RX TIG;

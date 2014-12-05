@@ -1,5 +1,5 @@
 :main
-	LDA	r1	0xfffff
+	LDI	r1	10
 	JSUB	:fib
 	STA	r1	0xfffff
 	BEQ	r0	r0	0
