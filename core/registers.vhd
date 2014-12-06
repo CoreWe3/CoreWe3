@@ -1,3 +1,7 @@
+-- register unit
+-- asynchronous read
+-- synchronous write
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -12,10 +16,10 @@ entity registers is
     in_word : in std_logic_vector(31 downto 0);
     out_word1 : out std_logic_vector(31 downto 0);
     out_word2 : out std_logic_vector(31 downto 0));
-  
 end registers;
 
 architecture arch_registers of registers is
+
   type ram_t is array(63 downto 0) of std_logic_vector(31 downto 0);
   signal RAM : ram_t;
        
