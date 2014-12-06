@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
   
   component core_main
     generic (
-      CODE : string := "fib_rec.bin";
+      CODE : string := "file/fib_rec.bin";
       ADDR_WIDTH : integer := 10;
       wtime : std_logic_vector(15 downto 0) := wtime;
       debug : boolean := false);
