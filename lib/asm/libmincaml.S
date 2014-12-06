@@ -21,6 +21,7 @@
 	RET
 
 :min_caml_read_int
+:min_caml_read_float
 	LDA	r3	0xfffff
 	SHLI	r3	r3	8
 	LDA	r4	0xfffff
@@ -31,10 +32,6 @@
 	SHLI	r3	r3	8
 	LDA	r4	0xfffff
 	OR	r3	r3	r4
-	RET
-	
-:min_caml_read_float
-	JSUB	:min_caml_read_int
 	RET
 
 :min_caml_print_char
