@@ -69,7 +69,6 @@ let rec fiszero x = x = 0.0 in
 let rec fispos x = x > 0.0 in
 let rec fisneg x = x < 0.0 in 
 
-
 let rec sin_cos_reduction f =
   let rec init_p a p =
     if fless a p then p else init_p a (2.0 *. p)

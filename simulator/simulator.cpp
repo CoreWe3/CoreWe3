@@ -497,7 +497,7 @@ void fx86(unsigned int cx){
 			reg[3].f=atan(reg[3].f);
 			break;
 		case 9:
-			reg[3].f=static_cast<float>(reg[3].u);
+      		        reg[3].f=static_cast<float>(static_cast<int>(reg[3].u));
 			break;
 		case 10:
 			reg[3].u= static_cast<int>(reg[3].f);
