@@ -1,7 +1,9 @@
-ASM = ../../simulator/bin/assembler
-SIM = ~/cpu_core/core_main_tb
-WORK = ../../simulator/bin
-BUILDER = ../../lib/cw3c.sh
+ROOT = $(shell git rev-parse --show-toplevel)
+ASM = $(ROOT)/simulator/bin/assembler
+SIM = $(ROOT)/core/debug
+WORK = $(ROOT)/simulator/bin
+BUILDER = $(ROOT)/lib/cw3c.sh
+COMPILER = $(ROOT)/compiler/min-caml
 ADDRWIDTH = 12
 MLSOURCE = $(wildcard *.ml)
 SSOURCE = $(wildcard *.s) $(MLSOURCE:.ml=.s)
@@ -10,22 +12,23 @@ DEBUG = $(TARGET:=.bin)
 
 all: $(TARGET) $(DEBUG)
 
-%.s: %.ml
+%.s: %.ml $(COMPILER)
 	$(BUILDER) $< && \
 	cp $(WORK)/_$@ $@
 
-$(DEBUG): $(TARGET)
-	./textbin.py $(ADDRWIDTH) < $(@:.bin=) > $@ && \
+%.bin: %
+	./textbin.py $(ADDRWIDTH) < $< > $@ && \
 	cp $@ $(SIM)
 
-$(SSOURCE:.s=): $(SSOURCE) $(ASM)
+$(TARGET): $(SSOURCE) $(ASM)
 	$(ASM) $@ < $@.s && \
 	cat eof >> $@
 
+$(COMPILER):
+	cd $(ROOT)/mincaml_compiler && $(MAKE)
+
 $(ASM):
-	cd ../../simulator && \
-	make && \
-	cd ../core/file/
+	cd $(ROOT)/simulator && $(MAKE)
 
 .PHONY: all clean
 
