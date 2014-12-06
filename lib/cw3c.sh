@@ -9,6 +9,7 @@ usage() {
     echo "Options:"
     echo " --help     ヘルプ"
     echo " --work-dir 実行ファイル及び作業用ファイルが生成されるディレクトリ(デフォルトでsimulator/bin)"
+    echo " --inline   コンパイラのインライン展開の深さ(デフォルトで4)"
     echo " --lib-ml   mincamlのライブラリ(デフォルトでlib/mincaml/libmincaml.ml)"
     echo " --lib-asm  アセンブリのライブラリ(デフォルトでlib/asm/libmincaml.S)"
     echo " --boot     ブートローダー(デフォルトでlib/asm/boot.s)"
@@ -49,6 +50,8 @@ WORK_DIR=${REPO_ROOT}/simulator/bin
 
 LIB_ML=${REPO_ROOT}/lib/mincaml/libmincaml.ml
 
+INLINE=4
+
 LIB_S=${REPO_ROOT}/lib/asm/libmincaml.S
 BOOT_S=${REPO_ROOT}/lib/asm/boot.s
 
@@ -65,6 +68,18 @@ do
                 exit 1
             fi
             WORK_DIR=`echo $2 | sed 's/\/$//'`
+            shift 2
+            ;;
+        '--inline' )
+            if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                echo "$0: option requires an argument" 1>&2
+                exit 1
+            fi
+            if ! expr "$2" : '[0-9]*' > /dev/null; then
+                echo "$0: '$2' is not number" 1>&2
+                exit 1
+            fi
+            INLINE="$2"
             shift 2
             ;;
         '--lib-ml' )
@@ -116,8 +131,8 @@ done
 echo "cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml"
 cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml
 
-echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err"
-${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err
+echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err"
+${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err
 
 echo "cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s"
 cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
