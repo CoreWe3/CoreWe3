@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
   
   component core_main
     generic (
-      CODE : string := "memtest.bin";
+      CODE : string := "stack_test.bin";
       ADDR_WIDTH : integer := 10;
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
