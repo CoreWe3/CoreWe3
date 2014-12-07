@@ -6,8 +6,7 @@ entity core_main is
   generic (
     CODE  : string := "code.bin";
     ADDR_WIDTH : integer := 12;
-    wtime : std_logic_vector(15 downto 0) := x"023D";
-    debug : boolean := false);
+    wtime : std_logic_vector(15 downto 0) := x"023D");
   port (
     clk   : in    std_logic;
     RS_TX : out   std_logic;
@@ -62,8 +61,7 @@ architecture arch_core_main of core_main is
 
   component memory_io
     generic (
-      wtime : std_logic_vector(15 downto 0) := wtime;
-      debug : boolean := debug);
+      wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk        : in    std_logic;
       RS_RX      : in    std_logic;
@@ -224,6 +222,7 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+1;
             when "000001" => --store
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -233,18 +232,27 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+1;
+            when "000010" => --load abs
+              state <= state+1;
             when "000011" => --store abs
               buf <= reg_ow1;
+              state <= state+1;
+            when "000100" | "000101" => --load immediate
+              state <= state+3;
             when "000110" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "000111" => --sub
               ctrl <= "001";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001000" => --fneg
               buf <= reg_ow1;
+              state <= state+3;
             when "001001" => --addi
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -253,34 +261,42 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+3;
             when "001010" => --and
               ctrl <= "010";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001011" => --or
               ctrl <= "011";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001100" => --xor
               ctrl <= "100";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001101" => --shl
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001110" => --shr
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001111" => --shl imm
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              state <= state+3;
             when "010000" => --shr imm
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              state <= state+3;
             when "010001" => --branch eq
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -294,6 +310,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010010" => --ble
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -307,6 +324,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010011" => --blt
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -320,6 +338,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010100" => --bfle
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -333,6 +352,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010101" => --jump subroutine
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -342,23 +362,26 @@ begin
                 alu_iw2 <= "11" & x"F" & instr(25 downto 0);
               end if;
               sp <= sp-1;
+              state <= state+1;
             when "010110" => --ret
               ctrl <= "000";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
+              state <= state+1;
             when "010111" => --push
               ctrl <= "001";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
               buf <= reg_ow1;
+              state <= state+1;
             when "011000" => --pop
               ctrl <= "000";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
+              state <= state+1;
             when others =>
           end case;
           next_pc <= pc+1;
-          state <= state+1;
 
         when x"4" => --memory request
           case instr(31 downto 26) is
