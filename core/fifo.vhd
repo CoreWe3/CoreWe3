@@ -39,21 +39,15 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if enq = '1' and deq = '1' and
-        enq_addr = deq_addr then --when queue is empty
-        do <= di;
-      elsif enq = '1' then
-        if enq_addr+1 /= deq_addr then
-          --when queue is not full
-          enq_addr <= enq_addr+1;
-          QUE(conv_integer(enq_addr)) <= di;
-        end if;
-      elsif deq = '1' then
-        if enq_addr /= deq_addr then
-          -- when queue is not empty
-          deq_addr <= deq_addr+1;
-          do <= QUE(conv_integer(deq_addr));
-        end if;
+      if enq = '1' and enq_addr+1 /= deq_addr then
+        --when queue is not full
+        enq_addr <= enq_addr+1;
+        QUE(conv_integer(enq_addr)) <= di;
+      end if;
+      if deq = '1' and enq_addr /= deq_addr then
+        -- when queue is not empty
+        deq_addr <= deq_addr+1;
+        do <= QUE(conv_integer(deq_addr));
       end if;
     end if;
   end process;
