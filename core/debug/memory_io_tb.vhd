@@ -113,8 +113,7 @@ begin
       if go = '0' and busy = '0' then
         addr <= x"FFFFF";
         go <= '1';
-        we <= '1';
-        store_data <= x"00000041";
+        we <= '0';
       else
         go <= '0';
       end if;

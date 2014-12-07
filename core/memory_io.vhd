@@ -2,8 +2,8 @@
 --      read  1 clk
 -- sram write 2 clk
 --      read  3 clk
--- io   write 3 clk (best)
---      read  4 clk (best)
+-- io   write 0 clk (best)
+--      read  2 clk (best)
 
 
 library ieee;
@@ -41,7 +41,7 @@ architecture arch_memory_io of memory_io is
 
   component FIFO is
     generic (
-      WIDTH : integer := 10);
+      WIDTH : integer := 3);
     port (
       clk : in std_logic;
       di : in std_logic_vector(7 downto 0);
@@ -52,24 +52,25 @@ architecture arch_memory_io of memory_io is
       full : out std_logic);
   end component;
 
-  component receive_buffer is
+  component uart_receiver is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
-      clk : in std_logic;
-      RS_RX : in std_logic;
-      go : in std_logic;
-      do : out std_logic_vector(7 downto 0);
-      busy : out std_logic);
+      clk  : in  std_logic;
+      rx   : in  std_logic;
+      complete : out std_logic;
+      data : out std_logic_vector(7 downto 0));
   end component;
 
   component uart_transmitter is
-    generic (wtime: std_logic_vector(15 downto 0) := wtime);
-    Port ( clk  : in  STD_LOGIC;
-           data : in  STD_LOGIC_VECTOR (7 downto 0);
-           go   : in  STD_LOGIC;
-           busy : out STD_LOGIC;
-           tx   : out STD_LOGIC);
+    generic (
+      wtime: std_logic_vector(15 downto 0) := wtime);
+    Port (
+      clk  : in  STD_LOGIC;
+      data : in  STD_LOGIC_VECTOR (7 downto 0);
+      go   : in  STD_LOGIC;
+      busy : out STD_LOGIC;
+      tx   : out STD_LOGIC);
   end component;
 
   signal state : std_logic_vector(7 downto 0) := x"00";
@@ -79,8 +80,12 @@ architecture arch_memory_io of memory_io is
   signal buf : std_logic_vector(31 downto 0);
 
   signal rgo : std_logic := '0';
-  signal rbusy : std_logic;
-  signal receive_data : std_logic_vector(7 downto 0);
+  signal rcomplete : std_logic;
+  signal rdo : std_logic_vector(7 downto 0);
+  signal rdi : std_logic_vector(7 downto 0);
+  signal renq : std_logic := '0';
+  signal rdeq : std_logic := '0';
+  signal rempty : std_logic;
 
   signal tgo : std_logic := '0';
   signal tbusy : std_logic;
@@ -102,12 +107,20 @@ begin
     addr => addr(11 downto 0),
     we => bwe);
 
-  receive : receive_buffer port map (
+  receiver : uart_receiver port map (
     clk => clk,
-    RS_RX => RS_RX,
-    go => rgo,
-    do => receive_data,
-    busy => rbusy);
+    rx => RS_RX,
+    complete => rcomplete,
+    data => rdi);
+
+  receive_fifo : FIFO port map (
+    clk => clk,
+    di => rdi,
+    do => rdo,
+    enq => renq,
+    deq => rdeq,
+    empty => rempty,
+    full => open);
 
   transmitter : uart_transmitter port map(
     clk => clk,
@@ -132,6 +145,7 @@ begin
         when x"00" =>
           if go = '1' then
             if we = '1' then -- write
+              rdeq <= '0';
               if addr = x"FFFFF" then  -- transmit
                 bwe <= '0';
                 XWA <= '1';
@@ -159,11 +173,18 @@ begin
               bwe <= '0';
               tenq <= '0';
               if addr = x"FFFFF" then -- receive
-                rgo <= '1';
-                state <= x"60";
+                if rempty = '0' then
+                  rdeq <= '1';
+                  state <= x"61";
+                else
+                  rdeq <= '0';
+                  state <= x"60";
+                end if;
               elsif addr(19 downto 12) = x"EF" then -- bram
+                rdeq <= '0';
                 state <= x"30";
               else -- sram
+                rdeq <= '0';
                 state <= x"40";
               end if;
             end if;
@@ -199,12 +220,17 @@ begin
             state <= x"00";
             tenq <= '1';
           end if;
-        when x"60" => --receive
-          rgo <= '0';
-          if rgo = '0' and rbusy = '0' then
-            state <= x"00";
-            load_data <= x"000000" & receive_data;
+        when x"60" => --wait receive
+          if rempty = '0' then
+            rdeq <= '1';
+            state <= x"61";
           end if;
+        when x"61" => --receiving
+          rdeq <= '0';
+          state <= x"62";
+        when x"62" => --received
+          load_data <= x"000000" & rdo;
+          state <= x"00";
         when others =>
           state <= x"00";
           XWA <= '1';
@@ -242,7 +268,17 @@ begin
     end if;
   end process;
 
-  
+  recv_enque : process(clk)
+  begin
+    if rising_edge(clk) then
+      if rcomplete = '1' then
+        renq <= '1';
+      else
+        renq <= '0';
+      end if;
+    end if;
+  end process;
+      
   busy <= '0' when state = x"00" else
           '1';
 
