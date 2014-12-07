@@ -6,10 +6,11 @@ entity memory_io_tb is
 end memory_io_tb;
 
 architecture arch of memory_io_tb is
+  constant wtime : std_logic_vector(15 downto 0) := x"0007";
+  
   component memory_io is
     generic(
-      wtime : std_logic_vector(15 downto 0) := x"1ADB";
-      debug : boolean := false);
+      wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk        : in    std_logic;
       RS_RX      : in    std_logic;
@@ -33,24 +34,47 @@ architecture arch of memory_io_tb is
       XWA : in std_logic);
   end component;
 
+  component input_simulator is
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime;
+      INPUT_FILE  : string := "input.txt");
+    port(
+      clk : in std_logic;
+      RS_RX : out std_logic);
+  end component;
+
+  component output_simulator is
+    generic(
+      wtime : std_logic_vector(15 downto 0) := wtime;
+      OUTPUT_FILE : string := "output.txt");
+    port (
+      clk : std_logic;
+      RS_TX : std_logic);
+  end component;
+
   signal clk : std_logic;
   signal ZD : std_logic_vector(31 downto 0);
   signal ZA : std_logic_vector(19 downto 0);
   signal XWA : std_logic;
+  signal RS_RX : std_logic;
+  signal RS_TX : std_logic;    
 
   signal store_data : std_logic_vector(31 downto 0);
   signal load_data : std_logic_vector(31 downto 0);  
-  signal addr : std_logic_vector(19 downto 0) := x"EF003";
+  signal addr : std_logic_vector(19 downto 0) := x"00000";
   signal we : std_logic;
-  signal go : std_logic;
+  signal go : std_logic := '0';
   signal busy : std_logic;
+
+  signal state : std_logic_vector(3 downto 0) := (others => '0');
+  signal count : std_logic_vector(3 downto 0) := (others => '0');
 
 begin
 
   main : memory_io port map(
     clk => clk,
-    RS_RX => '0',
-    RS_TX => open,
+    RS_RX => RS_RX,
+    RS_TX => RS_TX,
     ZD => ZD,
     ZA => ZA,
     XWA => XWA,
@@ -67,6 +91,14 @@ begin
     ZA => ZA,
     XWA => XWA);
 
+  input : input_simulator port map(
+    clk => clk,
+    RS_RX => RS_RX);
+
+  output : output_simulator port map(
+    clk => clk,
+    RS_TX => RS_TX);
+
   clkgen : process
   begin
     clk <= '1';
@@ -79,17 +111,10 @@ begin
   begin
     if rising_edge(clk) then
       if go = '0' and busy = '0' then
+        addr <= x"FFFFF";
         go <= '1';
-        addr <= addr-1;
-        if addr > x"EF000" then
-          we <= '0';
-        elsif addr = x"EEFFA" then
-          we <= '0';
-          addr <= x"EEFFC";
-        else
-          we <= '1';
-          store_data <= x"000" & addr;
-        end if;
+        we <= '1';
+        store_data <= x"00000041";
       else
         go <= '0';
       end if;
