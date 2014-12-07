@@ -79,7 +79,6 @@ architecture arch_memory_io of memory_io is
   signal bwe : std_logic := '0';
   signal buf : std_logic_vector(31 downto 0);
 
-  signal rgo : std_logic := '0';
   signal rcomplete : std_logic;
   signal rdo : std_logic_vector(7 downto 0);
   signal rdi : std_logic_vector(7 downto 0);
@@ -193,7 +192,6 @@ begin
             bwe <= '0';
             XWA <= '1';
             tenq <= '0';
-            rgo <= '0';
           end if;
         when x"10" => --write bram
           bwe <= '0';
