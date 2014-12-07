@@ -1,0 +1,15 @@
+・プリプロセス
+raytracer-ocaml/preprocess.pyを使って、
+./preprocess.py mi-rt.ml > min-rt2.ml
+
+・sldをバイナリ形式に変換
+convbin.cをコンパイルし、
+./a.out < sld/contest.sld > sld/contest_bin.sld
+
+・コンパイル
+lib/cw3c.shを使って、
+./cw3c.sh ../raytracer-ocaml/min-rt2.ml --boot asm/rt_boot.s
+
+・実行
+simulator/bin/simulatorを使って、
+./simulator ./min-rt2  -i ../../raytracer-ocaml/sld/contest_bin.sld -o contest.pnm -r contest.memdump  -s ../../lib/init.bit
