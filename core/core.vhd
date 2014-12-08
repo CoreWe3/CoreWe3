@@ -31,7 +31,7 @@ architecture arch_core of core is
   component core_main
     generic (
       CODE : string := "bootload";
-      ADDR_WIDTH : integer := 12;
+      ADDR_WIDTH : integer := 14;
       wtime : std_logic_vector(15 downto 0) := x"047A";
       --wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
