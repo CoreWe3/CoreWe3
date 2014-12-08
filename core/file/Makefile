@@ -4,13 +4,27 @@ SIM = ~/cpu_core/core_main_tb
 WORK = $(ROOT)/simulator/bin
 BUILDER = $(ROOT)/lib/cw3c.sh
 COMPILER = $(ROOT)/compiler/min-caml
-ADDRWIDTH = 12
-MLSOURCE = $(wildcard *.ml)
-SSOURCE = $(wildcard *.s) $(MLSOURCE:.ml=.s)
-TARGET = $(SSOURCE:.s=)
+RAYTR = $(ROOT)/raytracer-ocaml
+ADDRWIDTH = 14
+MLSOURCE = newton.ml mandelbrot.ml
+SSOURCE = fib.s fib_rec.s loopback.s stack_test.s
+TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=) min-rt2
 DEBUG = $(TARGET:=.bin)
 
 all: $(TARGET) $(DEBUG)
+
+test: min-rt2
+
+min-rt2: convbin min-rt2.ml
+	$(BUILDER) min-rt2.ml --boot $(ROOT)/lib/asm/rt_boot.s && \
+	cp $(WORK)/$@ . && \
+	cat eof >> $@
+
+convbin:
+	gcc $(RAYTR)/convbin.c -o convbin
+
+min-rt2.ml:
+	$(RAYTR)/preprocess.py $(RAYTR)/min-rt.ml > min-rt2.ml
 
 %.s: %.ml $(COMPILER)
 	$(BUILDER) $< && \
@@ -20,8 +34,8 @@ all: $(TARGET) $(DEBUG)
 	./textbin.py $(ADDRWIDTH) < $< > $@ && \
 	cp $@ $(SIM)
 
-$(TARGET): $(SSOURCE) $(ASM)
-	$(ASM) $@ < $@.s && \
+%: %.s $(ASM)
+	$(ASM) $@ < $< && \
 	cat eof >> $@
 
 $(COMPILER):
@@ -30,7 +44,7 @@ $(COMPILER):
 $(ASM):
 	cd $(ROOT)/simulator && $(MAKE)
 
-.PHONY: all clean
+.PHONY: all clean test
 
 clean:
-	rm -rf $(DEBUG) $(TARGET) $(MLSOURCE:.ml=.s)
+	rm -rf $(DEBUG) $(TARGET) $(MLSOURCE:.ml=.s) convbin
