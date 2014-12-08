@@ -51,9 +51,9 @@ begin
               in_word1 or in_word2 when ctrl = "011" else
               in_word1 xor in_word2 when ctrl = "100" else
               std_logic_vector(shiftl)
-              when ctrl = "101" and in_word2(31 downto 5) /= 0 else
+              when ctrl = "101" and in_word2(31 downto 5) = 0 else
               std_logic_vector(shiftr)
-              when ctrl = "110" and in_word2(31 downto 5) /= 0 else
+              when ctrl = "110" and in_word2(31 downto 5) = 0 else
               x"00000000";
 
 end arch_alu;
