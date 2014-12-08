@@ -6,8 +6,7 @@ entity core_main is
   generic (
     CODE  : string := "code.bin";
     ADDR_WIDTH : integer := 12;
-    wtime : std_logic_vector(15 downto 0) := x"023D";
-    debug : boolean := false);
+    wtime : std_logic_vector(15 downto 0) := x"023D");
   port (
     clk   : in    std_logic;
     RS_TX : out   std_logic;
@@ -52,8 +51,9 @@ architecture arch_core_main of core_main is
     port (
       clk : in std_logic;
       we : in std_logic;
-      addr1 : in std_logic_vector(5 downto 0);
-      addr2 : in std_logic_vector(5 downto 0);
+      in_addr : in std_logic_vector(5 downto 0);
+      out_addr1 : in std_logic_vector(5 downto 0);
+      out_addr2 : in std_logic_vector(5 downto 0);
       in_word : in std_logic_vector(31 downto 0);
       out_word1 : out std_logic_vector(31 downto 0);
       out_word2 : out std_logic_vector(31 downto 0));
@@ -61,8 +61,7 @@ architecture arch_core_main of core_main is
 
   component memory_io
     generic (
-      wtime : std_logic_vector(15 downto 0) := wtime;
-      debug : boolean := debug);
+      wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk        : in    std_logic;
       RS_RX      : in    std_logic;
@@ -92,8 +91,9 @@ architecture arch_core_main of core_main is
   signal alu_ow : std_logic_vector(31 downto 0);
   signal ctrl : std_logic_vector(2 downto 0) := (others => '0');
 
-  signal reg_addr1 : std_logic_vector(5 downto 0):= (others => '0');
-  signal reg_addr2 : std_logic_vector(5 downto 0) := (others => '0');
+  signal reg_iaddr : std_logic_vector(5 downto 0) := (others => '0');
+  signal reg_oaddr1 : std_logic_vector(5 downto 0):= (others => '0');
+  signal reg_oaddr2 : std_logic_vector(5 downto 0) := (others => '0');
   signal reg_we : std_logic := '0';
   signal reg_iw : std_logic_vector(31 downto 0) := (others => '0');
   signal reg_ow1 : std_logic_vector(31 downto 0);
@@ -143,8 +143,9 @@ begin
   reg : registers port map (
     clk => clk,
     we => reg_we,
-    addr1 => reg_addr1,
-    addr2 => reg_addr2,
+    in_addr => reg_iaddr,
+    out_addr1 => reg_oaddr1,
+    out_addr2 => reg_oaddr2,
     in_word => reg_iw,
     out_word1 => reg_ow1,
     out_word2 => reg_ow2);
@@ -179,34 +180,34 @@ begin
         when x"2" => --decode 
           case instr(31 downto 26) is
             when "000000" => --load
-              reg_addr1 <= instr(19 downto 14);
+              reg_oaddr1 <= instr(19 downto 14);
             when "000001" => --store
-              reg_addr1 <= instr(19 downto 14);
-              reg_addr2 <= instr(25 downto 20);
+              reg_oaddr1 <= instr(19 downto 14);
+              reg_oaddr2 <= instr(25 downto 20);
             when "000010" => --load abs
             when "000011" => --store abs
-              reg_addr1 <= instr(25 downto 20);
+              reg_oaddr1 <= instr(25 downto 20);
             when "000100" => --load immediate high
-              reg_addr1 <= instr(25 downto 20);
+              reg_oaddr1 <= instr(25 downto 20);
             when "000110" | "000111" => --add sub
-              reg_addr1 <= instr(19 downto 14);
-              reg_addr2 <= instr(13 downto 8);
+              reg_oaddr1 <= instr(19 downto 14);
+              reg_oaddr2 <= instr(13 downto 8);
             when "001000" => --fneg
-              reg_addr1 <= instr(19 downto 14);
+              reg_oaddr1 <= instr(19 downto 14);
             when "001001" => --addi
-              reg_addr1 <= instr(19 downto 14);
+              reg_oaddr1 <= instr(19 downto 14);
             when "001010" | "001011" | "001100" | "001101" | "001110" =>
               --and or shl shr xor
-              reg_addr1 <= instr(19 downto 14);
-              reg_addr2 <= instr(13 downto 8);
+              reg_oaddr1 <= instr(19 downto 14);
+              reg_oaddr2 <= instr(13 downto 8);
             when "001111" | "010000" => --shri shli
-              reg_addr1 <= instr(19 downto 14);
+              reg_oaddr1 <= instr(19 downto 14);
             when "010001" | "010010" | "010011" | "010100" =>
               -- branch
-              reg_addr1 <= instr(25 downto 20);
-              reg_addr2 <= instr(19 downto 14);
+              reg_oaddr1 <= instr(25 downto 20);
+              reg_oaddr2 <= instr(19 downto 14);
             when "010111" => --push
-              reg_addr1 <= instr(25 downto 20);
+              reg_oaddr1 <= instr(25 downto 20);
             when others =>
           end case;
           state <= state+1;
@@ -221,6 +222,7 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+1;
             when "000001" => --store
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -230,18 +232,27 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+1;
+            when "000010" => --load abs
+              state <= state+1;
             when "000011" => --store abs
               buf <= reg_ow1;
+              state <= state+1;
+            when "000100" | "000101" => --load immediate
+              state <= state+3;
             when "000110" => --add
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "000111" => --sub
               ctrl <= "001";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001000" => --fneg
               buf <= reg_ow1;
+              state <= state+3;
             when "001001" => --addi
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
@@ -250,34 +261,42 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
+              state <= state+3;
             when "001010" => --and
               ctrl <= "010";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001011" => --or
               ctrl <= "011";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001100" => --xor
               ctrl <= "100";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001101" => --shl
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001110" => --shr
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= reg_ow2;
+              state <= state+3;
             when "001111" => --shl imm
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              state <= state+3;
             when "010000" => --shr imm
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
               alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              state <= state+3;
             when "010001" => --branch eq
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -291,6 +310,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010010" => --ble
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -304,6 +324,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010011" => --blt
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -317,6 +338,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010100" => --bfle
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -330,6 +352,7 @@ begin
               else
                 branch_f <= '0';
               end if;
+              state <= state+3;
             when "010101" => --jump subroutine
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
@@ -339,23 +362,26 @@ begin
                 alu_iw2 <= "11" & x"F" & instr(25 downto 0);
               end if;
               sp <= sp-1;
+              state <= state+1;
             when "010110" => --ret
               ctrl <= "000";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
+              state <= state+1;
             when "010111" => --push
               ctrl <= "001";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
               buf <= reg_ow1;
+              state <= state+1;
             when "011000" => --pop
               ctrl <= "000";
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
+              state <= state+1;
             when others =>
           end case;
           next_pc <= pc+1;
-          state <= state+1;
 
         when x"4" => --memory request
           case instr(31 downto 26) is
@@ -470,48 +496,48 @@ begin
         when x"6" => --write
           case instr(31 downto 26) is
             when "000000" => --load
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= buf;
               reg_we <= '1';
               pc <= next_pc;
             when "000001" => --store
               pc <= next_pc;
             when "000010" => --load abs
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= buf;
               reg_we <= '1';
               pc <= next_pc;
             when "000011" =>
               pc <= next_pc;
             when "000100" => --load immediate high
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= instr(15 downto 0) & reg_ow1(15 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "000101" => --load immediate low
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= "000000000000" & instr(19 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "000110" | "000111" => --add sub
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
             when "001000" => --fneg
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= (not buf(31)) & buf(30 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "001001" => --addi
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
             when "001010" | "001011" | "001100" |
               "001101" | "001110" | "001111" | "010000" =>
               --and ~ shr imm
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
@@ -531,7 +557,7 @@ begin
               pc <= next_pc;
             when "011000" => --pop
               reg_we <= '1';
-              reg_addr1 <= instr(25 downto 20);
+              reg_iaddr <= instr(25 downto 20);
               reg_iw <= buf;
               sp <= alu_ow(19 downto 0);
               pc <= next_pc;

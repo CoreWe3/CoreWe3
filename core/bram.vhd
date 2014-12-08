@@ -8,8 +8,8 @@ entity bram is
   generic (file_name : string := "init_data.txt");
   port (
     clk : in std_logic;
-    input : in std_logic_vector(31 downto 0);
-    output : out std_logic_vector(31 downto 0);
+    di : in std_logic_vector(31 downto 0);
+    do : out std_logic_vector(31 downto 0);
     addr : in std_logic_vector(11 downto 0);
     we : in std_logic);
 end bram;
@@ -39,9 +39,9 @@ begin
   begin
     if rising_edge(clk) then
       if we = '1' then
-        RAM(conv_integer(addr)) <= to_bitvector(input);
+        RAM(conv_integer(addr)) <= to_bitvector(di);
       end if;
-      output <= to_stdLogicVector(RAM(conv_integer(addr)));
+      do <= to_stdLogicVector(RAM(conv_integer(addr)));
     end if;
   end process;
 
