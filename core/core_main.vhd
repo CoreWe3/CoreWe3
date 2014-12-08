@@ -99,7 +99,7 @@ architecture arch_core_main of core_main is
   signal reg_ow1 : std_logic_vector(31 downto 0);
   signal reg_ow2 : std_logic_vector(31 downto 0);
 
-  signal buf : std_logic_vector(31 downto 0);
+  signal buf : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_store : std_logic_vector(31 downto 0) := (others => '0');
   signal mem_load : std_logic_vector(31 downto 0);
   signal mem_addr : std_logic_vector(19 downto 0) := (others => '0');

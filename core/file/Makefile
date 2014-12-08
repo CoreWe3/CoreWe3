@@ -1,6 +1,6 @@
 ROOT = $(shell git rev-parse --show-toplevel)
 ASM = $(ROOT)/simulator/bin/assembler
-SIM = ~/projects/core
+SIM = ~/cpu_core/core_main_tb
 WORK = $(ROOT)/simulator/bin
 BUILDER = $(ROOT)/lib/cw3c.sh
 COMPILER = $(ROOT)/compiler/min-caml
