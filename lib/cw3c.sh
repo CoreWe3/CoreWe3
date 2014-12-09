@@ -9,7 +9,7 @@ usage() {
     echo "Options:"
     echo " --help     ヘルプ"
     echo " --work-dir 実行ファイル及び作業用ファイルが生成されるディレクトリ(デフォルトでsimulator/bin)"
-    echo " --inline   コンパイラのインライン展開の深さ(デフォルトで4)"
+    echo " --inline   コンパイラのインライン展開の深さ(デフォルトで0)"
     echo " --lib-ml   mincamlのライブラリ(デフォルトでlib/mincaml/libmincaml.ml)"
     echo " --lib-asm  アセンブリのライブラリ(デフォルトでlib/asm/libmincaml.S)"
     echo " --boot     ブートローダー(デフォルトでlib/asm/boot.s)"
@@ -50,7 +50,7 @@ WORK_DIR=${REPO_ROOT}/simulator/bin
 
 LIB_ML=${REPO_ROOT}/lib/mincaml/libmincaml.ml
 
-INLINE=4
+INLINE=0
 
 LIB_S=${REPO_ROOT}/lib/asm/libmincaml.S
 BOOT_S=${REPO_ROOT}/lib/asm/boot.s
