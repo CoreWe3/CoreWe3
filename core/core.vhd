@@ -32,8 +32,8 @@ architecture arch_core of core is
     generic (
       CODE : string := "bootload";
       ADDR_WIDTH : integer := 14;
-      wtime : std_logic_vector(15 downto 0) := x"047A";
-      --wtime : std_logic_vector(15 downto 0) := x"023D";
+      --wtime : std_logic_vector(15 downto 0) := x"047A";
+      wtime : std_logic_vector(15 downto 0) := x"023D";
       debug : boolean := false);
     port (
       clk   : in    std_logic;
@@ -57,10 +57,14 @@ begin  -- arch_core
     i => MCLK1,
     o => iclk);
 
-  bg0 : BUFG port map (
-    i => gsysclk,
-    o => sysclk);
+  --bg0 : BUFG port map (
+  --  i => gsysclk,
+  --  o => sysclk);
 
+  bg0 : BUFG port map (
+    i => iclk,
+    o => sysclk);
+    
   bg1 : BUFG port map (
     i => fbclk,
     o => bfbclk);

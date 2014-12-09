@@ -10,8 +10,8 @@ architecture arch_core_main_tb of core_main_tb is
   
   component core_main
     generic (
-      CODE : string := "mandelbrot.bin";
-      ADDR_WIDTH : integer := 12;
+      CODE : string := "min-rt2.bin";
+      ADDR_WIDTH : integer := 14;
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
@@ -33,7 +33,7 @@ architecture arch_core_main_tb of core_main_tb is
   component input_simulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      INPUT_FILE : string := "input.txt");
+      INPUT_FILE : string := "contest.sld");
     port (
       clk  : in  std_logic;
       RS_RX   : out std_logic);

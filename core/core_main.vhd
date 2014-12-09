@@ -107,9 +107,9 @@ architecture arch_core_main of core_main is
   signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 
-  signal branch_f : std_logic;
+  signal branch_f : std_logic := '0';
 
-  signal ready : std_logic;
+  signal ready : std_logic := '0';
   signal RS_RX_exec : std_logic;
   signal RS_RX_load : std_logic;
 

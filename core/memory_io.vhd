@@ -41,7 +41,7 @@ architecture arch_memory_io of memory_io is
 
   component FIFO is
     generic (
-      WIDTH : integer := 3);
+      WIDTH : integer := 12);
     port (
       clk : in std_logic;
       di : in std_logic_vector(7 downto 0);
