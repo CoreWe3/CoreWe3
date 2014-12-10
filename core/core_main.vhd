@@ -18,6 +18,7 @@ end core_main;
 
 architecture arch_core_main of core_main is
   constant zero : std_logic_vector(31 downto 0) := (others => '0');
+  constant one : std_logic_vector(31 downto 0) := (others => '1');
 
   component init_code_rom
     generic ( CODE  : string := CODE;
@@ -233,9 +234,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               state <= state+1;
             when "000001" => --store
@@ -243,9 +244,9 @@ begin
               alu_iw1 <= reg_ow1;
               buf <= reg_ow2;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               state <= state+1;
             when "000010" => --load abs

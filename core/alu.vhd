@@ -35,12 +35,12 @@ architecture arch_alu of alu is
   
 begin
 
-  left : lshifter port map(
+  left_shift : lshifter port map(
     DI => unsigned(in_word1),
     SEL => unsigned(in_word2(4 downto 0)),
     SO => shiftl);
 
-  right : rshifter port map(
+  right_shift : rshifter port map(
     DI => unsigned(in_word1),
     SEL => unsigned(in_word2(4 downto 0)),
     SO => shiftr);

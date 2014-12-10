@@ -33,7 +33,3 @@ begin
   end process;
 
 end arch_fle;
-        
-
-  
-    
