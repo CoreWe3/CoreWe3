@@ -77,6 +77,12 @@ architecture arch_core_main of core_main is
       busy       : out   std_logic);
   end component;
 
+  component fle is
+    port (
+      a : in std_logic_vector(31 downto 0);
+      b : in std_logic_vector(31 downto 0);
+      cmp : out std_logic);
+  end component;
 
   signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0)
     := zero(ADDR_WIDTH-1 downto 0);
@@ -107,6 +113,10 @@ architecture arch_core_main of core_main is
   signal mem_go : std_logic := '0';
   signal mem_busy : std_logic;
 
+  signal fle_a : std_logic_vector(31 downto 0);
+  signal fle_b : std_logic_vector(31 downto 0);
+  signal fle_cmp : std_logic;
+  
   signal branch_f : std_logic := '0';
 
   signal ready : std_logic := '0';
@@ -163,6 +173,11 @@ begin
     we => mem_we,
     go => mem_go,
     busy => mem_busy);
+
+  fle_comparator : fle port map (
+    a => fle_a,
+    b => fle_b,
+    cmp => fle_cmp);
 
   RS_RX_exec <= RS_RX when state /= x"F" else
                 '1';
@@ -347,11 +362,8 @@ begin
               else
                 alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
               end if;
-              if reg_ow1 <= reg_ow2 then --isnt correct when argument is 0
-                branch_f <= '1';
-              else
-                branch_f <= '0';
-              end if;
+              fle_a <= reg_ow1;
+              fle_b <= reg_ow2;
               state <= state+3;
             when "010101" => --jump subroutine
               ctrl <= "000";
@@ -541,9 +553,15 @@ begin
               reg_iw <= alu_ow;
               reg_we <= '1';
               pc <= next_pc;
-            when "010001" | "010010" | "010011" | "010100" =>
-              --branch
+            when "010001" | "010010" | "010011" =>
+              --branch eq lt le
               if branch_f = '1' then
+                pc <= alu_ow(ADDR_WIDTH-1 downto 0);
+              else
+                pc <= next_pc;
+              end if;
+            when "010100" => --bfle
+              if fle_cmp = '1' then
                 pc <= alu_ow(ADDR_WIDTH-1 downto 0);
               else
                 pc <= next_pc;

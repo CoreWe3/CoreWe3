@@ -48,7 +48,7 @@ architecture arch_core_main_tb of core_main_tb is
       RS_TX : std_logic);
   end component;
   
-  signal clk   : std_logic; 
+  signal clk   : std_logic := '0';
   signal RS_TX : std_logic; 
   signal RS_RX : std_logic; 
   signal ZD    : std_logic_vector(31 downto 0); 

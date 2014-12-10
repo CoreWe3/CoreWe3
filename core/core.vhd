@@ -57,32 +57,32 @@ begin  -- arch_core
     i => MCLK1,
     o => iclk);
 
+  bg0 : BUFG port map (
+    i => iclk,
+    o => sysclk);
+
   --bg0 : BUFG port map (
   --  i => gsysclk,
   --  o => sysclk);
 
-  bg0 : BUFG port map (
-    i => iclk,
-    o => sysclk);
-    
-  bg1 : BUFG port map (
-    i => fbclk,
-    o => bfbclk);
+  --bg1 : BUFG port map (
+  --  i => fbclk,
+  --  o => bfbclk);
 
-  dcm : DCM_BASE port map (
-    CLKIN => iclk,
-    CLKFB => bfbclk,
-    RST => '0',
-    CLK0 => fbclk,
-    CLK90 => open,
-    CLK180 => open,
-    CLK270 => open,
-    CLK2X => gsysclk,
-    CLK2X180 => open,
-    CLKDV => open,
-    CLKFX => open,
-    CLKFX180 => open,
-    LOCKED => open);
+  --dcm : DCM_BASE port map (
+  --  CLKIN => iclk,
+  --  CLKFB => bfbclk,
+  --  RST => '0',
+  --  CLK0 => fbclk,
+  --  CLK90 => open,
+  --  CLK180 => open,
+  --  CLK270 => open,
+  --  CLK2X => gsysclk,
+  --  CLK2X180 => open,
+  --  CLKDV => open,
+  --  CLKFX => open,
+  --  CLKFX180 => open,
+  --  LOCKED => open);
 
   --pll : PLL_BASE
   --  generic map (
