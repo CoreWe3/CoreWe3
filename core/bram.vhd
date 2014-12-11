@@ -5,7 +5,7 @@ use ieee.std_logic_textio.all;
 use std.textio.all;
 
 entity bram is
-  generic (file_name : string := "init_data.txt");
+  generic (file_name : string := "init.txt");
   port (
     clk : in std_logic;
     di : in std_logic_vector(31 downto 0);

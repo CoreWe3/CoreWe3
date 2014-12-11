@@ -20,7 +20,7 @@ end registers;
 
 architecture arch_registers of registers is
 
-  type ram_t is array(63 downto 0) of std_logic_vector(31 downto 0);
+  type ram_t is array(0 to 63) of std_logic_vector(31 downto 0);
   signal RAM : ram_t;
        
 begin
@@ -33,10 +33,8 @@ begin
     end if;
   end process;
 
-  out_word1 <= RAM(conv_integer(out_addr1)) when out_addr1 /= "000000" else
-               (others => '0');
-  out_word2 <= RAM(conv_integer(out_addr2)) when out_addr2 /= "000000" else
-               (others => '0');
+  out_word1 <= RAM(conv_integer(out_addr1));
+  out_word2 <= RAM(conv_integer(out_addr2));
 
 end arch_registers;
   

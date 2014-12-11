@@ -273,9 +273,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= reg_ow1;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               state <= state+3;
             when "001010" => --and
@@ -306,20 +306,20 @@ begin
             when "001111" => --shl imm
               ctrl <= "101";
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               state <= state+3;
             when "010000" => --shr imm
               ctrl <= "110";
               alu_iw1 <= reg_ow1;
-              alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+              alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               state <= state+3;
             when "010001" => --branch eq
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               if reg_ow1 = reg_ow2 then
                 branch_f <= '1';
@@ -331,9 +331,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               if reg_ow1 <= reg_ow2 then
                 branch_f <= '1';
@@ -345,9 +345,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               if reg_ow1 < reg_ow2 then
                 branch_f <= '1';
@@ -359,9 +359,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(13) = '0' then
-                alu_iw2 <= "00" & x"0000" & instr(13 downto 0);
+                alu_iw2 <= zero(31 downto 14) & instr(13 downto 0);
               else
-                alu_iw2 <= "11" & x"FFFF" & instr(13 downto 0);
+                alu_iw2 <= one(31 downto 14) & instr(13 downto 0);
               end if;
               fle_a <= reg_ow1;
               fle_b <= reg_ow2;
@@ -370,9 +370,9 @@ begin
               ctrl <= "000";
               alu_iw1 <= zero(31 downto ADDR_WIDTH) & pc;
               if instr(25) = '0' then
-                alu_iw2 <= "00" & x"0" & instr(25 downto 0);
+                alu_iw2 <= zero(31 downto 26) & instr(25 downto 0);
               else
-                alu_iw2 <= "11" & x"F" & instr(25 downto 0);
+                alu_iw2 <= one(31 downto 26) & instr(25 downto 0);
               end if;
               sp <= sp-1;
               state <= state+1;
@@ -529,7 +529,7 @@ begin
               pc <= next_pc;
             when "000101" => --load immediate low
               reg_iaddr <= instr(25 downto 20);
-              reg_iw <= "000000000000" & instr(19 downto 0);
+              reg_iw <= zero(31 downto 20) & instr(19 downto 0);
               reg_we <= '1';
               pc <= next_pc;
             when "000110" | "000111" => --add sub
