@@ -118,7 +118,7 @@ let rec sin f =
     if a < 0.0 then a else -.a in
 let rec cos f = 
   let s = 0 in
-  let a = if s = 0 then f else -.f in
+  let a = if f > 0.0 then f else -.f in
   let a = sin_cos_reduction a in
   let pi = 3.141592653589793 in
   let (a, s) = if a < pi then (a, s) else (a -. pi, 1 - s) in
@@ -131,7 +131,7 @@ let rec cos f =
 	    kernel_cos a in
   if s = 0 then
     if a < 0.0 then -.a else a
-  else 
+  else
     if a < 0.0 then a else -.a in
 
 let rec atan f =
