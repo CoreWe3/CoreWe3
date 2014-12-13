@@ -64,19 +64,19 @@ begin
     ZA    => ZA,
     XWA   => XWA);
 
-  sram_sim : SRAM port map (
-    clk => clk,
-    ZD  => ZD,
-    ZA  => ZA,
-    XWA => XWA);
+  --sram_sim : SRAM port map (
+  --  clk => clk,
+  --  ZD  => ZD,
+  --  ZA  => ZA,
+  --  XWA => XWA);
 
-  input_sim : input_simulator port map (
-    clk   => clk,
-    RS_RX => RS_RX);
+  --input_sim : input_simulator port map (
+  --  clk   => clk,
+  --  RS_RX => RS_RX);
 
-  output_sim : output_simulator port map (
-    clk   => clk,
-    RS_TX => RS_TX);
+  --output_sim : output_simulator port map (
+  --  clk   => clk,
+  --  RS_TX => RS_TX);
 
   process
   begin
