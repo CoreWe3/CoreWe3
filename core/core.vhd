@@ -6,7 +6,7 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity core is
-  
+
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -28,13 +28,12 @@ entity core is
 end core;
 
 architecture arch_core of core is
-  component core_main
+  component control is
     generic (
-      CODE : string := "bootload";
-      ADDR_WIDTH : integer := 14;
+      CODE : string := "";
+      ADDR_WIDTH : integer := 5;
       --wtime : std_logic_vector(15 downto 0) := x"047A";
-      wtime : std_logic_vector(15 downto 0) := x"023D";
-      debug : boolean := false);
+      wtime : std_logic_vector(15 downto 0) := x"023D");
     port (
       clk   : in    std_logic;
       RS_TX : out   std_logic;
@@ -103,7 +102,7 @@ begin  -- arch_core
   --    CLKFBOUT => fbclk,
   --    LOCKED => open);
 
-  main : core_main port map (
+  main : control port map (
     clk   => sysclk,
     RS_TX => RS_TX,
     RS_RX => RS_RX,

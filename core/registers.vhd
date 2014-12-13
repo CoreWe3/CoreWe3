@@ -4,7 +4,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity registers is
   port (
@@ -21,20 +21,35 @@ end registers;
 architecture arch_registers of registers is
 
   type ram_t is array(0 to 63) of std_logic_vector(31 downto 0);
-  signal RAM : ram_t;
-       
+  signal RAM : ram_t := (
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000",
+    x"00000000", x"00000000", x"00000000", x"00000000");
+
 begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if we = '1' and in_addr /= "000000" then
-        RAM(conv_integer(in_addr)) <= in_word;
+      if we = '1' and unsigned(in_addr) /= 0 then
+        RAM(to_integer(unsigned(in_addr))) <= in_word;
       end if;
     end if;
   end process;
 
-  out_word1 <= RAM(conv_integer(out_addr1));
-  out_word2 <= RAM(conv_integer(out_addr2));
+  out_word1 <= RAM(to_integer(unsigned(out_addr1)));
+  out_word2 <= RAM(to_integer(unsigned(out_addr2)));
 
 end arch_registers;
-  

@@ -7,7 +7,7 @@ end core_main_tb;
 
 architecture arch_core_main_tb of core_main_tb is
   constant wtime : std_logic_vector(15 downto 0) := x"0008";
-  
+
   component core_main
     generic (
       CODE : string := "min-rt2.bin";
@@ -47,21 +47,22 @@ architecture arch_core_main_tb of core_main_tb is
       clk : std_logic;
       RS_TX : std_logic);
   end component;
-  
+
   signal clk   : std_logic := '0';
-  signal RS_TX : std_logic; 
-  signal RS_RX : std_logic; 
-  signal ZD    : std_logic_vector(31 downto 0); 
-  signal ZA    : std_logic_vector(19 downto 0); 
+  signal RS_TX : std_logic;
+  signal RS_RX : std_logic;
+  signal ZD    : std_logic_vector(31 downto 0);
+  signal ZA    : std_logic_vector(19 downto 0);
   signal XWA   : std_logic;
+
 begin
 
   main : core_main port map (
-    clk   => clk   , 
-    RS_TX => RS_TX , 
-    RS_RX => RS_RX , 
-    ZD    => ZD    , 
-    ZA    => ZA    , 
+    clk   => clk   ,
+    RS_TX => RS_TX ,
+    RS_RX => RS_RX ,
+    ZD    => ZD    ,
+    ZA    => ZA    ,
     XWA   => XWA   );
 
   sram_sim : SRAM port map (
@@ -77,7 +78,7 @@ begin
   output_sim : output_simulator port map (
     clk => clk,
     RS_TX => RS_TX);
-    
+
   process
   begin
     clk <= '0';
@@ -86,5 +87,4 @@ begin
     wait for 1 ns;
   end process;
 
-  
 end arch_core_main_tb;

@@ -1,13 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 use std.textio.all;
 use ieee.std_logic_textio.all;
 
 entity init_code_rom is
   generic(CODE  : string := "code.bin";
           WIDTH : integer := 14);
-  
+
   port (clk   : in  std_logic;
         en    : in  std_logic;
         addr  : in  std_logic_vector(WIDTH-1 downto 0);
@@ -44,7 +44,7 @@ begin
     if rising_edge(clk) then
       if en = '1' then
         --instr <= ROM(conv_integer(addr));
-        instr <= to_stdLogicVector(ROM(conv_integer(addr)));
+        instr <= to_stdLogicVector(ROM(to_integer(unsigned(addr))));
       end if;
     end if;
   end process;

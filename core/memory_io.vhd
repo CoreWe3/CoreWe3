@@ -151,6 +151,7 @@ begin
                 tdi <= store_data(7 downto 0);
                 if tfull = '0' then -- not full
                   tenq <= '1';
+                  state <= x"00";
                 else -- full
                   tenq <= '0';
                   state <= x"50";
@@ -159,7 +160,7 @@ begin
                 bwe <= '1';
                 XWA <= '1';
                 tenq <= '0';
-                state <= x"10";
+                state <= x"00";
               else -- sram
                 bwe <= '0';
                 XWA <= '0';
@@ -193,9 +194,6 @@ begin
             XWA <= '1';
             tenq <= '0';
           end if;
-        when x"10" => --write bram
-          bwe <= '0';
-          state <= x"00";
         when x"20" => --write sram
           XWA <= '1';
           state <= x"21";
@@ -276,9 +274,8 @@ begin
       end if;
     end if;
   end process;
-      
+
   busy <= '0' when state = x"00" else
           '1';
-
 
 end arch_memory_io;

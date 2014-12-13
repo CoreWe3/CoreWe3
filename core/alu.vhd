@@ -29,10 +29,10 @@ architecture arch_alu of alu is
   --    SEL: in unsigned(4 downto 0);
   --    SO: out unsigned(31 downto 0));
   --end component;
-  
+
   --signal shiftl : unsigned(31 downto 0);
   --signal shiftr : unsigned(31 downto 0);
-  
+
 begin
 
   --left_shift : lshifter port map(
