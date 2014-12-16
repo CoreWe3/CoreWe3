@@ -85,6 +85,14 @@ architecture arch_core_main of core_main is
       cmp : out std_logic);
   end component;
 
+  component fadd is
+    port (
+      clk : in std_logic;
+      a : in std_logic_vector(31 downto 0);
+      b : in std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
   signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0)
     := zero(ADDR_WIDTH-1 downto 0);
   signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
@@ -117,6 +125,10 @@ architecture arch_core_main of core_main is
   signal fle_a : std_logic_vector(31 downto 0);
   signal fle_b : std_logic_vector(31 downto 0);
   signal fle_cmp : std_logic;
+
+  signal fadd_a : std_logic_vector(31 downto 0);
+  signal fadd_b : std_logic_vector(31 downto 0);
+  signal fadd_o : std_logic_vector(31 downto 0);
   
   signal branch_f : std_logic := '0';
 
@@ -180,6 +192,12 @@ begin
     b => fle_b,
     cmp => fle_cmp);
 
+  fadd_u : fadd port map (
+    clk => clk,
+    a => fadd_a,
+    b => fadd_b,
+    o => fadd_o);
+
   RS_RX_exec <= RS_RX when state /= x"F" else
                 '1';
   RS_RX_load <= RS_RX when state = x"F" else
@@ -224,6 +242,10 @@ begin
               reg_oaddr2 <= instr(19 downto 14);
             when "010111" => --push
               reg_oaddr1 <= instr(25 downto 20);
+            when "011001" => --fadd
+              reg_oaddr1 <= instr(19 downto 14);
+              reg_oaddr2 <= instr(13 downto 8);
+            when "011010" => --fmul
             when others =>
           end case;
           state <= state+1;
@@ -392,11 +414,15 @@ begin
               alu_iw1 <= x"000" & sp;
               alu_iw2 <= x"00000001";
               state <= state+1;
+            when "011001" => --fadd
+              fadd_a <= reg_ow1;
+              fadd_b <= reg_ow2;
+              state <= state+1;
             when others =>
           end case;
           next_pc <= pc+1;
 
-        when x"4" => --memory request
+        when x"4" => --memory request and fpu wait
           case instr(31 downto 26) is
             when "000000" => --load
               if mem_busy = '0' and mem_go = '0' then
@@ -459,6 +485,8 @@ begin
                 mem_addr <= sp;
                 state <= state+1;
               end if;
+            when "011001" => --fadd
+              state <= state+1;
             when others =>
               state <= state+2;
           end case;
@@ -503,9 +531,11 @@ begin
                 buf <= mem_load;
                 state <= state+1;
               end if;
+            when "011001" => --fadd
+              state <= state+1;
             when others =>
           end case;
-                       
+
         when x"6" => --write
           case instr(31 downto 26) is
             when "000000" => --load
@@ -580,11 +610,16 @@ begin
               reg_iw <= buf;
               sp <= alu_ow(19 downto 0);
               pc <= next_pc;
+            when "011001" => --fadd
+              reg_we <= '1';
+              reg_iaddr <= instr(25 downto 20);
+              reg_iw <= fadd_o;
+              pc <= next_pc;
             when others =>
           end case;
           state <= x"0";
 
-        when x"F" => --setupping 
+        when x"F" => --setupping
           if ready = '1' then
             state <= x"0";
             pc <= zero(ADDR_WIDTH-1 downto 0);

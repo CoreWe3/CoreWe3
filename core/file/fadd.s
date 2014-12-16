@@ -1,0 +1,4 @@
+:main
+	LDI	r1	0x40000000
+	LDI	r2	0x40400000
+	FADD	r3	r1	r2
