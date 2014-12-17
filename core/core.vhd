@@ -28,11 +28,9 @@ entity core is
 end core;
 
 architecture arch_core of core is
-  component control is
+  component core_main is
     generic (
       CODE : string := "";
-      ADDR_WIDTH : integer := 5;
-      --wtime : std_logic_vector(15 downto 0) := x"047A";
       wtime : std_logic_vector(15 downto 0) := x"023D");
     port (
       clk   : in    std_logic;
@@ -102,7 +100,7 @@ begin  -- arch_core
   --    CLKFBOUT => fbclk,
   --    LOCKED => open);
 
-  main : control port map (
+  main : core_main port map (
     clk   => sysclk,
     RS_TX => RS_TX,
     RS_RX => RS_RX,

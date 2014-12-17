@@ -98,7 +98,7 @@ begin
 
   bram_u : bram port map (
     clk => clk,
-    di => memi.d,
+    di => std_logic_vector(memi.d),
     do => bram_o,
     addr => std_logic_vector(memi.a(11 downto 0)),
     we => bwe);
@@ -139,10 +139,10 @@ begin
     if rising_edge(clk) then
       case state is
         when x"00" =>
-          if go = '1' then
-            if we = '1' then -- write
+          if memi.go = '1' then
+            if memi.we = '1' then -- write
               rdeq <= '0';
-              if addr = x"FFFFF" then  -- transmit
+              if memi.a = x"FFFFF" then  -- transmit
                 bwe <= '0';
                 XWA <= '1';
                 tdi <= std_logic_vector(memi.d(7 downto 0));
@@ -153,7 +153,7 @@ begin
                   tenq <= '0';
                   state <= x"50";
                 end if;
-              elsif addr(19 downto 12) = x"EF" then -- bram
+              elsif memi.a(19 downto 12) = x"EF" then -- bram
                 bwe <= '1';
                 XWA <= '1';
                 tenq <= '0';
@@ -169,7 +169,7 @@ begin
               XWA <= '1';
               bwe <= '0';
               tenq <= '0';
-              if addr = x"FFFFF" then -- receive
+              if memi.a = x"FFFFF" then -- receive
                 if rempty = '0' then
                   rdeq <= '1';
                   state <= x"61";
@@ -177,7 +177,7 @@ begin
                   rdeq <= '0';
                   state <= x"60";
                 end if;
-              elsif addr(19 downto 12) = x"EF" then -- bram
+              elsif memi.a(19 downto 12) = x"EF" then -- bram
                 rdeq <= '0';
                 state <= x"30";
               else -- sram
@@ -185,7 +185,7 @@ begin
                 state <= x"40";
               end if;
             end if;
-            ZA <= addr;
+            ZA <= std_logic_vector(memi.a);
           else
             bwe <= '0';
             XWA <= '1';

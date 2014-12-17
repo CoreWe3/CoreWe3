@@ -4,16 +4,19 @@ use ieee.numeric_std.all;
 library work;
 use work.util.all;
 
+library UNISIM;
+use UNISIM.vcomponents.all;
+
 entity code_rom_test is
   port (
-    clk : in std_logic;
+    MCLK1 : in std_logic;
     RS_TX : out std_logic);
 end code_rom_test;
 
 architecture arch of code_rom_test is
   component init_code_rom
     generic (
-      CODE : string := "test.bin");
+      CODE : string := "file/test.bin");
     port (
       clk   : in std_logic;
       insti : in inst_in_t;
@@ -22,7 +25,7 @@ architecture arch of code_rom_test is
 
   component uart_transmitter is
     generic (
-      wtime : std_logic_vector(15 downto 0) := x"0001");
+      wtime : std_logic_vector(15 downto 0) := x"023D");
     port (
       clk  : in std_logic;
       data : in std_logic_vector(7 downto 0);
@@ -37,7 +40,17 @@ architecture arch of code_rom_test is
   signal busy : std_logic;
   signal insti : inst_in_t := (a => (others => '0'));
   signal insto : inst_out_t;
+  signal clk : std_logic;
+  signal iclk : std_logic;
 begin
+
+  ib : IBUFG port map (
+    i => MCLK1,
+    o => iclk);
+
+  bg : BUFG port map (
+    i => iclk,
+    o => clk);
 
   rom : init_code_rom port map (
     clk => clk,
@@ -55,23 +68,25 @@ begin
   begin
     if rising_edge(clk) then
       if busy = '0' and go = '0' then
-        case state is
-          when "000" =>
-            go <= '1';
-            data <= insto.d(31 downto 24);
-          when "001" =>
-            go <= '1';
-            data <= insto.d(23 downto 16);
-          when "010" =>
-            go <= '1';
-            data <= insto.d(15 downto 8);
-          when "011" =>
-            go <= '1';
-            data <= insto.d(7  downto 0);
-            insti.a <= insti.a+1;
-          when others =>
-        end case;
-        state <= state+1;
+        if insto.d /= x"ffffffff" then
+          case state is
+            when "000" =>
+              go <= '1';
+              data <= insto.d(31 downto 24);
+            when "001" =>
+              go <= '1';
+              data <= insto.d(23 downto 16);
+            when "010" =>
+              go <= '1';
+              data <= insto.d(15 downto 8);
+            when "011" =>
+              go <= '1';
+              data <= insto.d(7  downto 0);
+              insti.a <= insti.a+1;
+            when others =>
+          end case;
+          state <= state+1;
+        end if;
       else
         go <= '0';
       end if;

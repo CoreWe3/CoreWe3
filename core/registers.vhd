@@ -6,16 +6,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.util.all;
+
 entity registers is
   port (
     clk : in std_logic;
-    we : in std_logic;
-    ai : in unsigned(5 downto 0);
-    ao1 : in unsigned(5 downto 0);
-    ao2 : in unsigned(5 downto 0);
-    di : in unsigned(31 downto 0);
-    do1 : out unsigned(31 downto 0);
-    do2 : out unsigned(31 downto 0));
+    rdi : in rreg_in_t;
+    wdi : in wreg_in_t;
+    do : out reg_out_t);
 end registers;
 
 architecture arch_registers of registers is
@@ -43,13 +42,13 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if we = '1' and ai /= 0 then
-        RAM(to_integer(ai)) <= di;
+      if wdi.we = '1' and wdi.a /= 0 then
+        RAM(to_integer(wdi.a)) <= wdi.d;
       end if;
     end if;
   end process;
 
-  do1 <= RAM(to_integer(do1));
-  do2 <= RAM(to_integer(do2));
+  do.d1 <= RAM(to_integer(rdi.a1));
+  do.d2 <= RAM(to_integer(rdi.a2));
 
 end arch_registers;

@@ -8,10 +8,11 @@ library work;
 use work.util.all;
 
 entity init_code_rom is
-  generic(CODE  : string := "code.bin");
-  port (clk   : in  std_logic;
-        insti : in inst_in_t;
-        insto : out inst_out_t);
+  generic(
+    CODE  : string := "code.bin");
+  port (
+    inst : out std_logic_vector(31 downto 0);
+    pc : in unsigned(ADDR_WIDTH-1 downto 0));
 end init_code_rom;
 
 architecture arch_code_rom of init_code_rom is
@@ -38,13 +39,5 @@ architecture arch_code_rom of init_code_rom is
   attribute rom_style : string;
   attribute rom_style of ROM : signal is "block";
 begin
-
-  process(clk)
-  begin
-    if rising_edge(clk) then
-      --instr <= ROM(conv_integer(addr));
-      insto.d <= to_stdLogicVector(ROM(to_integer(insti.a)));
-    end if;
-  end process;
-
+  inst <= to_stdLogicVector(ROM(to_integer(pc)));
 end arch_code_rom;
