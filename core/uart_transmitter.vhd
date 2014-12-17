@@ -35,7 +35,7 @@ begin
           else
             countdown<=countdown-1;
           end if;
-                      
+
         when "0001" =>
           if countdown=0 then
             sendbuf<="1"&sendbuf(8 downto 1);

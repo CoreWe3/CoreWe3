@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_signed.all;
+
+library work;
+use work.util.all;
 
 entity core_main is
   generic (
@@ -17,47 +19,14 @@ entity core_main is
 end core_main;
 
 architecture arch_core_main of core_main is
-  constant zero : std_logic_vector(31 downto 0) := (others => '0');
-  constant one : std_logic_vector(31 downto 0) := (others => '1');
 
   component init_code_rom
     generic ( CODE  : string := CODE;
               WIDTH : integer := ADDR_WIDTH);
     port (
       clk   : in  std_logic;
-      en    : in  std_logic;
-      addr  : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
-      instr : out std_logic_vector(31 downto 0));
-  end component;
-
-  component bootload_code_rom
-    generic ( wtime : std_logic_vector(15 downto 0) := wtime;
-              WIDTH : integer := ADDR_WIDTH);
-    port (
-      clk   : in std_logic;
-      RS_RX : in std_logic;
-      ready : out std_logic;
-      addr  : in std_logic_vector(ADDR_WIDTH-1 downto 0);
-      instr : out std_logic_vector(31 downto 0));
-  end component;
-
-  component alu
-    port ( in_word1 : in std_logic_vector(31 downto 0);
-           in_word2 : in std_logic_vector(31 downto 0);
-           out_word : out std_logic_vector(31 downto 0);
-           ctrl : in std_logic_vector(2 downto 0));
-  end component;
-
-  component registers
-    port (
-      clk : in std_logic;
-      we : in std_logic;
-      in_addr : in std_logic_vector(5 downto 0);
-      out_addr1 : in std_logic_vector(5 downto 0);
-      out_addr2 : in std_logic_vector(5 downto 0);
-      in_word : in std_logic_vector(31 downto 0);
-      out_word1 : out std_logic_vector(31 downto 0);
-      out_word2 : out std_logic_vector(31 downto 0));
+      insti : out inst_in_t;
+      insto : in inst_out_t);
   end component;
 
   component memory_io
@@ -78,53 +47,6 @@ architecture arch_core_main of core_main is
       busy       : out   std_logic);
   end component;
 
-  component fle is
-    port (
-      a : in std_logic_vector(31 downto 0);
-      b : in std_logic_vector(31 downto 0);
-      cmp : out std_logic);
-  end component;
-
-  signal pc : std_logic_vector(ADDR_WIDTH-1 downto 0)
-    := zero(ADDR_WIDTH-1 downto 0);
-  signal next_pc : std_logic_vector(ADDR_WIDTH-1 downto 0);
-  signal sp : std_logic_vector(19 downto 0) := x"FFFFE";
-  
-  signal instr : std_logic_vector(31 downto 0);
-  signal state : std_logic_vector(3 downto 0) := x"F";
-
-  signal alu_iw1 : std_logic_vector(31 downto 0) := (others => '0');
-  signal alu_iw2 : std_logic_vector(31 downto 0) := (others => '0');
-  signal alu_ow : std_logic_vector(31 downto 0);
-  signal ctrl : std_logic_vector(2 downto 0) := (others => '0');
-
-  signal reg_iaddr : std_logic_vector(5 downto 0) := (others => '0');
-  signal reg_oaddr1 : std_logic_vector(5 downto 0):= (others => '0');
-  signal reg_oaddr2 : std_logic_vector(5 downto 0) := (others => '0');
-  signal reg_we : std_logic := '0';
-  signal reg_iw : std_logic_vector(31 downto 0) := (others => '0');
-  signal reg_ow1 : std_logic_vector(31 downto 0);
-  signal reg_ow2 : std_logic_vector(31 downto 0);
-
-  signal buf : std_logic_vector(31 downto 0) := (others => '0');
-  signal mem_store : std_logic_vector(31 downto 0) := (others => '0');
-  signal mem_load : std_logic_vector(31 downto 0);
-  signal mem_addr : std_logic_vector(19 downto 0) := (others => '0');
-  signal mem_we : std_logic := '0';
-  signal mem_go : std_logic := '0';
-  signal mem_busy : std_logic;
-
-  signal fle_a : std_logic_vector(31 downto 0);
-  signal fle_b : std_logic_vector(31 downto 0);
-  signal fle_cmp : std_logic;
-  
-  signal branch_f : std_logic := '0';
-
-  signal ready : std_logic := '0';
-  signal RS_RX_exec : std_logic;
-  signal RS_RX_load : std_logic;
-
-  
 begin
 
   file_initialize : if (CODE /= "bootload") generate
@@ -135,31 +57,6 @@ begin
       instr => instr);
     ready <= '1';
   end generate;
-  
-  bootload : if (CODE = "bootload") generate
-    rom : bootload_code_rom port map (
-      clk => clk,
-      RS_RX => RS_RX_load,
-      ready => ready,
-      addr => pc,
-      instr => instr);
-  end generate;
-
-  alu0 : alu port map (
-    in_word1 => alu_iw1,
-    in_word2 => alu_iw2,
-    out_word => alu_ow,
-    ctrl => ctrl);
-
-  reg : registers port map (
-    clk => clk,
-    we => reg_we,
-    in_addr => reg_iaddr,
-    out_addr1 => reg_oaddr1,
-    out_addr2 => reg_oaddr2,
-    in_word => reg_iw,
-    out_word1 => reg_ow1,
-    out_word2 => reg_ow2);
 
   mem : memory_io port map (
     clk => clk,
@@ -175,11 +72,6 @@ begin
     go => mem_go,
     busy => mem_busy);
 
-  fle_comparator : fle port map (
-    a => fle_a,
-    b => fle_b,
-    cmp => fle_cmp);
-
   RS_RX_exec <= RS_RX when state /= x"F" else
                 '1';
   RS_RX_load <= RS_RX when state = x"F" else
@@ -193,7 +85,7 @@ begin
           state <= x"2";
           reg_we <= '0';
 
-        when x"2" => --decode 
+        when x"2" => --decode
           case instr(31 downto 26) is
             when "000000" => --load
               reg_oaddr1 <= instr(19 downto 14);

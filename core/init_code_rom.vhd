@@ -1,21 +1,21 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use std.textio.all;
 use ieee.std_logic_textio.all;
+library std;
+use std.textio.all;
+library work;
+use work.util.all;
 
 entity init_code_rom is
-  generic(CODE  : string := "code.bin";
-          WIDTH : integer := 14);
-
+  generic(CODE  : string := "code.bin");
   port (clk   : in  std_logic;
-        en    : in  std_logic;
-        addr  : in  std_logic_vector(WIDTH-1 downto 0);
-        instr : out std_logic_vector(31 downto 0));
+        insti : in inst_in_t;
+        insto : out inst_out_t);
 end init_code_rom;
 
 architecture arch_code_rom of init_code_rom is
-  constant SIZE : integer := 2 ** WIDTH;
+  constant SIZE : integer := 2 ** ADDR_WIDTH;
   type rom_t is array (0 to SIZE-1) of bit_vector(31 downto 0);
   --type rom_t is array (0 to SIZE-1) of std_logic_vector(31 downto 0);
   impure function init_rom (file_name : in string) return rom_t is
@@ -42,10 +42,8 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if en = '1' then
-        --instr <= ROM(conv_integer(addr));
-        instr <= to_stdLogicVector(ROM(to_integer(unsigned(addr))));
-      end if;
+      --instr <= ROM(conv_integer(addr));
+      insto.d <= to_stdLogicVector(ROM(to_integer(insti.a)));
     end if;
   end process;
 

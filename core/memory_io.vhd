@@ -5,27 +5,24 @@
 -- io   write 0 clk (best)
 --      read  2 clk (best)
 
-
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+library work;
+use work.util.all;
 
 entity memory_io is
   generic(
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
   port (
-    clk        : in    std_logic;
-    RS_RX      : in    std_logic;
-    RS_TX      : out   std_logic;
-    ZD         : inout std_logic_vector(31 downto 0);
-    ZA         : out   std_logic_vector(19 downto 0);
-    XWA        : out   std_logic;
-    store_data : in    std_logic_vector(31 downto 0);
-    load_data  : out   std_logic_vector(31 downto 0);
-    addr       : in   std_logic_vector(19 downto 0);
-    we         : in   std_logic;
-    go         : in    std_logic;
-    busy       : out   std_logic);
+    clk   : in    std_logic;
+    RS_RX : in    std_logic;
+    RS_TX : out   std_logic;
+    ZD    : inout std_logic_vector(31 downto 0);
+    ZA    : out   std_logic_vector(19 downto 0);
+    XWA   : out   std_logic;
+    memi  : in    mem_in_t;
+    memo  : out   mem_out_t);
 end memory_io;
 
 architecture arch_memory_io of memory_io is
@@ -101,9 +98,9 @@ begin
 
   bram_u : bram port map (
     clk => clk,
-    di => store_data,
+    di => memi.d,
     do => bram_o,
-    addr => addr(11 downto 0),
+    addr => std_logic_vector(memi.a(11 downto 0)),
     we => bwe);
 
   receiver : uart_receiver port map (
@@ -148,7 +145,7 @@ begin
               if addr = x"FFFFF" then  -- transmit
                 bwe <= '0';
                 XWA <= '1';
-                tdi <= store_data(7 downto 0);
+                tdi <= std_logic_vector(memi.d(7 downto 0));
                 if tfull = '0' then -- not full
                   tenq <= '1';
                   state <= x"00";
@@ -165,7 +162,7 @@ begin
                 bwe <= '0';
                 XWA <= '0';
                 tenq <= '0';
-                buf <= store_data;
+                buf <= std_logic_vector(memi.d);
                 state <= x"20";
               end if;
             else  -- read
@@ -201,7 +198,7 @@ begin
           ZD <= buf;
           state <= x"00";
         when x"30" => --read bram
-          load_data <= bram_o;
+          memo.d <= unsigned(bram_o);
           state <= x"00";
         when x"40" => --read sram
           state <= x"41";
@@ -209,7 +206,7 @@ begin
         when x"41" => --read sram
           state <= x"42";
         when x"42" => --read sram
-          load_data <= ZD;
+          memo.d <= unsigned(ZD);
           state <= x"00";
         when x"50" => --transmit
           if tfull = '0' then
@@ -225,7 +222,7 @@ begin
           rdeq <= '0';
           state <= x"62";
         when x"62" => --received
-          load_data <= x"000000" & rdo;
+          memo.d <= unsigned(x"000000" & rdo);
           state <= x"00";
         when others =>
           state <= x"00";
@@ -275,7 +272,7 @@ begin
     end if;
   end process;
 
-  busy <= '0' when state = x"00" else
+  memo.busy <= '0' when state = x"00" else
           '1';
 
 end arch_memory_io;
