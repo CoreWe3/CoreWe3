@@ -6,7 +6,7 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity core is
-  
+
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
