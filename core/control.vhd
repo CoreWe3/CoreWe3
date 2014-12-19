@@ -6,8 +6,6 @@ library work;
 use work.util.all;
 
 entity control is
-  generic (
-    wtime : std_logic_vector(15 downto 0) := x"023D");
   port(
     clk   : in std_logic;
     memo  : in mem_out_t;
@@ -50,7 +48,8 @@ architecture arch_control of control is
     end if;
   end function find_data_hazard;
 
-  signal r, nextr : cpu_t;
+  signal r : cpu_t := init_r;
+  signal nextr : cpu_t;
   signal alu_o : alu_out_t;
   signal reg_o : reg_out_t;
 

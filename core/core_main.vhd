@@ -43,8 +43,6 @@ architecture arch_core_main of core_main is
   end component;
 
   component control is
-    generic (
-      wtime : std_logic_vector(15 downto 0) := x"023D");
     port(
       clk   : in std_logic;
       memo  : in mem_out_t;

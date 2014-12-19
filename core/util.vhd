@@ -56,6 +56,9 @@ package util is
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
   end record fetch_t;
 
+  constant default_f :fetch_t :=
+    (pc => (others => '0'));
+
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
     op    : std_logic_vector(5 downto 0);
@@ -64,6 +67,14 @@ package util is
     reg   : rreg_in_t;
   end record decode_t;
 
+  constant default_d : decode_t := (
+    pc => (others => '0'),
+    op => (others => '0'),
+    dest => (others => '0'),
+    data => (others => '0'),
+    reg => (a1 => (others => '0'),
+            a2 => (others => '0')));
+
   type execute_t is record
     op    : std_logic_vector(5 downto 0);
     dest  : unsigned(5 downto 0);
@@ -71,15 +82,33 @@ package util is
     alu   : alu_in_t;
   end record execute_t;
 
+  constant default_e : execute_t := (
+    op => (others => '0'),
+    dest => (others => '0'),
+    data => (others => '0'),
+    alu => (d1 => (others => '0'),
+            d2 => (others => '0'),
+            ctrl => (others => '0')));
+
   type memory_access_t is record
     op    : std_logic_vector(5 downto 0);
     dest  : unsigned(5 downto 0);
     data  : unsigned(31 downto 0);
   end record memory_access_t;
 
+  constant default_m : memory_access_t := (
+    op => (others => '0'),
+    dest => (others => '0'),
+    data => (others => '0'));
+
   type write_back_t is record
     reg   : wreg_in_t;
   end record write_back_t;
+
+  constant default_w : write_back_t := (
+    reg => (we => '0',
+            a => (others => '0'),
+            d => (others => '0')));
 
   type cpu_t is record
     f : fetch_t;
@@ -88,5 +117,12 @@ package util is
     m : memory_access_t;
     w : write_back_t;
   end record cpu_t;
+
+  constant init_r : cpu_t := (
+    f => default_f,
+    d => default_d,
+    e => default_e,
+    m => default_m,
+    w => default_w);
 
 end package util;

@@ -6,12 +6,11 @@ entity core_main_tb is
 end core_main_tb;
 
 architecture arch_core_main_tb of core_main_tb is
-  constant wtime : std_logic_vector(15 downto 0) := x"0008";
+  constant wtime : std_logic_vector(15 downto 0) := x"0004";
 
   component core_main
     generic (
-      CODE : string := "min-rt2.bin";
-      ADDR_WIDTH : integer := 14;
+      CODE : string := "test.bin";
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
