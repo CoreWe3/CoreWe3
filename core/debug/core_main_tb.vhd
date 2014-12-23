@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
 
   component core_main
     generic (
-      CODE : string := "test.bin";
+      CODE : string := "file/test.bin";
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
@@ -32,7 +32,7 @@ architecture arch_core_main_tb of core_main_tb is
   component input_simulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      INPUT_FILE : string := "contest.sld");
+      INPUT_FILE : string := "input");
     port (
       clk  : in  std_logic;
       RS_RX   : out std_logic);
@@ -41,7 +41,7 @@ architecture arch_core_main_tb of core_main_tb is
   component output_simulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      OUTPUT_FILE : string := "output.txt");
+      OUTPUT_FILE : string := "output");
     port (
       clk : std_logic;
       RS_TX : std_logic);

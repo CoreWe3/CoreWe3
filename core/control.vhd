@@ -131,6 +131,8 @@ begin
       when others => null;
     end case;
 
+    -- stall
+
     nextr <= v;
     pc <= v.f.pc;
     memi <= vmemi;

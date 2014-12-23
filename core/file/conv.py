@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 class ParseError(Exception):
     def __init__(self, s):
         self.s = s
@@ -210,6 +212,24 @@ class Assembly:
         for l, n in self.blabel_d.iteritems():
             fout.write(l+' '+hex(n)+'\n')
 
-a = Assembly()
-a.print_text()
+import argparse
+import sys
+
+parser = argparse.ArgumentParser(description='Simple Assembler')
+parser.add_argument('assembly', metavar='asmfile', nargs='?',
+                    type=argparse.FileType('r'),
+                    default=sys.stdin, help='assembly file')
+parser.add_argument('-t', '--text', dest='text', action='store_true',
+                    help='output as ascii binary \
+                    (otherwise normal binary')
+parser.add_argument('-o', metavar='outfile', dest='output', nargs='?',
+                    type=argparse.FileType('w'),
+                    default=sys.stdout,
+                    help='output file'),
+p = vars(parser.parse_args())
+a = Assembly(p['assembly'])
+if p['text']:
+    a.print_text(p['output'])
+else:
+    a.print_bin(p['output'])
 # a.show_branch_label()

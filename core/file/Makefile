@@ -1,7 +1,5 @@
 ROOT = $(shell git rev-parse --show-toplevel)
-ASM = $(ROOT)/simulator/bin/assembler
 SIMULATOR = $(ROOT)/simulator/bin/simulator
-SIM = ~/cpu_core/core_main_tb
 WORK = $(ROOT)/simulator/bin
 BUILDER = $(ROOT)/lib/cw3c.sh
 COMPILER = $(ROOT)/compiler/min-caml
@@ -27,18 +25,15 @@ min-rt2.ml:
 	cp $(WORK)/_$@ $@
 
 %.bin: %
-	./textbin.py $(ADDRWIDTH) < $< > $@ && \
-	cp $@ $(SIM)
+	./textbin.py $(ADDRWIDTH) < $< > $@ # && \
+#	cp $@ $(SIM)
 
-%: %.s $(ASM)
-	$(ASM) $@ < $< && \
+%: %.s
+	$(ASM) < $< > $@ && \
 	cat eof >> $@
 
 $(COMPILER):
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
-
-$(ASM):
-	cd $(ROOT)/simulator && $(MAKE)
 
 .PHONY: all clean
 
