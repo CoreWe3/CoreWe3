@@ -105,21 +105,24 @@ begin
       when ADD =>
         v.e.alu.d1 := reg_o.d1;
         v.e.alu.d2 := reg_o.d2;
+        v.e.alu.ctrl := "000";
       when ADDI =>
         v.e.alu.d1 := reg_o.d1;
         v.e.alu.d2 := r.d.data;
+        v.e.alu.ctrl := "000";
       when others => null;
     end case;
 
     --memory access
     v.m.op := r.e.op;
     v.m.dest := r.e.dest;
-    case r.d.op is
+    case r.e.op is
       when ADD =>
         v.m.data := alu_o.d;
       when ADDI =>
         v.m.data := alu_o.d;
-      when others => null;
+      when others =>
+        v.m.data := (others => 'U');
     end case;
 
     -- write
@@ -128,20 +131,44 @@ begin
         v.w.reg.we := '1';
         v.w.reg.a := r.m.dest;
         v.w.reg.d := r.m.data;
-      when others => null;
+      when others =>
+        v.w.reg.we := '0';
     end case;
 
     -- stall
+    if data_hazard then
+      v.f := r.f;
+      v.stall.d := '1';
+    else
+      v.stall.d := '0';
+    end if;
+
+    if r.stall.d = '1' then
+      v.d := r.d;
+      v.e := default_e;
+    end if;
+
+    v.stall.e := r.stall.d;
+    if r.stall.e = '1' then
+      v.m := default_m;
+    end if;
+
+    v.stall.m := r.stall.e;
+    if r.stall.m = '1' then
+      v.w := default_w;
+    end if;
+    
+    v.stall.w := r.stall.m;
 
     nextr <= v;
-    pc <= v.f.pc;
-    memi <= vmemi;
   end process;
 
   update : process(clk)
   begin
     if rising_edge(clk) then
       r <= nextr;
+      pc <= nextr.f.pc;
+      memi <= default_mem_in;
     end if;
   end process;
 

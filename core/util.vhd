@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 package util is
   constant ADDR_WIDTH : integer := 4;
 
-  constant ADD : std_logic_vector(5 downto 0) := "000110";
+  constant ADD  : std_logic_vector(5 downto 0) := "000110";
   constant ADDI : std_logic_vector(5 downto 0) := "001001";
 
   type mem_out_t is record
@@ -110,12 +110,26 @@ package util is
             a => (others => '0'),
             d => (others => '0')));
 
+  type stall_t is record
+    d : std_logic;
+    e : std_logic;
+    m : std_logic;
+    w : std_logic;
+  end record stall_t;
+
+  constant default_stall : stall_t := (
+    d => '0',
+    e => '0',
+    m => '0',
+    w => '0');
+
   type cpu_t is record
     f : fetch_t;
     d : decode_t;
     e : execute_t;
     m : memory_access_t;
     w : write_back_t;
+    stall : stall_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
@@ -123,6 +137,7 @@ package util is
     d => default_d,
     e => default_e,
     m => default_m,
-    w => default_w);
+    w => default_w,
+    stall => default_stall);
 
 end package util;

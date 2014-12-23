@@ -64,11 +64,12 @@ begin
     ZA    => ZA    ,
     XWA   => XWA   );
 
-  sram_sim : SRAM port map (
-    clk => clk,
-    ZD => ZD,
-    ZA => ZA,
-    XWA => XWA);
+  
+  --sram_sim : SRAM port map (
+  --  clk => clk,
+  --  ZD => ZD,
+  --  ZA => ZA,
+  --  XWA => XWA);
 
   input_sim : input_simulator port map (
     clk => clk,
@@ -81,9 +82,9 @@ begin
   process
   begin
     clk <= '0';
-    wait for 1 ns;
+    wait for 1 ps;
     clk <= '1';
-    wait for 1 ns;
+    wait for 1 ps;
   end process;
 
 end arch_core_main_tb;
