@@ -87,15 +87,21 @@ begin
         v.d.reg.a2 := unsigned(inst(13 downto 8));
         data_hazard := find_data_hazard(r, v.d.reg.a1) or
                        find_data_hazard(r, v.d.reg.a2);
-        branch_hazard := false;
       when ADDI =>
         v.d.dest := unsigned(inst(25 downto 20));
         v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
         v.d.reg.a1 := unsigned(inst(19 downto 14));
         v.d.reg.a2 := (others => '0');
         data_hazard := find_data_hazard(r, v.d.reg.a1);
-        branch_hazard := false;
-      when others => null;
+      when BEQ =>
+        v.d.dest := (others => '0');
+        v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
+        v.d.reg.a1 := unsigned(inst(25 downto 20));
+        v.d.reg.a2 := unsigned(inst(19 downto 14));
+        data_hazard := find_data_hazard(r, v.d.reg.a1) or
+                       find_data_hazard(r, v.d.reg.a2);
+      when others =>
+        data_hazard := false;
     end case;
 
     --execute
@@ -106,10 +112,20 @@ begin
         v.e.alu.d1 := reg_o.d1;
         v.e.alu.d2 := reg_o.d2;
         v.e.alu.ctrl := "000";
+        v.e.branch := '0';
       when ADDI =>
         v.e.alu.d1 := reg_o.d1;
         v.e.alu.d2 := r.d.data;
         v.e.alu.ctrl := "000";
+        v.e.branch := '0';
+      when BEQ =>
+        v.e.alu.d1 := resize(r.d.pc, 32);
+        v.e.alu.d2 := r.d.data;
+        if reg_o.d1 = reg_o.d2 then
+          v.e.branch := '1';
+        else
+          v.e.branch := '0';
+        end if;
       when others => null;
     end case;
 
@@ -121,6 +137,8 @@ begin
         v.m.data := alu_o.d;
       when ADDI =>
         v.m.data := alu_o.d;
+      when BEQ =>
+        v.m.data := alu_o.d;
       when others =>
         v.m.data := (others => 'U');
     end case;
@@ -131,11 +149,14 @@ begin
         v.w.reg.we := '1';
         v.w.reg.a := r.m.dest;
         v.w.reg.d := r.m.data;
+      when BEQ =>
+        v.w.reg.we := '0';
       when others =>
         v.w.reg.we := '0';
     end case;
 
     -- stall
+    -- resolve data hazard
     if data_hazard then
       v.f := r.f;
       v.stall.d := '1';
@@ -158,7 +179,15 @@ begin
       v.w := default_w;
     end if;
     
-    v.stall.w := r.stall.m;
+    --resolve branch hazard
+    if v.e.branch = '1' then
+      v.d := default_d;
+    end if;
+    
+    if r.e.branch = '1' then
+      v.f.pc := alu_o.d(ADDR_WIDTH-1 downto 0);
+      v.d := default_d;
+    end if;
 
     nextr <= v;
   end process;

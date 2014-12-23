@@ -7,6 +7,7 @@ package util is
 
   constant ADD  : std_logic_vector(5 downto 0) := "000110";
   constant ADDI : std_logic_vector(5 downto 0) := "001001";
+  constant BEQ  : std_logic_vector(5 downto 0) := "010001";
 
   type mem_out_t is record
     d : unsigned(31 downto 0);
@@ -69,37 +70,41 @@ package util is
 
   constant default_d : decode_t := (
     pc => (others => '0'),
-    op => (others => '0'),
+    op => ADDI,
     dest => (others => '0'),
     data => (others => '0'),
     reg => (a1 => (others => '0'),
             a2 => (others => '0')));
 
   type execute_t is record
-    op    : std_logic_vector(5 downto 0);
-    dest  : unsigned(5 downto 0);
-    data  : unsigned(31 downto 0);
-    alu   : alu_in_t;
+    op     : std_logic_vector(5 downto 0);
+    dest   : unsigned(5 downto 0);
+    data   : unsigned(31 downto 0);
+    branch : std_logic;
+    alu    : alu_in_t;
   end record execute_t;
 
   constant default_e : execute_t := (
-    op => (others => '0'),
+    op => ADDI,
     dest => (others => '0'),
     data => (others => '0'),
+    branch => '0',
     alu => (d1 => (others => '0'),
             d2 => (others => '0'),
             ctrl => (others => '0')));
 
   type memory_access_t is record
-    op    : std_logic_vector(5 downto 0);
-    dest  : unsigned(5 downto 0);
-    data  : unsigned(31 downto 0);
+    op     : std_logic_vector(5 downto 0);
+    dest   : unsigned(5 downto 0);
+    data   : unsigned(31 downto 0);
+    branch : std_logic;
   end record memory_access_t;
 
   constant default_m : memory_access_t := (
-    op => (others => '0'),
+    op => ADDI,
     dest => (others => '0'),
-    data => (others => '0'));
+    data => (others => '0'),
+    branch => '0');
 
   type write_back_t is record
     reg   : wreg_in_t;
