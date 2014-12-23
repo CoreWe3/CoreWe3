@@ -152,7 +152,7 @@ class Instruction:
 
 class Assembly:
     import sys
-    def __init__(self, fin):
+    def __init__(self, fin = sys.stdin):
         self.ins_l = [] # list of instructions
         self.blabel_d = dict() # dictionary of branch label
         self.ilabel_d = dict() # dictionary of immediate label
@@ -210,8 +210,6 @@ class Assembly:
         for l, n in self.blabel_d.iteritems():
             fout.write(l+' '+hex(n)+'\n')
 
-
-fin = open("fib.s", 'r')
-a = Assembly(fin)
+a = Assembly()
 a.print_text()
-a.show_branch_label()
+# a.show_branch_label()
