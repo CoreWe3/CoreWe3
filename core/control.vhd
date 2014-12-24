@@ -33,16 +33,16 @@ architecture arch_control of control is
   function find_data_hazard(
     r : cpu_t;
     reg : unsigned(5 downto 0))
-    return boolean is
+    return std_logic is
   begin
     if reg = 0 then
-      return false;
+      return '0';
     elsif r.e.dest = reg then
-      return true;
+      return '1';
     elsif r.m.dest = reg then
-      return true;
+      return '1';
     else
-      return false;
+      return '0';
     end if;
   end function find_data_hazard;
 
@@ -106,7 +106,7 @@ begin
         data_hazard := find_data_hazard(r, v.d.reg.a1) or
                        find_data_hazard(r, v.d.reg.a2);
       when others =>
-        data_hazard := false;
+        data_hazard := '0';
     end case;
 
     --execute
@@ -175,7 +175,7 @@ begin
 
     -- stall
     -- resolve data hazard
-    if data_hazard then
+    if data_hazard = '1' then
       v.f := r.f;
       v.stall.d := '1';
     else
