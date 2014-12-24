@@ -6,7 +6,7 @@ entity core_main_tb is
 end core_main_tb;
 
 architecture arch_core_main_tb of core_main_tb is
-  constant wtime : std_logic_vector(15 downto 0) := x"0004";
+  constant wtime : std_logic_vector(15 downto 0) := x"0007";
 
   component core_main
     generic (

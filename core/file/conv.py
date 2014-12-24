@@ -189,7 +189,8 @@ class Assembly:
         for i in self.ins_l:
             fout.write(struct.pack('i', i.binary))
 
-    def print_text(self,fout=sys.stdout):
+    def print_text(self,fout=sys.stdout, width=10):
+        line = 2**width
         def print_byte(n):
             fout.write(bin(tmp)[2:].zfill(8))
 
@@ -203,6 +204,11 @@ class Assembly:
             tmp = i.binary & 255
             print_byte(tmp)
             fout.write('\n')
+            line -= 1
+
+        while(line > 0):
+            fout.write('00100100000000000000000000000000\n')
+            line -= 1
 
     def show_immediate_label(self, fout=sys.stdout):
         for l, n in self.ilabel_d.iteritems():
@@ -219,17 +225,16 @@ parser = argparse.ArgumentParser(description='Simple Assembler')
 parser.add_argument('assembly', metavar='asmfile', nargs='?',
                     type=argparse.FileType('r'),
                     default=sys.stdin, help='assembly file')
-parser.add_argument('-t', '--text', dest='text', action='store_true',
-                    help='output as ascii binary \
-                    (otherwise normal binary')
+parser.add_argument('-t', '--text', dest='width', type = int,
+                    help='output as ascii binary and specify address width (otherwise normal binary')
 parser.add_argument('-o', metavar='outfile', dest='output', nargs='?',
                     type=argparse.FileType('w'),
                     default=sys.stdout,
                     help='output file'),
 p = vars(parser.parse_args())
 a = Assembly(p['assembly'])
-if p['text']:
-    a.print_text(p['output'])
+if p['width'] != None:
+    a.print_text(p['output'], p['width'])
 else:
     a.print_bin(p['output'])
 # a.show_branch_label()

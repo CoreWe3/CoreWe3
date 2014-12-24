@@ -12,3 +12,4 @@
 	BEQ	r0	r0	:loop	# loop
 :end
 	ST	r2	r0	0xffff
+	BEQ	r0	r0	0

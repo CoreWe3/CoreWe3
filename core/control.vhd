@@ -80,6 +80,13 @@ begin
     v.d.pc := r.f.pc;
     v.d.op := inst(31 downto 26);
     case v.d.op is
+      when ST =>
+        v.d.dest := (others => '0');
+        v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
+        v.d.reg.a1 := unsigned(inst(25 downto 20));
+        v.d.reg.a2 := unsigned(inst(19 downto 14));
+        data_hazard := find_data_hazard(r, v.d.reg.a1) or
+                       find_data_hazard(r, v.d.reg.a2);
       when ADD =>
         v.d.dest := unsigned(inst(25 downto 20));
         v.d.data := (others => '0');
@@ -108,6 +115,12 @@ begin
     v.e.op := r.d.op;
     v.e.dest := r.d.dest;
     case r.d.op is
+      when ST =>
+        v.e.alu.d1 := reg_o.d2;
+        v.e.alu.d2 := r.d.data;
+        v.e.alu.ctrl := "000";
+        v.e.branch := '0';
+        v.e.data := reg_o.d1;
       when ADD =>
         v.e.alu.d1 := reg_o.d1;
         v.e.alu.d2 := reg_o.d2;
@@ -132,7 +145,14 @@ begin
     --memory access
     v.m.op := r.e.op;
     v.m.dest := r.e.dest;
+
+    v.mem := default_mem_in;
     case r.e.op is
+      when ST =>
+        v.mem.a := alu_o.d(19 downto 0);
+        v.mem.d := v.e.data;
+        v.mem.go := '1';
+        v.mem.we := '1';
       when ADD =>
         v.m.data := alu_o.d;
       when ADDI =>
@@ -189,6 +209,13 @@ begin
       v.d := default_d;
     end if;
 
+    --wait for memory
+    if r.mem.go /= '0' or memo.busy /= '0' then
+      v := r;
+      v.mem := default_mem_in;
+    end if;
+      
+
     nextr <= v;
   end process;
 
@@ -197,7 +224,7 @@ begin
     if rising_edge(clk) then
       r <= nextr;
       pc <= nextr.f.pc;
-      memi <= default_mem_in;
+      memi <= nextr.mem;
     end if;
   end process;
 

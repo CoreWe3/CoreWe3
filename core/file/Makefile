@@ -4,13 +4,15 @@ WORK = $(ROOT)/simulator/bin
 BUILDER = $(ROOT)/lib/cw3c.sh
 COMPILER = $(ROOT)/compiler/min-caml
 RAYTR = $(ROOT)/raytracer-ocaml
-ADDRWIDTH = 14
+ADDRWIDTH = 4
 MLSOURCE = newton.ml mandelbrot.ml graph.ml
 SSOURCE = fib.s fib_rec.s loopback.s stack_test.s memtest.s aaa.s test.s
 TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=) min-rt2
 DEBUG = $(TARGET:=.bin)
 
 all: $(TARGET) $(DEBUG)
+
+sim: $(DEBUG)
 
 min-rt2: min-rt2.ml
 	$(BUILDER) min-rt2.ml --boot $(ROOT)/lib/asm/rt_boot.s && \
@@ -24,13 +26,11 @@ min-rt2.ml:
 	$(BUILDER) $< && \
 	cp $(WORK)/_$@ $@
 
-%.bin: %
-	./textbin.py $(ADDRWIDTH) < $< > $@ # && \
-#	cp $@ $(SIM)
+%.bin: %.s
+	./conv.py $< -t $(ADDRWIDTH) -o $@
 
 %: %.s
-	$(ASM) < $< > $@ && \
-	cat eof >> $@
+	./conv.py $< -o $@
 
 $(COMPILER):
 	cd $(ROOT)/mincaml_compiler && $(MAKE)

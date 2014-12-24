@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package util is
   constant ADDR_WIDTH : integer := 4;
 
+  constant ST   : std_logic_vector(5 downto 0) := "000001";
   constant ADD  : std_logic_vector(5 downto 0) := "000110";
   constant ADDI : std_logic_vector(5 downto 0) := "001001";
   constant BEQ  : std_logic_vector(5 downto 0) := "010001";
@@ -135,6 +136,7 @@ package util is
     m : memory_access_t;
     w : write_back_t;
     stall : stall_t;
+    mem: mem_in_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
@@ -143,6 +145,7 @@ package util is
     e => default_e,
     m => default_m,
     w => default_w,
-    stall => default_stall);
+    stall => default_stall,
+    mem => default_mem_in);
 
 end package util;
