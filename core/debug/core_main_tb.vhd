@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
 
   component core_main
     generic (
-      CODE : string := "file/fib.bin";
+      CODE : string := "test.bin";
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
@@ -82,9 +82,9 @@ begin
   process
   begin
     clk <= '0';
-    wait for 1 ps;
+    wait for 1 ns;
     clk <= '1';
-    wait for 1 ps;
+    wait for 1 ns;
   end process;
 
 end arch_core_main_tb;

@@ -120,14 +120,12 @@ package util is
     d : std_logic;
     e : std_logic;
     m : std_logic;
-    w : std_logic;
   end record stall_t;
 
   constant default_stall : stall_t := (
     d => '0',
     e => '0',
-    m => '0',
-    w => '0');
+    m => '0');
 
   type cpu_t is record
     f : fetch_t;
