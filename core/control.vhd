@@ -160,7 +160,7 @@ begin
       when BEQ =>
         v.m.data := alu_o.d;
       when others =>
-        v.m.data := (others => 'U');
+        null;
     end case;
 
     -- write
