@@ -37,8 +37,6 @@ architecture arch_control of control is
   begin
     if reg = 0 then
       return false;
-    elsif r.d.dest = reg then
-      return true;
     elsif r.e.dest = reg then
       return true;
     elsif r.m.dest = reg then
