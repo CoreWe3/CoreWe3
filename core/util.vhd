@@ -98,14 +98,12 @@ package util is
     op     : std_logic_vector(5 downto 0);
     dest   : unsigned(5 downto 0);
     data   : unsigned(31 downto 0);
-    branch : std_logic;
   end record memory_access_t;
 
   constant default_m : memory_access_t := (
     op => ADDI,
     dest => (others => '0'),
-    data => (others => '0'),
-    branch => '0');
+    data => (others => '0'));
 
   type write_back_t is record
     reg   : wreg_in_t;
@@ -133,7 +131,7 @@ package util is
     e : execute_t;
     m : memory_access_t;
     w : write_back_t;
-    stall : stall_t;
+    data_hazard : std_logic;
     mem: mem_in_t;
   end record cpu_t;
 
@@ -143,7 +141,7 @@ package util is
     e => default_e,
     m => default_m,
     w => default_w,
-    stall => default_stall,
+    data_hazard => '0',
     mem => default_mem_in);
 
 end package util;

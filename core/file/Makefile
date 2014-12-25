@@ -27,7 +27,8 @@ min-rt2.ml:
 	cp $(WORK)/_$@ $@
 
 %.bin: %.s
-	./conv.py $< -t $(ADDRWIDTH) -o $@
+	./conv.py $< -t $(ADDRWIDTH) -o $@ && \
+	cp $@ ~/cpu_core/core_main_tb/
 
 %: %.s
 	./conv.py $< -o $@

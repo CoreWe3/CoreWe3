@@ -30,26 +30,11 @@ architecture arch_control of control is
       do : out reg_out_t);
   end component;
 
-  function find_data_hazard(
-    r : cpu_t;
-    reg : unsigned(5 downto 0))
-    return std_logic is
-  begin
-    if reg = 0 then
-      return '0';
-    elsif r.e.dest = reg then
-      return '1';
-    elsif r.m.dest = reg then
-      return '1';
-    else
-      return '0';
-    end if;
-  end function find_data_hazard;
-
   signal r : cpu_t := init_r;
   signal nextr : cpu_t;
   signal alu_o : alu_out_t;
   signal reg_o : reg_out_t;
+  signal setup : unsigned(1 downto 0) := (others => '0');
 
 begin
 
@@ -65,46 +50,41 @@ begin
 
   main : process(r, alu_o, reg_o, memo, inst)
     variable v : cpu_t;
-    variable vmemi : mem_in_t := default_mem_in;
   begin
     v := r;
 
     --fetch
     v.f.pc := r.f.pc+1;
 
-    --decode(detect hazard)
+    --decode
     v.d.pc := r.f.pc;
     v.d.op := inst(31 downto 26);
     case v.d.op is
       when ST =>
         v.d.dest := (others => '0');
-        v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
+        v.d.data := unsigned(resize(
+          signed(inst(13 downto 0)), 32));
         v.d.reg.a1 := unsigned(inst(25 downto 20));
         v.d.reg.a2 := unsigned(inst(19 downto 14));
-        v.stall.d := find_data_hazard(r, v.d.reg.a1) or
-                       find_data_hazard(r, v.d.reg.a2);
       when ADD =>
         v.d.dest := unsigned(inst(25 downto 20));
         v.d.data := (others => '0');
         v.d.reg.a1 := unsigned(inst(19 downto 14));
         v.d.reg.a2 := unsigned(inst(13 downto 8));
-        v.stall.d := find_data_hazard(r, v.d.reg.a1) or
-                     find_data_hazard(r, v.d.reg.a2);
       when ADDI =>
         v.d.dest := unsigned(inst(25 downto 20));
-        v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
+        v.d.data := unsigned(resize(
+          signed(inst(13 downto 0)), 32));
         v.d.reg.a1 := unsigned(inst(19 downto 14));
         v.d.reg.a2 := (others => '0');
-        v.stall.d := find_data_hazard(r, v.d.reg.a1);
       when BEQ =>
         v.d.dest := (others => '0');
-        v.d.data := unsigned(resize(signed(inst(13 downto 0)), 32));
+        v.d.data := unsigned(resize(
+          signed(inst(13 downto 0)), 32));
         v.d.reg.a1 := unsigned(inst(25 downto 20));
         v.d.reg.a2 := unsigned(inst(19 downto 14));
-        v.stall.d := find_data_hazard(r, v.d.reg.a1) or
-                     find_data_hazard(r, v.d.reg.a2);
       when others =>
-        v.stall.d := '0';
+        v.d := default_d;
     end case;
 
     --execute
@@ -135,7 +115,8 @@ begin
         else
           v.e.branch := '0';
         end if;
-      when others => null;
+      when others =>
+        v.e := default_e;
     end case;
 
     --memory access
@@ -146,7 +127,7 @@ begin
     case r.e.op is
       when ST =>
         v.mem.a := alu_o.d(19 downto 0);
-        v.mem.d := v.e.data;
+        v.mem.d := r.e.data;
         v.mem.go := '1';
         v.mem.we := '1';
       when ADD =>
@@ -156,7 +137,7 @@ begin
       when BEQ =>
         v.m.data := alu_o.d;
       when others =>
-        null;
+        v.m := default_m;
     end case;
 
     -- write
@@ -172,26 +153,30 @@ begin
     end case;
 
 
-    -- stall
-    -- resolve data hazard
+    -- detect data hazard
+    v.data_hazard := '0';
+    if v.d.reg.a1 /= 0 then
+      if v.d.reg.a1 = v.e.dest or v.d.reg.a1 = v.m.dest or
+        v.d.reg.a1 = v.w.reg.a then
+        v.data_hazard := '1';
+      end if;
+    end if;
 
-    if v.stall.d = '1' then
+    if v.d.reg.a2 /= 0 then
+      if v.d.reg.a2 = v.e.dest or v.d.reg.a2 = v.m.dest or
+        v.d.reg.a2 = v.w.reg.a then
+        v.data_hazard := '1';
+      end if;
+    end if;
+
+    -- resolve data hazard
+    if v.data_hazard = '1' then
       v.f := r.f;
     end if;
 
-    if r.stall.d = '1' then
+    if r.data_hazard = '1' then
       v.d := r.d;
       v.e := default_e;
-    end if;
-
-    v.stall.e := r.stall.d;
-    if r.stall.e = '1' then
-      v.m := default_m;
-    end if;
-
-    v.stall.m := r.stall.e;
-    if r.stall.m = '1' then
-      v.w := default_w;
     end if;
 
     --resolve branch hazard
@@ -216,9 +201,16 @@ begin
   update : process(clk)
   begin
     if rising_edge(clk) then
-      r <= nextr;
-      pc <= nextr.f.pc;
-      memi <= nextr.mem;
+      if setup = "11" then
+        r <= nextr;
+        pc <= nextr.f.pc;
+        memi <= nextr.mem;
+      else
+        r <= init_r;
+        pc <= (others => '0');
+        memi <= default_mem_in;
+        setup <= setup+1;
+      end if;
     end if;
   end process;
 

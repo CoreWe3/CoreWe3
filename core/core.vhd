@@ -42,9 +42,9 @@ architecture arch_core of core is
   end component;
 
   signal iclk : std_logic;
-  signal fbclk : std_logic;
-  signal bfbclk : std_logic;
-  signal gsysclk : std_logic;
+  --signal fbclk : std_logic;
+  --signal bfbclk : std_logic;
+  --signal gsysclk : std_logic;
   signal sysclk : std_logic;
   --signal gmemclk : std_logic;
   --signal memclk : std_logic;
