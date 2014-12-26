@@ -15,35 +15,7 @@ entity alu is
 end alu;
 
 architecture arch_alu of alu is
-
-  --component lshifter is
-  --  port(
-  --    DI: in unsigned(31 downto 0);
-  --    SEL: in unsigned(4 downto 0);
-  --    SO: out unsigned(31 downto 0));
-  --end component;
-
-  --component rshifter is
-  --  port(
-  --    DI: in unsigned(31 downto 0);
-  --    SEL: in unsigned(4 downto 0);
-  --    SO: out unsigned(31 downto 0));
-  --end component;
-  
-  --signal shiftl : unsigned(31 downto 0);
-  --signal shiftr : unsigned(31 downto 0);
-  
 begin
-
-  --left_shift : lshifter port map(
-  --  DI => unsigned(in_word1),
-  --  SEL => unsigned(in_word2(4 downto 0)),
-  --  SO => shiftl);
-
-  --right_shift : rshifter port map(
-  --  DI => unsigned(in_word1),
-  --  SEL => unsigned(in_word2(4 downto 0)),
-  --  SO => shiftr);
 
   out_word <= in_word1 + in_word2 when ctrl = "000" else
               in_word1 - in_word2 when ctrl = "001" else
