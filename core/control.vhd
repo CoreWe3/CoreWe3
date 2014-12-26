@@ -30,15 +30,23 @@ architecture arch_control of control is
       do : out reg_out_t);
   end component;
 
-  function detect_data_hazard(rf : unsigned(5 downto 0),
+  function detect_data_hazard(rf : unsigned(5 downto 0);
                               v : cpu_t) return std_logic is
   begin
     if rf /= 0 then
-      if rf = v.d.dest or rf = v.e.dest or
-        rf = v.mem.a then
-        return '1';
+      if v.data_hazard = '0' then
+        if rf = v.d.dest or rf = v.e.dest or
+          rf = v.m.dest then
+          return '1';
+        else
+          return '0';
+        end if;
       else
-        return '0';
+        if rf = v.e.dest or rf = v.m.dest then
+          return '1';
+        else
+          return '0';
+        end if;
       end if;
     else
       return '0';
@@ -65,11 +73,12 @@ begin
 
   main : process(r, alu_o, reg_o, memo, inst)
     variable v : cpu_t;
-    variable op, ra, rb, rc : unsigned(5 downto 0);
+    variable op : std_logic_vector(5 downto 0);
+    variable ra, rb, rc : unsigned(5 downto 0);
   begin
     v := r;
 
-    op := unsigned(inst(31 downto 26));
+    op := inst(31 downto 26);
     ra := unsigned(inst(25 downto 20));
     rb := unsigned(inst(19 downto 14));
     rc := unsigned(inst(13 downto 8));
@@ -107,7 +116,7 @@ begin
           v.d.dest := ra;
           v.d.data := unsigned(resize(
             signed(inst(13 downto 0)), 32));
-          v.d.reg.a1 := rb
+          v.d.reg.a1 := rb;
           v.d.reg.a2 := (others => '0');
         when BEQ =>
           v.d.dest := (others => '0');
