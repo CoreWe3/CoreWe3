@@ -30,6 +30,21 @@ architecture arch_control of control is
       do : out reg_out_t);
   end component;
 
+  function detect_data_hazard(rf : unsigned(5 downto 0),
+                              v : cpu_t) return std_logic is
+  begin
+    if rf /= 0 then
+      if rf = v.d.dest or rf = v.e.dest or
+        rf = v.mem.a then
+        return '1';
+      else
+        return '0';
+      end if;
+    else
+      return '0';
+    end if;
+  end function detect_data_hazard;
+
   signal r : cpu_t := init_r;
   signal nextr : cpu_t;
   signal alu_o : alu_out_t;
@@ -50,42 +65,61 @@ begin
 
   main : process(r, alu_o, reg_o, memo, inst)
     variable v : cpu_t;
+    variable op, ra, rb, rc : unsigned(5 downto 0);
   begin
     v := r;
 
+    op := unsigned(inst(31 downto 26));
+    ra := unsigned(inst(25 downto 20));
+    rb := unsigned(inst(19 downto 14));
+    rc := unsigned(inst(13 downto 8));
+
+    --detect data hazard
+    case op is
+      when ST =>
+        v.data_hazard := detect_data_hazard(ra, v) or
+                         detect_data_hazard(rb, v);
+      when others =>
+        v.data_hazard := '0';
+    end case;
+
     --fetch
-    v.f.pc := r.f.pc+1;
+    if v.data_hazard = '0' then
+      v.f.pc := r.f.pc+1;
+    end if;
 
     --decode
-    v.d.pc := r.f.pc;
-    v.d.op := inst(31 downto 26);
-    case v.d.op is
-      when ST =>
-        v.d.dest := (others => '0');
-        v.d.data := unsigned(resize(
-          signed(inst(13 downto 0)), 32));
-        v.d.reg.a1 := unsigned(inst(25 downto 20));
-        v.d.reg.a2 := unsigned(inst(19 downto 14));
-      when ADD =>
-        v.d.dest := unsigned(inst(25 downto 20));
-        v.d.data := (others => '0');
-        v.d.reg.a1 := unsigned(inst(19 downto 14));
-        v.d.reg.a2 := unsigned(inst(13 downto 8));
-      when ADDI =>
-        v.d.dest := unsigned(inst(25 downto 20));
-        v.d.data := unsigned(resize(
-          signed(inst(13 downto 0)), 32));
-        v.d.reg.a1 := unsigned(inst(19 downto 14));
-        v.d.reg.a2 := (others => '0');
-      when BEQ =>
-        v.d.dest := (others => '0');
-        v.d.data := unsigned(resize(
-          signed(inst(13 downto 0)), 32));
-        v.d.reg.a1 := unsigned(inst(25 downto 20));
-        v.d.reg.a2 := unsigned(inst(19 downto 14));
-      when others =>
-        v.d := default_d;
-    end case;
+    if r.data_hazard = '0' then
+      v.d.op := inst(31 downto 26);
+      case v.d.op is
+        when ST =>
+          v.d.dest := (others => '0');
+          v.d.data := unsigned(resize(
+            signed(inst(13 downto 0)), 32));
+          v.d.reg.a1 := ra;
+          v.d.reg.a2 := rb;
+        when ADD =>
+          v.d.dest := ra;
+          v.d.data := (others => '0');
+          v.d.reg.a1 := rb;
+          v.d.reg.a2 := rc;
+        when ADDI =>
+          v.d.dest := ra;
+          v.d.data := unsigned(resize(
+            signed(inst(13 downto 0)), 32));
+          v.d.reg.a1 := rb
+          v.d.reg.a2 := (others => '0');
+        when BEQ =>
+          v.d.dest := (others => '0');
+          v.d.data := unsigned(resize(
+            signed(inst(13 downto 0)), 32));
+          v.d.reg.a1 := ra;
+          v.d.reg.a2 := rb;
+        when others =>
+          v.d := default_d;
+      end case;
+      v.d.pc := r.f.pc;
+    end if;
 
     --execute
     v.e.op := r.d.op;
@@ -122,7 +156,6 @@ begin
     --memory access
     v.m.op := r.e.op;
     v.m.dest := r.e.dest;
-
     v.mem := default_mem_in;
     case r.e.op is
       when ST =>
@@ -151,33 +184,6 @@ begin
       when others =>
         v.w.reg.we := '0';
     end case;
-
-
-    -- detect data hazard
-    v.data_hazard := '0';
-    if v.d.reg.a1 /= 0 then
-      if v.d.reg.a1 = v.e.dest or v.d.reg.a1 = v.m.dest or
-        v.d.reg.a1 = v.w.reg.a then
-        v.data_hazard := '1';
-      end if;
-    end if;
-
-    if v.d.reg.a2 /= 0 then
-      if v.d.reg.a2 = v.e.dest or v.d.reg.a2 = v.m.dest or
-        v.d.reg.a2 = v.w.reg.a then
-        v.data_hazard := '1';
-      end if;
-    end if;
-
-    -- resolve data hazard
-    if v.data_hazard = '1' then
-      v.f := r.f;
-    end if;
-
-    if r.data_hazard = '1' then
-      v.d := r.d;
-      v.e := default_e;
-    end if;
 
     --resolve branch hazard
     if v.e.branch = '1' then
