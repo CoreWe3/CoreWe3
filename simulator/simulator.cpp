@@ -28,10 +28,12 @@ void ble(unsigned int ra, unsigned int rb, unsigned int cx);
 void blt(unsigned int ra, unsigned int rb, unsigned int cx);
 void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
 void jsub(unsigned int cx);
-void fx86(unsigned int cx);
+/* void fx86(unsigned int cx); */
 void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
+void fadd(unsigned int ra, unsigned int rb, unsigned int rc);
+void fmul(unsigned int ra, unsigned int rb, unsigned int rc);
 
 const char* op2name(unsigned int op);
 const char* reg2name(unsigned int reg);
@@ -264,8 +266,14 @@ int main(int argc, char* argv[])
 			case POP:
 				pop(ins.A.ra);
 				break;
-			case FX86:
-				fx86(ins.J.cx);
+			/* case FX86: */
+			/* 	fx86(ins.J.cx); */
+			/* 	break; */
+			case FADD:
+				fadd(ins.A.ra,ins.A.rb,ins.A.rc);
+				break;
+			case FMUL:
+				fmul(ins.A.ra,ins.A.rb,ins.A.rc);
 				break;
 			default:
 				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
@@ -465,48 +473,51 @@ void pop(unsigned int ra){
 		exit(1);
 	}
 }
-void fx86(unsigned int cx){
-
-	switch (cx){
-	/*0から順にfadd,fsub,fmul,fdiv,finv,fsqrt,sin,cos,atan,itof,ftoi,floor*/
-		case 0:
-			reg[3].f=(reg[3].f)+(reg[4].f);
-			break;
-		case 1:
-			reg[3].f=(reg[3].f)-(reg[4].f);
-			break;
-		case 2:
-			reg[3].f=(reg[3].f)*(reg[4].f);
-			break;
-		case 3:
-			reg[3].f=(reg[3].f)/(reg[4].f);
-			break;
-		case 4:
-			reg[3].f=(1)/(reg[3].f);
-			break;
-		case 5:
-			reg[3].f=sqrt(reg[3].f);
-			break;
-		case 6:
-			reg[3].f=sin(reg[3].f);
-			break;
-		case 7:
-			reg[3].f=cos(reg[3].f);
-			break;
-		case 8:
-			reg[3].f=atan(reg[3].f);
-			break;
-		case 9:
-      		        reg[3].f=static_cast<float>(static_cast<int>(reg[3].u));
-			break;
-		case 10:
-			reg[3].u= static_cast<int>(reg[3].f);
-			break;
-		case 11:
-			reg[3].f= floor(reg[3].f);
-			break;
-	}
-
-
+/* void fx86(unsigned int cx){ */
+/* 	switch (cx){ */
+/* 	/\*0から順にfadd,fsub,fmul,fdiv,finv,fsqrt,sin,cos,atan,itof,ftoi,floor*\/ */
+/* 		case 0: */
+/* 			reg[3].f=(reg[3].f)+(reg[4].f); */
+/* 			break; */
+/* 		case 1: */
+/* 			reg[3].f=(reg[3].f)-(reg[4].f); */
+/* 			break; */
+/* 		case 2: */
+/* 			reg[3].f=(reg[3].f)*(reg[4].f); */
+/* 			break; */
+/* 		case 3: */
+/* 			reg[3].f=(reg[3].f)/(reg[4].f); */
+/* 			break; */
+/* 		case 4: */
+/* 			reg[3].f=(1)/(reg[3].f); */
+/* 			break; */
+/* 		case 5: */
+/* 			reg[3].f=sqrt(reg[3].f); */
+/* 			break; */
+/* 		case 6: */
+/* 			reg[3].f=sin(reg[3].f); */
+/* 			break; */
+/* 		case 7: */
+/* 			reg[3].f=cos(reg[3].f); */
+/* 			break; */
+/* 		case 8: */
+/* 			reg[3].f=atan(reg[3].f); */
+/* 			break; */
+/* 		case 9: */
+/*       		        reg[3].f=static_cast<float>(static_cast<int>(reg[3].u)); */
+/* 			break; */
+/* 		case 10: */
+/* 			reg[3].u= static_cast<int>(reg[3].f); */
+/* 			break; */
+/* 		case 11: */
+/* 			reg[3].f= floor(reg[3].f); */
+/* 			break; */
+/* 	} */
+/* } */
+void fadd(unsigned int ra, unsigned int rb, unsigned int rc){
+	reg[ra].f = reg[rb].f + reg[rc].f;
+}
+void fmul(unsigned int ra, unsigned int rb, unsigned int rc){
+	reg[ra].f = reg[rb].f * reg[rc].f;
 }
 
