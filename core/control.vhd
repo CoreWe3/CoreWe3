@@ -144,37 +144,41 @@ begin
 
 
           --execute
-          r.e.op <= r.d.op;
-          r.e.dest <= r.d.dest;
-          case r.d.op is
-            when ST =>
-              r.e.alu.d1 <= reg_o.d2;
-              r.e.alu.d2 <= r.d.data;
-              r.e.alu.ctrl <= "000";
-              r.e.branch <= '0';
-              r.e.data <= reg_o.d1;
-            when ADD =>
-              r.e.alu.d1 <= reg_o.d1;
-              r.e.alu.d2 <= reg_o.d2;
-              r.e.alu.ctrl <= "000";
-              r.e.branch <= '0';
-            when ADDI =>
-              r.e.alu.d1 <= reg_o.d1;
-              r.e.alu.d2 <= r.d.data;
-              r.e.alu.ctrl <= "000";
-              r.e.branch <= '0';
-            when BEQ =>
-              r.e.alu.d1 <= resize(r.d.pc, 32);
-              r.e.alu.d2 <= r.d.data;
-              if reg_o.d1 = reg_o.d2 then
-                r.e.branch <= '1';
-              else
+          if r.e.branch = '0' then
+            r.e.op <= r.d.op;
+            r.e.dest <= r.d.dest;
+            case r.d.op is
+              when ST =>
+                r.e.alu.d1 <= reg_o.d2;
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "000";
                 r.e.branch <= '0';
-              end if;
-            when others =>
-              r.e <= default_e;
-          end case;
+                r.e.data <= reg_o.d1;
+              when ADD =>
+                r.e.alu.d1 <= reg_o.d1;
+                r.e.alu.d2 <= reg_o.d2;
+                r.e.alu.ctrl <= "000";
+                r.e.branch <= '0';
+              when ADDI =>
+                r.e.alu.d1 <= reg_o.d1;
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "000";
+                r.e.branch <= '0';
+              when BEQ =>
+                r.e.alu.d1 <= resize(r.d.pc, 32);
+                r.e.alu.d2 <= r.d.data;
+                if reg_o.d1 = reg_o.d2 then
+                  r.e.branch <= '1';
+                else
+                  r.e.branch <= '0';
+                end if;
+              when others =>
+                r.e <= default_e;
+            end case;
 
+          else
+            r.e <= default_e;
+          end if;
 
           --memory access
           r.m.op <= r.e.op;
