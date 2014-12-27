@@ -51,12 +51,12 @@ architecture arch_control of control is
   end function detect_data_hazard;
 
   signal r : cpu_t := init_r;
-  signal nextr : cpu_t;
   signal alu_o : alu_out_t;
   signal reg_o : reg_out_t;
   signal setup : unsigned(1 downto 0) := (others => '0');
 
 begin
+  pc <= r.f.pc;
 
   reg : registers port map (
     clk => clk,
@@ -68,10 +68,12 @@ begin
     di => r.e.alu,
     do => alu_o);
 
-  main : process(r, alu_o, reg_o, memo, inst)
+  main : process(clk)
     variable v : cpu_t;
     variable op : std_logic_vector(5 downto 0);
     variable ra, rb, rc : unsigned(5 downto 0);
+    variable data_hazard : std_logic;
+    variable mem_stall : std_logic;
   begin
     v := r;
 
@@ -81,149 +83,136 @@ begin
     rc := unsigned(inst(13 downto 8));
 
     --detect data hazard
-    case op is
-      when ST =>
-        v.data_hazard := detect_data_hazard(ra, v) or
-                         detect_data_hazard(rb, v);
-      when others =>
-        v.data_hazard := '0';
-    end case;
+    --case op is
+    --  when ST =>
+    --    data_hazard := detect_data_hazard(ra, v) or
+    --                   detect_data_hazard(rb, v);
+    --  when others =>
+    --    data_hazard := '0';
+    --end case;
+    data_hazard := '0';
 
-    --fetch
-    if v.data_hazard = '0' then
-      v.f.pc := r.f.pc+1;
-    end if;
 
-    --decode
-    if r.data_hazard = '0' then
-      v.d.op := inst(31 downto 26);
-      case v.d.op is
-        when ST =>
-          v.d.dest := (others => '0');
-          v.d.data := unsigned(resize(
-            signed(inst(13 downto 0)), 32));
-          v.d.reg.a1 := ra;
-          v.d.reg.a2 := rb;
-        when ADD =>
-          v.d.dest := ra;
-          v.d.data := (others => '0');
-          v.d.reg.a1 := rb;
-          v.d.reg.a2 := rc;
-        when ADDI =>
-          v.d.dest := ra;
-          v.d.data := unsigned(resize(
-            signed(inst(13 downto 0)), 32));
-          v.d.reg.a1 := rb;
-          v.d.reg.a2 := (others => '0');
-        when BEQ =>
-          v.d.dest := (others => '0');
-          v.d.data := unsigned(resize(
-            signed(inst(13 downto 0)), 32));
-          v.d.reg.a1 := ra;
-          v.d.reg.a2 := rb;
-        when others =>
-          v.d := default_d;
-      end case;
-      v.d.pc := r.f.pc;
-    end if;
+    --stall for memory access
+    if r.mem.go = '0' and memo.busy = '0' then
 
-    --execute
-    v.e.op := r.d.op;
-    v.e.dest := r.d.dest;
-    case r.d.op is
-      when ST =>
-        v.e.alu.d1 := reg_o.d2;
-        v.e.alu.d2 := r.d.data;
-        v.e.alu.ctrl := "000";
-        v.e.branch := '0';
-        v.e.data := reg_o.d1;
-      when ADD =>
-        v.e.alu.d1 := reg_o.d1;
-        v.e.alu.d2 := reg_o.d2;
-        v.e.alu.ctrl := "000";
-        v.e.branch := '0';
-      when ADDI =>
-        v.e.alu.d1 := reg_o.d1;
-        v.e.alu.d2 := r.d.data;
-        v.e.alu.ctrl := "000";
-        v.e.branch := '0';
-      when BEQ =>
-        v.e.alu.d1 := resize(r.d.pc, 32);
-        v.e.alu.d2 := r.d.data;
-        if reg_o.d1 = reg_o.d2 then
-          v.e.branch := '1';
-        else
-          v.e.branch := '0';
-        end if;
-      when others =>
-        v.e := default_e;
-    end case;
-
-    --memory access
-    v.m.op := r.e.op;
-    v.m.dest := r.e.dest;
-    v.mem := default_mem_in;
-    case r.e.op is
-      when ST =>
-        v.mem.a := alu_o.d(19 downto 0);
-        v.mem.d := r.e.data;
-        v.mem.go := '1';
-        v.mem.we := '1';
-      when ADD =>
-        v.m.data := alu_o.d;
-      when ADDI =>
-        v.m.data := alu_o.d;
-      when BEQ =>
-        v.m.data := alu_o.d;
-      when others =>
-        v.m := default_m;
-    end case;
-
-    -- write
-    case r.m.op is
-      when ADD | ADDI =>
-        v.w.reg.we := '1';
-        v.w.reg.a := r.m.dest;
-        v.w.reg.d := r.m.data;
-      when BEQ =>
-        v.w.reg.we := '0';
-      when others =>
-        v.w.reg.we := '0';
-    end case;
-
-    --resolve branch hazard
-    if v.e.branch = '1' then
-      v.d := default_d;
-    end if;
-
-    if r.e.branch = '1' then
-      v.f.pc := alu_o.d(ADDR_WIDTH-1 downto 0);
-      v.d := default_d;
-    end if;
-
-    --wait for memory
-    if r.mem.go /= '0' or memo.busy /= '0' then
-      v := r;
-      v.mem := default_mem_in;
-    end if;
-
-    nextr <= v;
-  end process;
-
-  update : process(clk)
-  begin
-    if rising_edge(clk) then
-      if setup = "11" then
-        r <= nextr;
-        pc <= nextr.f.pc;
-        memi <= nextr.mem;
-      else
-        r <= init_r;
-        pc <= (others => '0');
-        memi <= default_mem_in;
-        setup <= setup+1;
+      --fetch
+      if data_hazard = '0' and r.e.branch = '0' then
+        r.f.pc <= r.f.pc+1;
+      elsif data_hazard = '0' and r.e.branch = '1' then
+        r.f.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
       end if;
+
+
+      --decode
+      if data_hazard = '0' and r.e.branch = '0' then
+        r.d.pc <= r.f.pc;
+        r.d.op <= op;
+        case op is
+          when ST =>
+            r.d.dest <= (others => '0');
+            r.d.data <= unsigned(resize(
+              signed(inst(13 downto 0)), 32));
+            r.d.reg.a1 <= ra;
+            r.d.reg.a2 <= rb;
+          when ADD =>
+            r.d.dest <= ra;
+            r.d.data <= (others => '0');
+            r.d.reg.a1 <= rb;
+            r.d.reg.a2 <= rc;
+          when ADDI =>
+            r.d.dest <= ra;
+            r.d.data <= unsigned(resize(
+              signed(inst(13 downto 0)), 32));
+            r.d.reg.a1 <= rb;
+            r.d.reg.a2 <= (others => '0');
+          when BEQ =>
+            r.d.dest <= (others => '0');
+            r.d.data <= unsigned(resize(
+              signed(inst(13 downto 0)), 32));
+            r.d.reg.a1 <= ra;
+            r.d.reg.a2 <= rb;
+          when others =>
+            r.d <= default_d;
+        end case;
+      elsif data_hazard = '0' and r.e.branch = '1' then
+        r.d <= default_d;
+      end if;
+
+
+      --execute
+      r.e.op <= r.d.op;
+      r.e.dest <= r.d.dest;
+      case r.d.op is
+        when ST =>
+          r.e.alu.d1 <= reg_o.d2;
+          r.e.alu.d2 <= r.d.data;
+          r.e.alu.ctrl <= "000";
+          r.e.branch <= '0';
+          r.e.data <= reg_o.d1;
+        when ADD =>
+          r.e.alu.d1 <= reg_o.d1;
+          r.e.alu.d2 <= reg_o.d2;
+          r.e.alu.ctrl <= "000";
+          r.e.branch <= '0';
+        when ADDI =>
+          r.e.alu.d1 <= reg_o.d1;
+          r.e.alu.d2 <= r.d.data;
+          r.e.alu.ctrl <= "000";
+          r.e.branch <= '0';
+        when BEQ =>
+          r.e.alu.d1 <= resize(r.d.pc, 32);
+          r.e.alu.d2 <= r.d.data;
+          if reg_o.d1 = reg_o.d2 then
+            r.e.branch <= '1';
+          else
+            r.e.branch <= '0';
+          end if;
+        when others =>
+          r.e <= default_e;
+      end case;
+
+
+      --memory access
+      r.m.op <= r.e.op;
+      r.m.dest <= r.e.dest;
+      case r.e.op is
+        when ST =>
+          r.mem.a <= alu_o.d(19 downto 0);
+          r.mem.d <= r.e.data;
+          r.mem.go <= '1';
+          r.mem.we <= '1';
+        when ADD =>
+          r.m.data <= alu_o.d;
+          r.mem <= default_mem_in;
+        when ADDI =>
+          r.m.data <= alu_o.d;
+          r.mem <= default_mem_in;
+        when BEQ =>
+          r.m.data <= alu_o.d;
+          r.mem <= default_mem_in;
+        when others =>
+          r.m <= default_m;
+          r.mem <= default_mem_in;
+      end case;
+
+
+      -- write
+      case r.m.op is
+        when ADD | ADDI =>
+          r.w.reg.we <= '1';
+          r.w.reg.a <= r.m.dest;
+          r.w.reg.d <= r.m.data;
+        when BEQ =>
+          r.w.reg.we <= '0';
+        when others =>
+          r.w.reg.we <= '0';
+      end case;
+
+    else
+      r.mem <= default_mem_in;
     end if;
+
   end process;
 
 end arch_control;

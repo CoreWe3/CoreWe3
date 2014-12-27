@@ -114,17 +114,6 @@ package util is
             a => (others => '0'),
             d => (others => '0')));
 
-  type stall_t is record
-    d : std_logic;
-    e : std_logic;
-    m : std_logic;
-  end record stall_t;
-
-  constant default_stall : stall_t := (
-    d => '0',
-    e => '0',
-    m => '0');
-
   type cpu_t is record
     f : fetch_t;
     d : decode_t;
