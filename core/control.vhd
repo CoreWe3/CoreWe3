@@ -57,6 +57,7 @@ architecture arch_control of control is
 
 begin
   pc <= r.f.pc;
+  memi <= r.mem;
 
   reg : registers port map (
     clk => clk,
