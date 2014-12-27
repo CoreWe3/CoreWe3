@@ -96,12 +96,12 @@ architecture arch_memory_io of memory_io is
 
 begin
 
-  bram_u : bram port map (
-    clk => clk,
-    di => std_logic_vector(memi.d),
-    do => bram_o,
-    addr => std_logic_vector(memi.a(11 downto 0)),
-    we => bwe);
+  --bram_u : bram port map (
+  --  clk => clk,
+  --  di => std_logic_vector(memi.d),
+  --  do => bram_o,
+  --  addr => std_logic_vector(memi.a(11 downto 0)),
+  --  we => bwe);
 
   receiver : uart_receiver port map (
     clk => clk,

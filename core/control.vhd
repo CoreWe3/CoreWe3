@@ -32,25 +32,22 @@ architecture arch_control of control is
 
   function detect_data_hazard(rf : unsigned(5 downto 0);
                               v : cpu_t) return std_logic is
+    variable result : std_logic;
   begin
+    result := '0';
     if rf /= 0 then
       if v.data_hazard = '0' then
         if rf = v.d.dest or rf = v.e.dest or
           rf = v.m.dest then
-          return '1';
-        else
-          return '0';
+          result := '1';
         end if;
       else
         if rf = v.e.dest or rf = v.m.dest then
-          return '1';
-        else
-          return '0';
+          result := '1';
         end if;
       end if;
-    else
-      return '0';
     end if;
+    return result;
   end function detect_data_hazard;
 
   signal r : cpu_t := init_r;
