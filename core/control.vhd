@@ -84,67 +84,91 @@ begin
       rb := unsigned(inst(19 downto 14));
       rc := unsigned(inst(13 downto 8));
 
-      --detect data hazard
-      --case op is
-      --  when ST =>
-      --    data_hazard := detect_data_hazard(ra, v) or
-      --                   detect_data_hazard(rb, v);
-      --  when others =>
-      --    data_hazard := '0';
-      --end case;
-      data_hazard := '0';
+      -- detect data hazard
+      case op is
+        when ST =>
+          data_hazard := detect_data_hazard(ra, v) or
+                         detect_data_hazard(rb, v);
+        when ADD =>
+          data_hazard := detect_data_hazard(rb, v) or
+                         detect_data_hazard(rc, v);
+        when ADDI =>
+          data_hazard := detect_data_hazard(rb, v);
+        when BEQ =>
+          data_hazard := detect_data_hazard(ra, v) or
+                         detect_data_hazard(rb, v);
+        when others =>
+          data_hazard := '0';
+      end case;
+
+
 
       --ready
       if setup = 3 then
+
         --stall for memory access
         if r.mem.go = '0' and memo.busy = '0' then
 
+          if r.e.branch = '1' then
+            r.data_hazard <= '0';
+          else
+            r.data_hazard <= data_hazard;
+          end if;
+
           --fetch
-          if r.e.branch = '0' then
-            r.f.pc <= r.f.pc+1;
-          else -- elsif r.e.branch = '1' then
+          if r.e.branch = '1' then
             r.f.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
+          else
+            if data_hazard = '0' then
+              r.f.pc <= r.f.pc+1;
+            end if;
           end if;
 
 
           --decode
-          if r.e.branch = '0' then
-            r.d.pc <= r.f.pc;
-            r.d.op <= op;
-            case op is
-              when ST =>
-                r.d.dest <= (others => '0');
-                r.d.data <= unsigned(resize(
-                  signed(inst(13 downto 0)), 32));
-                r.d.reg.a1 <= ra;
-                r.d.reg.a2 <= rb;
-              when ADD =>
-                r.d.dest <= ra;
-                r.d.data <= (others => '0');
-                r.d.reg.a1 <= rb;
-                r.d.reg.a2 <= rc;
-              when ADDI =>
-                r.d.dest <= ra;
-                r.d.data <= unsigned(resize(
-                  signed(inst(13 downto 0)), 32));
-                r.d.reg.a1 <= rb;
-                r.d.reg.a2 <= (others => '0');
-              when BEQ =>
-                r.d.dest <= (others => '0');
-                r.d.data <= unsigned(resize(
-                  signed(inst(13 downto 0)), 32));
-                r.d.reg.a1 <= ra;
-                r.d.reg.a2 <= rb;
-              when others =>
-                r.d <= default_d;
-            end case;
-          else --elsif r.e.branch = '1' then
+          if r.e.branch = '1' then
             r.d <= default_d;
+          else
+            if data_hazard = '0' then
+              r.d.pc <= r.f.pc;
+              r.d.op <= op;
+              case op is
+                when ST =>
+                  r.d.dest <= (others => '0');
+                  r.d.data <= unsigned(resize(
+                    signed(inst(13 downto 0)), 32));
+                  r.d.reg.a1 <= ra;
+                  r.d.reg.a2 <= rb;
+                when ADD =>
+                  r.d.dest <= ra;
+                  r.d.data <= (others => '0');
+                  r.d.reg.a1 <= rb;
+                  r.d.reg.a2 <= rc;
+                when ADDI =>
+                  r.d.dest <= ra;
+                  r.d.data <= unsigned(resize(
+                    signed(inst(13 downto 0)), 32));
+                  r.d.reg.a1 <= rb;
+                  r.d.reg.a2 <= (others => '0');
+                when BEQ =>
+                  r.d.dest <= (others => '0');
+                  r.d.data <= unsigned(resize(
+                    signed(inst(13 downto 0)), 32));
+                  r.d.reg.a1 <= ra;
+                  r.d.reg.a2 <= rb;
+                when others =>
+                  r.d <= default_d;
+              end case;
+            else
+              r.d <= default_d;
+            end if;
           end if;
 
 
           --execute
-          if r.e.branch = '0' then
+          if r.e.branch = '1' then
+            r.e <= default_e;
+          else
             r.e.op <= r.d.op;
             r.e.dest <= r.d.dest;
             case r.d.op is
@@ -176,8 +200,6 @@ begin
                 r.e <= default_e;
             end case;
 
-          else
-            r.e <= default_e;
           end if;
 
           --memory access
