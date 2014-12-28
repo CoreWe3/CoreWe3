@@ -30,27 +30,18 @@ architecture arch_control of control is
       do : out reg_out_t);
   end component;
 
-  function detect_data_hazard(rf : unsigned(5 downto 0);
-                              v : cpu_t) return std_logic is
-    variable result : std_logic;
-  begin
-    result := '0';
-    if rf /= 0 then
-      if v.data_hazard = '0' then
-        if rf = v.d.dest or rf = v.e.dest or
-          rf = v.m.dest then
-          result := '1';
-        end if;
-      else
-        if rf = v.e.dest or rf = v.m.dest then
-          result := '1';
-        end if;
-      end if;
-    end if;
-    return result;
-  end function detect_data_hazard;
+  component detect_hazard is
+    port (
+      inst  : in std_logic_vector(31 downto 0);
+      dest1 : in unsigned(5 downto 0);
+      dest2 : in unsigned(5 downto 0);
+      dest3 : in unsigned(5 downto 0);
+      data_hazard : out std_logic);
+  end component;
+
 
   signal r : cpu_t := init_r;
+  signal data_hazard : std_logic;
   signal alu_o : alu_out_t;
   signal reg_o : reg_out_t;
   signal setup : unsigned(1 downto 0) := (others => '0');
@@ -69,39 +60,18 @@ begin
     di => r.e.alu,
     do => alu_o);
 
+  detect_hazard0 : detect_hazard port map (
+    inst => inst,
+    dest1 => r.d.dest,
+    dest2 => r.e.dest,
+    dest3 => r.m.dest,
+    data_hazard => data_hazard);
+
   main : process(clk)
     variable v : cpu_t;
-    variable op : std_logic_vector(5 downto 0);
-    variable ra, rb, rc : unsigned(5 downto 0);
-    variable data_hazard : std_logic;
     variable mem_stall : std_logic;
   begin
     if rising_edge(clk) then
-      v := r;
-
-      op := inst(31 downto 26);
-      ra := unsigned(inst(25 downto 20));
-      rb := unsigned(inst(19 downto 14));
-      rc := unsigned(inst(13 downto 8));
-
-      -- detect data hazard
-      case op is
-        when ST =>
-          data_hazard := detect_data_hazard(ra, v) or
-                         detect_data_hazard(rb, v);
-        when ADD =>
-          data_hazard := detect_data_hazard(rb, v) or
-                         detect_data_hazard(rc, v);
-        when ADDI =>
-          data_hazard := detect_data_hazard(rb, v);
-        when BEQ =>
-          data_hazard := detect_data_hazard(ra, v) or
-                         detect_data_hazard(rb, v);
-        when others =>
-          data_hazard := '0';
-      end case;
-
-
 
       --ready
       if setup = 3 then
@@ -109,11 +79,6 @@ begin
         --stall for memory access
         if r.mem.go = '0' and memo.busy = '0' then
 
-          if r.e.branch = '1' then
-            r.data_hazard <= '0';
-          else
-            r.data_hazard <= data_hazard;
-          end if;
 
           --fetch
           if r.e.branch = '1' then
@@ -124,38 +89,37 @@ begin
             end if;
           end if;
 
-
           --decode
           if r.e.branch = '1' then
             r.d <= default_d;
           else
             if data_hazard = '0' then
               r.d.pc <= r.f.pc;
-              r.d.op <= op;
-              case op is
+              r.d.op <= inst(31 downto 26);
+              case inst(31 downto 26) is
                 when ST =>
                   r.d.dest <= (others => '0');
                   r.d.data <= unsigned(resize(
                     signed(inst(13 downto 0)), 32));
-                  r.d.reg.a1 <= ra;
-                  r.d.reg.a2 <= rb;
+                  r.d.reg.a1 <= unsigned(inst(25 downto 20));
+                  r.d.reg.a2 <= unsigned(inst(19 downto 14));
                 when ADD =>
-                  r.d.dest <= ra;
+                  r.d.dest <= unsigned(inst(25 downto 20));
                   r.d.data <= (others => '0');
-                  r.d.reg.a1 <= rb;
-                  r.d.reg.a2 <= rc;
+                  r.d.reg.a1 <= unsigned(inst(19 downto 14));
+                  r.d.reg.a2 <= unsigned(inst(13 downto 8));
                 when ADDI =>
-                  r.d.dest <= ra;
+                  r.d.dest <= unsigned(inst(25 downto 20));
                   r.d.data <= unsigned(resize(
                     signed(inst(13 downto 0)), 32));
-                  r.d.reg.a1 <= rb;
+                  r.d.reg.a1 <= unsigned(inst(19 downto 14));
                   r.d.reg.a2 <= (others => '0');
                 when BEQ =>
                   r.d.dest <= (others => '0');
                   r.d.data <= unsigned(resize(
                     signed(inst(13 downto 0)), 32));
-                  r.d.reg.a1 <= ra;
-                  r.d.reg.a2 <= rb;
+                  r.d.reg.a1 <= unsigned(inst(25 downto 20));
+                  r.d.reg.a2 <= unsigned(inst(19 downto 14));
                 when others =>
                   r.d <= default_d;
               end case;

@@ -120,7 +120,6 @@ package util is
     e : execute_t;
     m : memory_access_t;
     w : write_back_t;
-    data_hazard : std_logic;
     mem: mem_in_t;
   end record cpu_t;
 
@@ -130,7 +129,6 @@ package util is
     e => default_e,
     m => default_m,
     w => default_w,
-    data_hazard => '0',
     mem => default_mem_in);
 
 end package util;
