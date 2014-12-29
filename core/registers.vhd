@@ -12,8 +12,7 @@ use work.util.all;
 entity registers is
   port (
     clk : in std_logic;
-    rdi : in rreg_in_t;
-    wdi : in wreg_in_t;
+    di : in reg_in_t;
     do : out reg_out_t);
 end registers;
 
@@ -42,13 +41,13 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if wdi.we = '1' and wdi.a /= 0 then
-        RAM(to_integer(wdi.a)) <= wdi.d;
+      if di.we = '1' and di.a1 /= 0 then
+        RAM(to_integer(di.a1)) <= di.d;
       end if;
     end if;
   end process;
 
-  do.d1 <= RAM(to_integer(rdi.a1));
-  do.d2 <= RAM(to_integer(rdi.a2));
+  do.d1 <= RAM(to_integer(di.a1));
+  do.d2 <= RAM(to_integer(di.a2));
 
 end arch_registers;
