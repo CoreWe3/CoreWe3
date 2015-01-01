@@ -1,8 +1,7 @@
 CoreWe3 コア
 
 とりあえず全命令実装し、fib.s fib_rec.s loopback.s
-stack_test.s memtest.sで
-正常に動くことを確認しました。
+stack_test.s memtest.sで正常に動くことを確認しました。
 基板上でで動かすには、まずこのフォルダ内にある
 すべての.vhdファイルと.ucfファイルをISEのプロジェクトに追加します。次に
 実行するコードをcore.vhd内のジェネリックパラメータCODEに
@@ -17,3 +16,7 @@ RS-232cを通して実行ファイルを送ることで、そのコードが読�
 $ make
 とすることで生成できます。
 debug/以下はデバッグに用いたコードです。
+
+* 汎用レジスタr63はハードウェアでlink registerとして使用
+JSUB Cx : sp-=1; [sp]=r63; r63=pc+1; pc=pc+Cx
+RET     : pc=r63; r63=[sp]; sp+=1

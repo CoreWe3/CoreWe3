@@ -10,7 +10,7 @@ architecture arch_core_main_tb of core_main_tb is
 
   component core_main
     generic (
-      CODE : string := "file/test.bin";
+      CODE : string := "file/fib_rec.bin";
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
@@ -22,6 +22,8 @@ architecture arch_core_main_tb of core_main_tb is
   end component;
 
   component SRAM
+    generic (
+      WIDTH : integer := 10);
     port (
       clk : in std_logic;
       ZD : inout std_logic_vector(31 downto 0);
@@ -64,12 +66,12 @@ begin
     ZA    => ZA    ,
     XWA   => XWA   );
 
-  
-  --sram_sim : SRAM port map (
-  --  clk => clk,
-  --  ZD => ZD,
-  --  ZA => ZA,
-  --  XWA => XWA);
+
+  sram_sim : SRAM port map (
+    clk => clk,
+    ZD => ZD,
+    ZA => ZA,
+    XWA => XWA);
 
   input_sim : input_simulator port map (
     clk => clk,

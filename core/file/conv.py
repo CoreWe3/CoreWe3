@@ -15,14 +15,20 @@ class Instruction:
         self.operand_l = [] # list of operand
         self.blabel_l = [] # list of branch label
         self.ilabel_al = [] # assoc list of immediate label
-        t = s.split()
+        tt = s.split()
+        t = []
+        for a in tt:
+            if a[0] == '#':
+                break
+            else:
+                t.append(a)
         if len(t) == 0: # empty line
             raise ParseError(s)
         elif len(t) == 1: # only label
             if t[0][0] == ':':
                 self.blabel_l.append(t[0])
             else:
-                raise ParseError(s)
+                self.opcode = t[0]
         elif len(t) == 2 and t[0][0] == '.': # immediate label
             self.ilabel_al.append(t[0], int(t[1], 0))
         else: # instruction
@@ -52,13 +58,16 @@ class Instruction:
                 imm = ilabel_d[self.operand_l[1]]
             else:
                 imm = int(self.operand_l[1], 0)
-            i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' + str(imm & 2**20-1))
-            i1.blabel_l = self.blabel_l
-            higher_bits = logical_rshift(imm,20)
-            if higher_bits != 0:
-                i2 = Instruction('LDIH ' + self.operand_l[0] + ' ' + str(higher_bits))
+            if imm >= 2**20:
+                i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' +
+                                 str(imm & 2**15-1))
+                i1.blabel_l = self.blabel_l
+                i2 = Instruction('LDIH ' + self.operand_l[0] + ' ' +
+                                 str(logical_rshift(imm, 16)))
                 return [i1, i2]
             else:
+                i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' +
+                                 str(imm))
                 return [i1]
         else:
             return [self]
