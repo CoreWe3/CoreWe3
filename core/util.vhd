@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package util is
   constant ADDR_WIDTH : integer := 6;
 
+  constant LD   : std_logic_vector(5 downto 0) := "000000";
   constant ST   : std_logic_vector(5 downto 0) := "000001";
   constant LDA  : std_logic_vector(5 downto 0) := "000010";
   constant STA  : std_logic_vector(5 downto 0) := "000011";

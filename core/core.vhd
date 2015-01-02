@@ -30,7 +30,7 @@ end core;
 architecture arch_core of core is
   component core_main is
     generic (
-      CODE : string := "file/fib_rec.bin";
+      CODE : string := "file/loopback.bin";
       wtime : std_logic_vector(15 downto 0) := x"023D");
     port (
       clk   : in    std_logic;

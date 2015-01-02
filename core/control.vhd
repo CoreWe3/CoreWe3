@@ -91,6 +91,12 @@ begin
               r.d.pc <= r.f.pc;
               r.d.op <= inst(31 downto 26);
               case inst(31 downto 26) is
+                when LD =>
+                  r.d.dest <= unsigned(inst(25 downto 20));
+                  r.d.data <= unsigned(resize(
+                    signed(inst(13 downto 0)), 32));
+                  r.d.a1 <= unsigned(inst(19 downto 14));
+                  r.d.a2 <= (others => '0');
                 when ST =>
                   r.d.dest <= (others => '0');
                   r.d.data <= unsigned(resize(
@@ -163,12 +169,19 @@ begin
               end case;
             end if;
 
+
             --execute
             if data_hazard = '0' then
               r.e.op <= r.d.op;
               r.e.dest <= r.d.dest;
               r.e.pc <= r.d.pc;
               case r.d.op is
+                when LD =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "000";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
                 when ST =>
                   r.e.alu.d1 <= reg_o.d2;
                   r.e.alu.d2 <= r.d.data;
@@ -253,7 +266,7 @@ begin
                 r.mem.go <= '1';
                 r.mem.we <= '1';
                 r.m.data <= (others => '-');
-              when LDA =>
+              when LD | LDA =>
                 r.mem.a <= alu_o.d(19 downto 0);
                 r.mem.d <= (others => '-');
                 r.mem.go <= '1';
@@ -303,7 +316,7 @@ begin
 
             -- write
             case r.m.op is
-              when LDA | LDIH | LDIL | ADD | SUB | ADDI |
+              when LD | LDA | LDIH | LDIL | ADD | SUB | ADDI |
                 JSUB | RET | POP =>
                 r.reg.we <= '1';
                 r.reg.a1 <= r.m.dest;
@@ -331,7 +344,7 @@ begin
 
           -- read memory
           case r.m.op is
-            when LDA | POP | RET =>
+            when LD | LDA | POP | RET =>
               if r.mem.go = '0' and memo.busy = '0' then
                 r.m.data <= memo.d;
                 r.state <= '0';
