@@ -68,6 +68,7 @@ class Instruction:
             else:
                 i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' +
                                  str(imm))
+                i1.blabel_l = self.blabel_l
                 return [i1]
         else:
             return [self]
@@ -76,7 +77,7 @@ class Instruction:
     def conv_bin(self, ilabel_d, blabel_d):
         opcode_dic = {'LD'  :0x0,
                       'ST'  :0x1,
-                      'LDI' :0x2,
+                      'LDA' :0x2,
                       'STA' :0x3,
                       'LDIH':0x4,
                       'LDIL':0x5,

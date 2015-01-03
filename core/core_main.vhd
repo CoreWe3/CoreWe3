@@ -7,7 +7,6 @@ use work.util.all;
 
 entity core_main is
   generic (
-    CODE  : string := "code.bin";
     wtime : std_logic_vector(15 downto 0) := x"023D");
   port (
     clk   : in    std_logic;
@@ -21,8 +20,6 @@ end core_main;
 architecture arch_core_main of core_main is
 
   component init_code_rom
-    generic (
-      CODE  : string := CODE);
     port (
       inst : out std_logic_vector(31 downto 0);
       pc : in unsigned(ADDR_WIDTH-1 downto 0));

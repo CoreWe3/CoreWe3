@@ -123,22 +123,27 @@ begin
                   r.d.a2 <= (others => '0');
                 when LDIL =>
                   r.d.dest <= unsigned(inst(25 downto 20));
-                  r.d.data <= unsigned(resize(
-                    signed(inst(19 downto 0)), 32));
+                  r.d.data <= resize(unsigned(inst(19 downto 0)), 32);
                   r.d.a1 <= (others => '0');
                   r.d.a2 <= (others => '0');
-                when ADD | SUB =>
+                when ADD | SUB | A_ND | O_R | X_OR | S_HL | S_HR |
+                  FADD | FMUL =>
                   r.d.dest <= unsigned(inst(25 downto 20));
                   r.d.data <= (others => '-');
                   r.d.a1 <= unsigned(inst(19 downto 14));
                   r.d.a2 <= unsigned(inst(13 downto 8));
-                when ADDI =>
+                when FNEG =>
+                  r.d.dest <= unsigned(inst(25 downto 20));
+                  r.d.data <= (others => '-');
+                  r.d.a1 <= unsigned(inst(19 downto 14));
+                  r.d.a2 <= (others => '0');
+                when ADDI | SHLI | SHRI =>
                   r.d.dest <= unsigned(inst(25 downto 20));
                   r.d.data <= unsigned(resize(
                     signed(inst(13 downto 0)), 32));
                   r.d.a1 <= unsigned(inst(19 downto 14));
                   r.d.a2 <= (others => '0');
-                when BEQ =>
+                when BEQ | BLE | BLT | BFLE =>
                   r.d.dest <= (others => '0');
                   r.d.data <= unsigned(resize(
                     signed(inst(13 downto 0)), 32));
@@ -212,10 +217,58 @@ begin
                   r.e.alu.ctrl <= "001";
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
+                when FNEG =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= x"80000000";
+                  r.e.alu.ctrl <= "100";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
                 when ADDI =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when A_ND =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= reg_o.d2;
+                  r.e.alu.ctrl <= "010";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when O_R =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= reg_o.d2;
+                  r.e.alu.ctrl <= "011";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when X_OR =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= reg_o.d2;
+                  r.e.alu.ctrl <= "100";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when S_HL =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= reg_o.d2;
+                  r.e.alu.ctrl <= "101";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when S_HR =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= reg_o.d2;
+                  r.e.alu.ctrl <= "110";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when SHLI =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "101";
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when SHRI =>
+                  r.e.alu.d1 <= reg_o.d1;
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "110";
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when BEQ =>
@@ -226,6 +279,44 @@ begin
                     r.e.branch <= '1';
                   else
                     r.e.branch <= '0';
+                  end if;
+                  r.e.data <= (others => '-');
+                when BLE =>
+                  r.e.alu.d1 <= resize(r.d.pc, 32);
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "000";
+                  if reg_o.d1 <= reg_o.d2 then
+                    r.e.branch <= '1';
+                  else
+                    r.e.branch <= '0';
+                  end if;
+                  r.e.data <= (others => '-');
+                when BLT =>
+                  r.e.alu.d1 <= resize(r.d.pc, 32);
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "000";
+                  if reg_o.d1 < reg_o.d2 then
+                    r.e.branch <= '1';
+                  else
+                    r.e.branch <= '0';
+                  end if;
+                  r.e.data <= (others => '-');
+                when BFLE =>
+                  r.e.alu.d1 <= resize(r.d.pc, 32);
+                  r.e.alu.d2 <= r.d.data;
+                  r.e.alu.ctrl <= "000";
+                  if reg_o.d1 < reg_o.d2 then
+                    if reg_o.d1(31) = '1' and reg_o.d1(31) ='1' then
+                      r.e.branch <= '0';
+                    else
+                      r.e.branch <= '1';
+                    end if;
+                  else
+                    if reg_o.d1(31) = '1' and reg_o.d1(31) ='1' then
+                      r.e.branch <= '1';
+                    else
+                      r.e.branch <= '0';
+                    end if;
                   end if;
                   r.e.data <= (others => '-');
                 when JSUB =>
@@ -276,10 +367,11 @@ begin
                 r.m.data <= alu_o.d(15 downto 0) &
                             r.e.data(15 downto 0);
                 r.mem <= default_mem_in;
-              when LDIL | ADD | SUB | ADDI =>
+              when LDIL | ADD | SUB | FNEG | ADDI | A_ND | O_R |
+                X_OR | S_HL | S_HR | SHLI | SHRI =>
                 r.m.data <= alu_o.d;
                 r.mem <= default_mem_in;
-              when BEQ =>
+              when BEQ | BLE | BLT | BFLE =>
                 r.m.data <= (others => '-');
                 r.mem <= default_mem_in;
               when JSUB =>
@@ -316,8 +408,9 @@ begin
 
             -- write
             case r.m.op is
-              when LD | LDA | LDIH | LDIL | ADD | SUB | ADDI |
-                JSUB | RET | POP =>
+              when LD | LDA | LDIH | LDIL | ADD | SUB | FNEG |
+                A_ND | O_R | X_OR | S_HL | S_HR | SHLI | SHRI |
+                ADDI | JSUB | RET | POP =>
                 r.reg.we <= '1';
                 r.reg.a1 <= r.m.dest;
                 r.reg.d <= r.m.data;

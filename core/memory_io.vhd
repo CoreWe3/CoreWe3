@@ -72,7 +72,9 @@ architecture arch_memory_io of memory_io is
 
   signal state : std_logic_vector(7 downto 0) := x"00";
 
+  signal bram_i : std_logic_vector(31 downto 0);
   signal bram_o : std_logic_vector(31 downto 0);
+  signal bram_a : std_logic_vector(11 downto 0);
   signal bwe : std_logic := '0';
   signal buf : std_logic_vector(31 downto 0);
 
@@ -96,12 +98,12 @@ architecture arch_memory_io of memory_io is
 
 begin
 
-  --bram_u : bram port map (
-  --  clk => clk,
-  --  di => std_logic_vector(memi.d),
-  --  do => bram_o,
-  --  addr => std_logic_vector(memi.a(11 downto 0)),
-  --  we => bwe);
+  bram_u : bram port map (
+    clk => clk,
+    di => bram_i,
+    do => bram_o,
+    addr => bram_a,
+    we => bwe);
 
   receiver : uart_receiver port map (
     clk => clk,
@@ -158,6 +160,8 @@ begin
                 XWA <= '1';
                 tenq <= '0';
                 state <= x"00";
+                bram_i <= std_logic_vector(memi.d);
+                bram_a <= std_logic_vector(memi.a);
               else -- sram
                 bwe <= '0';
                 XWA <= '0';
@@ -179,6 +183,7 @@ begin
                 end if;
               elsif memi.a(19 downto 12) = x"EF" then -- bram
                 rdeq <= '0';
+                bram_a <= std_logic_vector(memi.a);
                 state <= x"30";
               else -- sram
                 rdeq <= '0';
@@ -198,6 +203,8 @@ begin
           ZD <= buf;
           state <= x"00";
         when x"30" => --read bram
+          state <= x"31";
+        when x"31" => --read bram
           memo.d <= unsigned(bram_o);
           state <= x"00";
         when x"40" => --read sram

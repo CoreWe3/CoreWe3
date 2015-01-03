@@ -13,12 +13,25 @@ package util is
   constant LDIL : std_logic_vector(5 downto 0) := "000101";
   constant ADD  : std_logic_vector(5 downto 0) := "000110";
   constant SUB  : std_logic_vector(5 downto 0) := "000111";
+  constant FNEG : std_logic_vector(5 downto 0) := "001000";
   constant ADDI : std_logic_vector(5 downto 0) := "001001";
+  constant A_ND : std_logic_vector(5 downto 0) := "001010";
+  constant O_R  : std_logic_vector(5 downto 0) := "001011";
+  constant X_OR : std_logic_vector(5 downto 0) := "001100";
+  constant S_HL : std_logic_vector(5 downto 0) := "001101";
+  constant S_HR : std_logic_vector(5 downto 0) := "001110";
+  constant SHLI : std_logic_vector(5 downto 0) := "001111";
+  constant SHRI : std_logic_vector(5 downto 0) := "010000";
   constant BEQ  : std_logic_vector(5 downto 0) := "010001";
+  constant BLE  : std_logic_vector(5 downto 0) := "010010";
+  constant BLT  : std_logic_vector(5 downto 0) := "010011";
+  constant BFLE : std_logic_vector(5 downto 0) := "010100";
   constant JSUB : std_logic_vector(5 downto 0) := "010101";
   constant RET  : std_logic_vector(5 downto 0) := "010110";
   constant PUSH : std_logic_vector(5 downto 0) := "010111";
   constant POP  : std_logic_vector(5 downto 0) := "011000";
+  constant FADD : std_logic_vector(5 downto 0) := "011001";
+  constant FMUL : std_logic_vector(5 downto 0) := "011010";
 
   type mem_out_t is record
     d : unsigned(31 downto 0);

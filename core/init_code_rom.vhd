@@ -9,7 +9,7 @@ use work.util.all;
 
 entity init_code_rom is
   generic(
-    CODE  : string := "code.bin");
+    CODE  : string := "file/code.bin");
   port (
     inst : out std_logic_vector(31 downto 0);
     pc : in unsigned(ADDR_WIDTH-1 downto 0));
