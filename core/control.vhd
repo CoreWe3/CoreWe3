@@ -38,11 +38,29 @@ architecture arch_control of control is
       data_hazard : out std_logic);
   end component;
 
+  component fadd is
+    port (
+      clk : in std_logic;
+      a   : in  std_logic_vector(31 downto 0);
+      b   : in  std_logic_vector(31 downto 0);
+      o   : out std_logic_vector(31 downto 0));
+  end component;
+
+  component fmul is
+    port (
+      clk : in std_logic;
+      a : in  std_logic_vector(31 downto 0);
+      b : in  std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
 
   signal r : cpu_t := init_r;
   signal data_hazard : std_logic := '0';
   signal alu_o : alu_out_t;
   signal reg_o : reg_out_t;
+  signal fadd_o : std_logic_vector(31 downto 0);
+  signal fmul_o : std_logic_vector(31 downto 0);
   signal setup : unsigned(1 downto 0) := (others => '0');
 
 begin
@@ -64,6 +82,18 @@ begin
     dest1 => r.e.dest,
     dest2 => r.m.dest,
     data_hazard => data_hazard);
+
+  fadd0 : fadd port map (
+    clk => clk,
+    a => std_logic_vector(r.e.fpu.d1),
+    b => std_logic_vector(r.e.fpu.d2),
+    o => fadd_o);
+
+  fmul0 : fmul port map (
+    clk => clk,
+    a => std_logic_vector(r.e.fpu.d1),
+    b => std_logic_vector(r.e.fpu.d2),
+    o => fmul_o);
 
   main : process(clk)
   begin
@@ -126,8 +156,8 @@ begin
                   r.d.data <= resize(unsigned(inst(19 downto 0)), 32);
                   r.d.a1 <= (others => '0');
                   r.d.a2 <= (others => '0');
-                when ADD | SUB | A_ND | O_R | X_OR | S_HL | S_HR |
-                  FADD | FMUL =>
+                when ADD | SUB | A_ND | O_R | X_OR |
+                  S_HL | S_HR | F_ADD | F_MUL =>
                   r.d.dest <= unsigned(inst(25 downto 20));
                   r.d.data <= (others => '-');
                   r.d.a1 <= unsigned(inst(19 downto 14));
@@ -185,96 +215,112 @@ begin
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when ST =>
                   r.e.alu.d1 <= reg_o.d2;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= reg_o.d1;
                 when LDA | LDIH | LDIL =>
                   r.e.alu.d1 <= r.d.data;
                   r.e.alu.d2 <= (others => '0');
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= reg_o.d1;
                 when STA =>
                   r.e.alu.d1 <= r.d.data;
                   r.e.alu.d2 <= (others => '0');
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= reg_o.d1;
                 when ADD =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when SUB =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "001";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when FNEG =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= x"80000000";
                   r.e.alu.ctrl <= "100";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when ADDI =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when A_ND =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "010";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when O_R =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "011";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when X_OR =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "100";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when S_HL =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "101";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when S_HR =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= reg_o.d2;
                   r.e.alu.ctrl <= "110";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when SHLI =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "101";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when SHRI =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "110";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when BEQ =>
                   r.e.alu.d1 <= resize(r.d.pc, 32);
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   if reg_o.d1 = reg_o.d2 then
                     r.e.branch <= '1';
                   else
@@ -285,6 +331,7 @@ begin
                   r.e.alu.d1 <= resize(r.d.pc, 32);
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   if reg_o.d1 <= reg_o.d2 then
                     r.e.branch <= '1';
                   else
@@ -295,6 +342,7 @@ begin
                   r.e.alu.d1 <= resize(r.d.pc, 32);
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   if reg_o.d1 < reg_o.d2 then
                     r.e.branch <= '1';
                   else
@@ -305,7 +353,8 @@ begin
                   r.e.alu.d1 <= resize(r.d.pc, 32);
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
-                  if reg_o.d1 < reg_o.d2 then
+                  r.e.fpu <= default_fpu_in;
+                  if signed(reg_o.d1) < signed(reg_o.d2) then
                     if reg_o.d1(31) = '1' and reg_o.d1(31) ='1' then
                       r.e.branch <= '0';
                     else
@@ -323,22 +372,32 @@ begin
                   r.e.alu.d1 <= resize(r.d.pc, 32);
                   r.e.alu.d2 <= r.d.data;
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '1';
                   r.e.data <= reg_o.d1;
                 when RET =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= (others => '0');
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '1';
                   r.e.data <= (others => '-');
                 when PUSH =>
                   r.e.alu.d1 <= reg_o.d1;
                   r.e.alu.d2 <= (others => '0');
                   r.e.alu.ctrl <= "000";
+                  r.e.fpu <= default_fpu_in;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when POP =>
                   r.e.alu <= default_alu;
+                  r.e.fpu <= default_fpu_in;
+                  r.e.branch <= '0';
+                  r.e.data <= (others => '-');
+                when F_ADD | F_MUL =>
+                  r.e.alu <= default_alu;
+                  r.e.fpu.d1 <= reg_o.d1;
+                  r.e.fpu.d2 <= reg_o.d2;
                   r.e.branch <= '0';
                   r.e.data <= (others => '-');
                 when others =>
@@ -357,23 +416,28 @@ begin
                 r.mem.go <= '1';
                 r.mem.we <= '1';
                 r.m.data <= (others => '-');
+                r.m.comp <= '-';
               when LD | LDA =>
                 r.mem.a <= alu_o.d(19 downto 0);
                 r.mem.d <= (others => '-');
                 r.mem.go <= '1';
                 r.mem.we <= '0';
                 r.m.data <= (others => '-');
+                r.m.comp <= '-';
               when LDIH =>
                 r.m.data <= alu_o.d(15 downto 0) &
                             r.e.data(15 downto 0);
                 r.mem <= default_mem_in;
+                r.m.comp <= '-';
               when LDIL | ADD | SUB | FNEG | ADDI | A_ND | O_R |
                 X_OR | S_HL | S_HR | SHLI | SHRI =>
                 r.m.data <= alu_o.d;
                 r.mem <= default_mem_in;
+                r.m.comp <= '-';
               when BEQ | BLE | BLT | BFLE =>
                 r.m.data <= (others => '-');
                 r.mem <= default_mem_in;
+                r.m.comp <= '-';
               when JSUB =>
                 r.mem.a <= r.sp-1;
                 r.mem.d <= r.e.data;
@@ -381,6 +445,7 @@ begin
                 r.mem.we <= '1';
                 r.m.data <= resize(r.e.pc+1, 32);
                 r.sp <= r.sp-1;
+                r.m.comp <= '-';
               when RET =>
                 r.mem.a <= r.sp;
                 r.mem.d <= (others => '-');
@@ -388,6 +453,7 @@ begin
                 r.mem.we <= '0';
                 r.m.data <= (others => '-');
                 r.sp <= r.sp+1;
+                r.m.comp <= '-';
               when PUSH =>
                 r.mem.a <= r.sp-1;
                 r.mem.d <= alu_o.d;
@@ -395,6 +461,7 @@ begin
                 r.mem.we <= '1';
                 r.m.data <= (others => '-');
                 r.sp <= r.sp-1;
+                r.m.comp <= '-';
               when POP =>
                 r.mem.a <= r.sp;
                 r.mem.d <= (others => '-');
@@ -402,15 +469,22 @@ begin
                 r.mem.we <= '0';
                 r.m.data <= (others => '-');
                 r.sp <= r.sp+1;
+                r.m.comp <= '-';
+              when F_ADD | F_MUL =>
+                r.mem <= default_mem_in;
+                r.m.data <= (others => '-');
+                r.m.comp <= '0';
               when others =>
                 r.mem <= default_mem_in;
+                r.m.data <= (others => '-');
+                r.m.comp <= '-';
             end case;
 
             -- write
             case r.m.op is
               when LD | LDA | LDIH | LDIL | ADD | SUB | FNEG |
                 A_ND | O_R | X_OR | S_HL | S_HR | SHLI | SHRI |
-                ADDI | JSUB | RET | POP =>
+                ADDI | JSUB | RET | POP | F_ADD | F_MUL =>
                 r.reg.we <= '1';
                 r.reg.a1 <= r.m.dest;
                 r.reg.d <= r.m.data;
@@ -435,14 +509,32 @@ begin
           r.reg.a1 <= r.d.a1;
           r.reg.a2 <= r.d.a2;
 
-          -- read memory
+          -- read memory and fpu
           case r.m.op is
             when LD | LDA | POP | RET =>
               if r.mem.go = '0' and memo.busy = '0' then
                 r.m.data <= memo.d;
                 r.state <= '0';
+                r.m.comp <= '-';
               else
                 r.m.data <= (others => '-');
+                r.m.comp <= '-';
+              end if;
+            when F_ADD =>
+              if r.m.comp = '1' then
+                r.m.data <= unsigned(fadd_o);
+                r.state <= '0';
+                r.m.comp <= '-';
+              else
+                r.m.comp <= '1';
+              end if;
+            when F_MUL =>
+              if r.m.comp = '1' then
+                r.m.data <= unsigned(fmul_o);
+                r.state <= '0';
+                r.m.comp <= '-';
+              else
+                r.m.comp <= '1';
               end if;
             when others =>
               r.state <= '0';

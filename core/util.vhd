@@ -3,35 +3,35 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package util is
-  constant ADDR_WIDTH : integer := 6;
+  constant ADDR_WIDTH : integer := 10;
 
-  constant LD   : std_logic_vector(5 downto 0) := "000000";
-  constant ST   : std_logic_vector(5 downto 0) := "000001";
-  constant LDA  : std_logic_vector(5 downto 0) := "000010";
-  constant STA  : std_logic_vector(5 downto 0) := "000011";
-  constant LDIH : std_logic_vector(5 downto 0) := "000100";
-  constant LDIL : std_logic_vector(5 downto 0) := "000101";
-  constant ADD  : std_logic_vector(5 downto 0) := "000110";
-  constant SUB  : std_logic_vector(5 downto 0) := "000111";
-  constant FNEG : std_logic_vector(5 downto 0) := "001000";
-  constant ADDI : std_logic_vector(5 downto 0) := "001001";
-  constant A_ND : std_logic_vector(5 downto 0) := "001010";
-  constant O_R  : std_logic_vector(5 downto 0) := "001011";
-  constant X_OR : std_logic_vector(5 downto 0) := "001100";
-  constant S_HL : std_logic_vector(5 downto 0) := "001101";
-  constant S_HR : std_logic_vector(5 downto 0) := "001110";
-  constant SHLI : std_logic_vector(5 downto 0) := "001111";
-  constant SHRI : std_logic_vector(5 downto 0) := "010000";
-  constant BEQ  : std_logic_vector(5 downto 0) := "010001";
-  constant BLE  : std_logic_vector(5 downto 0) := "010010";
-  constant BLT  : std_logic_vector(5 downto 0) := "010011";
-  constant BFLE : std_logic_vector(5 downto 0) := "010100";
-  constant JSUB : std_logic_vector(5 downto 0) := "010101";
-  constant RET  : std_logic_vector(5 downto 0) := "010110";
-  constant PUSH : std_logic_vector(5 downto 0) := "010111";
-  constant POP  : std_logic_vector(5 downto 0) := "011000";
-  constant FADD : std_logic_vector(5 downto 0) := "011001";
-  constant FMUL : std_logic_vector(5 downto 0) := "011010";
+  constant LD    : std_logic_vector(5 downto 0) := "000000";
+  constant ST    : std_logic_vector(5 downto 0) := "000001";
+  constant LDA   : std_logic_vector(5 downto 0) := "000010";
+  constant STA   : std_logic_vector(5 downto 0) := "000011";
+  constant LDIH  : std_logic_vector(5 downto 0) := "000100";
+  constant LDIL  : std_logic_vector(5 downto 0) := "000101";
+  constant ADD   : std_logic_vector(5 downto 0) := "000110";
+  constant SUB   : std_logic_vector(5 downto 0) := "000111";
+  constant FNEG  : std_logic_vector(5 downto 0) := "001000";
+  constant ADDI  : std_logic_vector(5 downto 0) := "001001";
+  constant A_ND  : std_logic_vector(5 downto 0) := "001010";
+  constant O_R   : std_logic_vector(5 downto 0) := "001011";
+  constant X_OR  : std_logic_vector(5 downto 0) := "001100";
+  constant S_HL  : std_logic_vector(5 downto 0) := "001101";
+  constant S_HR  : std_logic_vector(5 downto 0) := "001110";
+  constant SHLI  : std_logic_vector(5 downto 0) := "001111";
+  constant SHRI  : std_logic_vector(5 downto 0) := "010000";
+  constant BEQ   : std_logic_vector(5 downto 0) := "010001";
+  constant BLE   : std_logic_vector(5 downto 0) := "010010";
+  constant BLT   : std_logic_vector(5 downto 0) := "010011";
+  constant BFLE  : std_logic_vector(5 downto 0) := "010100";
+  constant JSUB  : std_logic_vector(5 downto 0) := "010101";
+  constant RET   : std_logic_vector(5 downto 0) := "010110";
+  constant PUSH  : std_logic_vector(5 downto 0) := "010111";
+  constant POP   : std_logic_vector(5 downto 0) := "011000";
+  constant F_ADD : std_logic_vector(5 downto 0) := "011001";
+  constant F_MUL : std_logic_vector(5 downto 0) := "011010";
 
   type mem_out_t is record
     d : unsigned(31 downto 0);
@@ -65,6 +65,15 @@ package util is
   type alu_out_t is record
     d : unsigned(31 downto 0);
   end record alu_out_t;
+
+  type fpu_in_t is record
+    d1 : unsigned(31 downto 0);
+    d2 : unsigned(31 downto 0);
+  end record fpu_in_t;
+
+  constant default_fpu_in : fpu_in_t := (
+    d1 => (others => '-'),
+    d2 => (others => '-'));
 
   type reg_in_t is record
     we : std_logic;
@@ -116,6 +125,7 @@ package util is
     data   : unsigned(31 downto 0);
     branch : std_logic;
     alu    : alu_in_t;
+    fpu    : fpu_in_t;
   end record execute_t;
 
   constant default_e : execute_t := (
@@ -124,18 +134,22 @@ package util is
     dest => (others => '0'),
     data => (others => '-'),
     branch => '0',
-    alu => default_alu);
+    alu => default_alu,
+    fpu => default_fpu_in);
 
   type memory_access_t is record
     op     : std_logic_vector(5 downto 0);
     dest   : unsigned(5 downto 0);
     data   : unsigned(31 downto 0);
+    comp   : std_logic;
   end record memory_access_t;
 
   constant default_m : memory_access_t := (
     op => ADDI,
     dest => (others => '0'),
-    data => (others => '-'));
+    data => (others => '-'),
+    comp => '-');
+
 
   type cpu_t is record
     state : std_logic;

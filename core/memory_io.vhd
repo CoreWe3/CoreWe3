@@ -161,7 +161,7 @@ begin
                 tenq <= '0';
                 state <= x"00";
                 bram_i <= std_logic_vector(memi.d);
-                bram_a <= std_logic_vector(memi.a);
+                bram_a <= std_logic_vector(memi.a(11 downto 0));
               else -- sram
                 bwe <= '0';
                 XWA <= '0';
@@ -183,7 +183,7 @@ begin
                 end if;
               elsif memi.a(19 downto 12) = x"EF" then -- bram
                 rdeq <= '0';
-                bram_a <= std_logic_vector(memi.a);
+                bram_a <= std_logic_vector(memi.a(11 downto 0));
                 state <= x"30";
               else -- sram
                 rdeq <= '0';

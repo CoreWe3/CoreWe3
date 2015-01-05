@@ -170,8 +170,10 @@ class Assembly:
         self.ilabel_d = dict() # dictionary of immediate label
         while(True):
             s = fin.readline();
-            if s.strip() == '':
+            if s == '':
                 break
+            if s.strip() == '':
+                continue
             i = Instruction(s)
             while i.opcode == None:
                 i.append(Instruction(fin.readline()));

@@ -4,7 +4,7 @@ WORK = $(ROOT)/simulator/bin
 BUILDER = $(ROOT)/lib/cw3c.sh
 COMPILER = $(ROOT)/compiler/min-caml
 RAYTR = $(ROOT)/raytracer-ocaml
-ADDRWIDTH = 6
+ADDRWIDTH = 10
 MLSOURCE = newton.ml mandelbrot.ml graph.ml
 SSOURCE = fib.s fib_rec.s loopback.s stack_test.s memtest.s aaa.s test.s
 TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=) min-rt2
@@ -27,8 +27,8 @@ min-rt2.ml:
 	cp $(WORK)/_$@ $@
 
 %.bin: %.s
-	./conv.py $< -t $(ADDRWIDTH) -o $@ # && \
-#	cp $@ ~/cpu_core/core_main_tb/
+	./conv.py $< -t $(ADDRWIDTH) -o $@  && \
+	cp $@ code.bin
 
 %: %.s
 	./conv.py $< -o $@
