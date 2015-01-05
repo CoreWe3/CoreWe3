@@ -30,8 +30,8 @@ typedef union{
 } INS;
 
 
-#define ISANUM 0x1B
-const char* names[] = {"LD","ST","LDA","STA","LDIH","LDIL","ADD","SUB","FNEG","ADDI","AND","OR","XOR","SHL","SHR","SHLI","SHRI","BEQ","BLE","BLT","BFLE","JSUB","RET","PUSH","POP","LDI","FX86"};
+#define ISANUM 0x1C
+const char* names[] = {"LD","ST","LDA","STA","LDIH","LDIL","ADD","SUB","FNEG","ADDI","AND","OR","XOR","SHL","SHR","SHLI","SHRI","BEQ","BLE","BLT","BFLE","JSUB","RET","PUSH","POP","FADD","FMUL","LDI"};
 #define LD   0x0
 #define ST   0x1
 #define LDA  0x2
@@ -57,8 +57,9 @@ const char* names[] = {"LD","ST","LDA","STA","LDIH","LDIL","ADD","SUB","FNEG","A
 #define RET  0x16
 #define PUSH 0x17
 #define POP  0x18
-#define LDI  0x19
-#define FX86 0x1A
+#define FADD 0x19
+#define FMUL 0x1A
+#define LDI  0x1B
 
 #define REGNUM 64
 const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16","r17","r18","r19","r20","r21","r22","r23","r24","r25","r26","r27","r28","r29","r30","r31","r32","r33","r34","r35","r36","r37","r38","r39","r40","r41","r42","r43","r44","r45","r46","r47","r48","r49","r50","r51","r52","r53","r54","r55","r56","r57","r58","r59","r60","r61","r62","r63"};
