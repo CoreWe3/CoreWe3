@@ -30,7 +30,7 @@ class Instruction:
             else:
                 self.opcode = t[0]
         elif len(t) == 2 and t[0][0] == '.': # immediate label
-            self.ilabel_al.append(t[0], int(t[1], 0))
+            self.ilabel_al.append((t[0], int(t[1], 0)))
         else: # instruction
             if t[0][0] == ':':
                 self.blabel_l.append(t[0])
@@ -50,20 +50,20 @@ class Instruction:
         self.operand_l = i.operand_l
 
     def conv_pseudo(self, ilabel_d):
-        def logical_rshift(x, n):
-            return (x % 0x100000000) >> n
+        import struct
 
         if self.opcode == 'LDI':
-            if self.operand_l[1] == '.':
+            if self.operand_l[1][0] == '.':
                 imm = ilabel_d[self.operand_l[1]]
             else:
                 imm = int(self.operand_l[1], 0)
-            if imm >= 2**20:
+            if imm < 0 or 2**20 <= imm:
+                low, high = struct.unpack('<HH',struct.pack('<i',imm))
                 i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' +
-                                 str(imm & 2**15-1))
+                                 str(low))
                 i1.blabel_l = self.blabel_l
                 i2 = Instruction('LDIH ' + self.operand_l[0] + ' ' +
-                                 str(logical_rshift(imm, 16)))
+                                 str(high))
                 return [i1, i2]
             else:
                 i1 = Instruction('LDIL ' + self.operand_l[0] + ' ' +

@@ -355,13 +355,13 @@ begin
                   r.e.alu.ctrl <= "000";
                   r.e.fpu <= default_fpu_in;
                   if signed(reg_o.d1) < signed(reg_o.d2) then
-                    if reg_o.d1(31) = '1' and reg_o.d1(31) ='1' then
+                    if reg_o.d1(31) = '1' and reg_o.d2(31) = '1' then
                       r.e.branch <= '0';
                     else
                       r.e.branch <= '1';
                     end if;
                   else
-                    if reg_o.d1(31) = '1' and reg_o.d1(31) ='1' then
+                    if reg_o.d1(31) = '1' and reg_o.d2(31) = '1' then
                       r.e.branch <= '1';
                     else
                       r.e.branch <= '0';

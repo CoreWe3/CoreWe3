@@ -6,7 +6,7 @@ COMPILER = $(ROOT)/compiler/min-caml
 RAYTR = $(ROOT)/raytracer-ocaml
 ADDRWIDTH = 10
 MLSOURCE = newton.ml mandelbrot.ml graph.ml
-SSOURCE = fib.s fib_rec.s loopback.s stack_test.s memtest.s aaa.s test.s
+SSOURCE = fib.s fib_rec.s loopback.s stack_test.s memtest.s aaa.s
 TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=) min-rt2
 DEBUG = $(TARGET:=.bin)
 
