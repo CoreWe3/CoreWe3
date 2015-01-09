@@ -38,6 +38,9 @@ let rec fiszero x = x = 0.0 in
 let rec fispos x = x > 0.0 in
 let rec fisneg x = x < 0.0 in 
 
+let rec fsub x y = 
+  x +. (-.y) in
+
 let rec finv x =
   let a = fasi x in
   let idx = (a lsl 9) lsr 22 in
