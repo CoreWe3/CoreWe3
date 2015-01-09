@@ -13,19 +13,28 @@ end fadd;
 architecture blackbox of fadd is
   signal calc : std_logic; -- '0' -> add, '1' -> sub
   signal exp_0 : unsigned(7 downto 0);
-  signal big_frac : unsigned(24 downto 0);
-  signal sml_frac : unsigned(24 downto 0);
+  signal big_frac : unsigned(27 downto 0);
+  signal sml_frac : unsigned(27 downto 0);
   signal sign_0 : std_logic;
+  signal shift_right_in : unsigned(24 downto 0);
+  signal exp_dif_1 : unsigned(7 downto 0);
 
-  signal frac_1 : unsigned(24 downto 0);
+  signal frac_1 : unsigned(27 downto 0);
   signal sign_1 : std_logic;
   signal exp_1 : unsigned(7 downto 0);
   signal lead_zero : unsigned(4 downto 0);
 
   component leading_zero_counter is
     port (
-      data : in unsigned(24 downto 0);
+      data : in unsigned(27 downto 0);
       n : out unsigned(4 downto 0));
+  end component;
+
+  component shift_right_round is
+    port (
+      d : in  unsigned(24 downto 0);
+      exp_dif  : in unsigned(7 downto 0);
+      o : out unsigned(27 downto 0));
   end component;
 
 begin
@@ -34,9 +43,15 @@ begin
     data => frac_1,
     n => lead_zero);
 
+  SRR : shift_right_round port map(
+    d => shift_right_in,
+    exp_dif => exp_dif_1,
+    o => sml_frac);
+
   process(clk)
-    variable exp_dif : unsigned(7 downto 0);
-    variable frac : unsigned(24 downto 0);
+    variable exp_dif_0 : unsigned(7 downto 0);
+    variable frac_2 : unsigned(27 downto 0);
+    variable frac : unsigned(22 downto 0);
     variable exp : unsigned(7 downto 0);
   begin
     if rising_edge(clk) then
@@ -44,29 +59,28 @@ begin
       calc <= a(31) xor b(31);
       if unsigned(a(30 downto 0)) > unsigned(b(30 downto 0)) then
         sign_0 <= a(31);
-        exp_dif := unsigned(a(30 downto 23)) -
+        exp_dif_0 := unsigned(a(30 downto 23)) -
                    unsigned(b(30 downto 23));
         exp_0 <= unsigned(a(30 downto 23));
-        big_frac <= unsigned("01" & a(22 downto 0));
+        big_frac <= unsigned("01" & a(22 downto 0) & "000");
         if unsigned(b(30 downto 23)) /= 0 then
-          sml_frac <= shift_right(unsigned("01" & b(22 downto 0)),
-                                  to_integer(exp_dif));
+          shift_right_in <= unsigned("01" & b(22 downto 0));
         else
-          sml_frac <= (others => '0');
+          shift_right_in <= (others => '0');
         end if;
       else
         sign_0 <= b(31);
-        exp_dif := unsigned(b(30 downto 23)) -
+        exp_dif_0 := unsigned(b(30 downto 23)) -
                    unsigned(a(30 downto 23));
         exp_0 <= unsigned(b(30 downto 23));
-        big_frac <= unsigned("01" & b(22 downto 0));
+        big_frac <= unsigned("01" & b(22 downto 0) & "000");
         if unsigned(a(30 downto 23)) /= 0 then
-          sml_frac <= shift_right(unsigned("01" & a(22 downto 0)),
-                                  to_integer(exp_dif));
+          shift_right_in <= unsigned("01" & a(22 downto 0));
         else
-          sml_frac <= (others => '0');
+          shift_right_in <= (others => '0');
         end if;
       end if;
+      exp_dif_1 <= exp_dif_0;
 
       -- stage2
       if calc = '0' then
@@ -78,13 +92,21 @@ begin
       exp_1 <= exp_0;
 
       -- stage3
-      if exp_1 /= 255 then
+      if lead_zero > 26 then
+        exp := (others => '0');
+      elsif exp_1 /= 255 then
         exp := exp_1 - lead_zero + 1;
       else
         exp := exp_1;
       end if;
-      frac := shift_left(frac_1, to_integer(lead_zero));
-      o <= std_logic_vector(sign_1 & exp & frac(23 downto 1));
+      frac_2 := shift_left(frac_1, to_integer(lead_zero));
+      if frac_2(4 downto 3) = "00" or frac_2(4 downto 3) = "10" or
+        frac_2(4 downto 0) = "01000" then
+        frac := frac_2(26 downto 4);
+      else
+        frac := frac_2(26 downto 4) + 1;
+      end if;
+      o <= std_logic_vector(sign_1 & exp & frac);
     end if;
   end process;
 

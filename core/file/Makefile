@@ -36,7 +36,7 @@ min-rt2.ml:
 $(COMPILER):
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
 
-.PHONY: all clean
+.PHONY: all clean sim
 
 clean:
 	rm -rf $(DEBUG) $(TARGET) $(MLSOURCE:.ml=.s)

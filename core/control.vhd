@@ -10,6 +10,7 @@ entity control is
     clk   : in std_logic;
     memo  : in mem_out_t;
     memi  : out mem_in_t;
+    ready : in std_logic;
     inst  : in std_logic_vector(31 downto 0);
     pc    : out unsigned(ADDR_WIDTH-1 downto 0));
 end control;
@@ -546,7 +547,9 @@ begin
 
       else --setup
         r <= init_r;
-        setup <= setup+1;
+        if ready = '1' then
+          setup <= setup+1;
+        end if;
       end if;
 
     end if;

@@ -200,6 +200,7 @@ class Assembly:
         import struct
         for i in self.ins_l:
             fout.write(struct.pack('i', i.binary))
+        fout.write(struct.pack('I', 0xffffffff))
 
     def print_text(self,fout=sys.stdout, width=10):
         line = 2**width
@@ -218,7 +219,7 @@ class Assembly:
             fout.write('\n')
             line -= 1
 
-        while(line > 0):
+        while(line > 1):
             fout.write('00100100000000000000000000000000\n')
             line -= 1
 
