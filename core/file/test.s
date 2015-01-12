@@ -1,4 +1,0 @@
-	LDI	r1	0x40000000
-	LDI	r2	0x40400000
-	FMUL	r3	r1	r2
-	BEQ	r0	r0	0

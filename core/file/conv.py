@@ -89,7 +89,7 @@ class Instruction:
                       'OR'  :0xb,
                       'XOR' :0xc,
                       'SHL' :0xd,
-                      'SHR' :0xd,
+                      'SHR' :0xe,
                       'SHLI':0xf,
                       'SHRI':0x10,
                       'BEQ' :0x11,
@@ -129,7 +129,7 @@ class Instruction:
             self.opcode == 'BFLE'):
             self.binary |= (reg2int(self.operand_l[0]) & 2**6-1) << 20
             self.binary |= (reg2int(self.operand_l[1]) & 2**6-1) << 14
-            self.binary |= imm2int(self.operand_l[2], 14)
+            self.binary |= (imm2int(self.operand_l[2], 14) & 2**14-1)
         elif (self.opcode == 'LDA' or
               self.opcode == 'STA' or
               self.opcode == 'LDIH' or
@@ -152,7 +152,7 @@ class Instruction:
             self.binary |= (reg2int(self.operand_l[0]) & 2**6-1) << 20
             self.binary |= (reg2int(self.operand_l[1]) & 2**6-1) << 14
         elif (self.opcode == 'JSUB'):
-            self.binary |= (imm2int(self.operand_l[0], 26))
+            self.binary |= (imm2int(self.operand_l[0], 26) & 2**26-1)
         elif (self.opcode == 'RET'):
             pass
         elif (self.opcode == 'PUSH' or
@@ -219,7 +219,7 @@ class Assembly:
             fout.write('\n')
             line -= 1
 
-        while(line > 1):
+        while(line > 0):
             fout.write('00100100000000000000000000000000\n')
             line -= 1
 

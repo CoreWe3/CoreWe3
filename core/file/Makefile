@@ -32,6 +32,7 @@ min-rt2.ml:
 
 %: %.s
 	./conv.py $< -o $@
+	#cp ../../simulator/bin/test .
 
 $(COMPILER):
 	cd $(ROOT)/mincaml_compiler && $(MAKE)

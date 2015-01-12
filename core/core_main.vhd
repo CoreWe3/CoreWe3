@@ -73,6 +73,8 @@ begin
   --rom : init_code_rom port map (
   --  inst => inst,
   --  pc   => pc);
+  --ready <= '1';
+
 
   RS_RX_init <= RS_RX when ready = '0' else
                 '1';

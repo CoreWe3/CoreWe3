@@ -550,6 +550,15 @@ begin
         if ready = '1' then
           setup <= setup+1;
         end if;
+        if setup = 1 then
+          r.mem.a <= x"FFFFF";
+          r.mem.d <= x"0000000a";
+          r.mem.go <= '1';
+          r.mem.we <= '1';
+        else
+          r <= init_r;
+        end if;
+
       end if;
 
     end if;
