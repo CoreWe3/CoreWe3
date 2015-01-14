@@ -5,8 +5,10 @@ use ieee.std_logic_unsigned.all;
 library UNISIM;
 use UNISIM.VComponents.all;
 
-entity core is
+library work;
+use work.util.all;
 
+entity core is
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -28,17 +30,6 @@ entity core is
 end core;
 
 architecture arch_core of core is
-  component core_main is
-    generic (
-      wtime : std_logic_vector(15 downto 0) := x"023D");
-    port (
-      clk   : in    std_logic;
-      RS_TX : out   std_logic;
-      RS_RX : in    std_logic;
-      ZD    : inout std_logic_vector(31 downto 0);
-      ZA    : out   std_logic_vector(19 downto 0);
-      XWA   : out   std_logic);
-  end component;
 
   signal iclk : std_logic;
   --signal fbclk : std_logic;

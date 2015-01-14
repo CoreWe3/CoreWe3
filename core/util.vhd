@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 package util is
   constant ADDR_WIDTH : integer := 10;
+  constant wtime : std_logic_vector(15 downto 0) := x"023D";
 
   constant LD    : std_logic_vector(5 downto 0) := "000000";
   constant ST    : std_logic_vector(5 downto 0) := "000001";
@@ -171,5 +172,152 @@ package util is
     sp => x"FFFFE",
     reg => default_reg_in,
     mem => default_mem_in);
+
+  component core_main is
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime);
+    port (
+      clk   : in    std_logic;
+      RS_TX : out   std_logic;
+      RS_RX : in    std_logic;
+      ZD    : inout std_logic_vector(31 downto 0);
+      ZA    : out   std_logic_vector(19 downto 0);
+      XWA   : out   std_logic);
+  end component;
+
+  component init_code_rom
+    port (
+      inst : out std_logic_vector(31 downto 0);
+      pc   : in  unsigned(ADDR_WIDTH-1 downto 0));
+  end component;
+
+  component bootload_code_rom is
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime);
+    port (
+      clk   : in  std_logic;
+      RS_RX : in  std_logic;
+      ready : out std_logic;
+      pc    : in  unsigned(ADDR_WIDTH-1 downto 0);
+      inst  : out std_logic_vector(31 downto 0));
+  end component;
+
+  component memory_io
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime);
+    port (
+      clk   : in    std_logic;
+      RS_RX : in    std_logic;
+      RS_TX : out   std_logic;
+      ZD    : inout std_logic_vector(31 downto 0);
+      ZA    : out   std_logic_vector(19 downto 0);
+      XWA   : out   std_logic;
+      memi  : in    mem_in_t;
+      memo  : out   mem_out_t);
+  end component;
+
+  component control is
+    port(
+      clk   : in  std_logic;
+      memo  : in  mem_out_t;
+      memi  : out mem_in_t;
+      ready : in  std_logic;
+      inst  : in  std_logic_vector(31 downto 0);
+      pc    : out unsigned(ADDR_WIDTH-1 downto 0));
+  end component;
+
+  component bram is
+    port (
+      clk : in std_logic;
+      di : in std_logic_vector(31 downto 0);
+      do : out std_logic_vector(31 downto 0);
+      addr : in std_logic_vector(11 downto 0);
+      we : in std_logic);
+  end component;
+
+  component FIFO is
+    generic (
+      WIDTH : integer := 10);
+    port (
+      clk : in std_logic;
+      di : in std_logic_vector(7 downto 0);
+      do : out std_logic_vector(7 downto 0);
+      enq : in std_logic;
+      deq : in std_logic;
+      empty : out std_logic;
+      full : out std_logic);
+  end component;
+
+  component uart_receiver is
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime);
+    port (
+      clk  : in  std_logic;
+      rx   : in  std_logic;
+      complete : out std_logic;
+      data : out std_logic_vector(7 downto 0));
+  end component;
+
+  component uart_transmitter is
+    generic (
+      wtime: std_logic_vector(15 downto 0) := wtime);
+    Port (
+      clk  : in  STD_LOGIC;
+      data : in  STD_LOGIC_VECTOR (7 downto 0);
+      go   : in  STD_LOGIC;
+      busy : out STD_LOGIC;
+      tx   : out STD_LOGIC);
+  end component;
+
+  component alu
+    port (
+      di : in  alu_in_t;
+      do : out alu_out_t);
+  end component;
+
+  component registers
+    port (
+      clk : in std_logic;
+      di : in reg_in_t;
+      do : out reg_out_t);
+  end component;
+
+  component detect_hazard is
+    port (
+      a1 : in unsigned(5 downto 0);
+      a2 : in unsigned(5 downto 0);
+      dest1 : in unsigned(5 downto 0);
+      dest2 : in unsigned(5 downto 0);
+      data_hazard : out std_logic);
+  end component;
+
+  component fadd is
+    port (
+      clk : in std_logic;
+      a   : in  std_logic_vector(31 downto 0);
+      b   : in  std_logic_vector(31 downto 0);
+      o   : out std_logic_vector(31 downto 0));
+  end component;
+
+  component fmul is
+    port (
+      clk : in std_logic;
+      a : in  std_logic_vector(31 downto 0);
+      b : in  std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
+  component leading_zero_counter is
+    port (
+      data : in unsigned(27 downto 0);
+      n : out unsigned(4 downto 0));
+  end component;
+
+  component shift_right_round is
+    port (
+      d : in  unsigned(24 downto 0);
+      exp_dif  : in unsigned(7 downto 0);
+      o : out unsigned(27 downto 0));
+  end component;
 
 end package util;

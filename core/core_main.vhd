@@ -19,47 +19,6 @@ end core_main;
 
 architecture arch_core_main of core_main is
 
-  component init_code_rom
-    port (
-      inst : out std_logic_vector(31 downto 0);
-      pc   : in  unsigned(ADDR_WIDTH-1 downto 0));
-  end component;
-
-  component bootload_code_rom is
-    generic (
-      wtime : std_logic_vector(15 downto 0) := wtime);
-    port (
-      clk   : in  std_logic;
-      RS_RX : in  std_logic;
-      ready : out std_logic;
-      addr  : in  unsigned(ADDR_WIDTH-1 downto 0);
-      instr : out std_logic_vector(31 downto 0));
-  end component;
-
-  component memory_io
-    generic (
-      wtime : std_logic_vector(15 downto 0) := wtime);
-    port (
-      clk   : in    std_logic;
-      RS_RX : in    std_logic;
-      RS_TX : out   std_logic;
-      ZD    : inout std_logic_vector(31 downto 0);
-      ZA    : out   std_logic_vector(19 downto 0);
-      XWA   : out   std_logic;
-      memi  : in    mem_in_t;
-      memo  : out   mem_out_t);
-  end component;
-
-  component control is
-    port(
-      clk   : in  std_logic;
-      memo  : in  mem_out_t;
-      memi  : out mem_in_t;
-      ready : in  std_logic;
-      inst  : in  std_logic_vector(31 downto 0);
-      pc    : out unsigned(ADDR_WIDTH-1 downto 0));
-  end component;
-
   signal inst  : std_logic_vector(31 downto 0);
   signal pc    : unsigned(ADDR_WIDTH-1 downto 0);
   signal memi  : mem_in_t;
@@ -86,8 +45,8 @@ begin
     clk   => clk,
     RS_RX => RS_RX_init,
     ready => ready,
-    addr  => pc,
-    instr => inst);
+    pc    => pc,
+    inst  => inst);
 
   mem : memory_io port map (
     clk   => clk,

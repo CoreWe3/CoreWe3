@@ -7,7 +7,6 @@ use std.textio.all;
 library work;
 use work.util.all;
 
-
 entity bootload_code_rom is
   generic(
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
@@ -15,22 +14,12 @@ entity bootload_code_rom is
     clk   : in  std_logic;
     RS_RX : in  std_logic;
     ready : out std_logic;
-    addr  : in  unsigned(ADDR_WIDTH-1 downto 0);
-    instr : out std_logic_vector(31 downto 0));
+    pc    : in  unsigned(ADDR_WIDTH-1 downto 0);
+    inst  : out std_logic_vector(31 downto 0));
 end bootload_code_rom;
 
 architecture arch_code_rom of bootload_code_rom is
   constant SIZE : integer := 2 ** ADDR_WIDTH;
-
-  component uart_receiver is
-    generic (
-      wtime : std_logic_vector(15 downto 0) := wtime);
-    port (
-      clk      : in  std_logic;
-      rx       : in  std_logic;
-      complete : out std_logic;
-      data     : out std_logic_vector(7 downto 0));
-  end component;
 
   type rom_t is array (0 to SIZE-1) of std_logic_vector(31 downto 0);
 
@@ -42,8 +31,8 @@ architecture arch_code_rom of bootload_code_rom is
   signal in_addr  : unsigned(ADDR_WIDTH-1 downto 0)
     := (others => '0');
 
-  attribute rom_style : string;
-  attribute rom_style of ROM : signal is "block";
+  -- attribute rom_style : string;
+  -- attribute rom_style of ROM : signal is "block";
 begin
 
   recieve : uart_receiver port map (
@@ -77,11 +66,10 @@ begin
             state <= x"4";
           end if;
         when x"4" =>
+          ROM(to_integer(in_addr)) <= buf;
           if buf = x"FFFFFFFF" then --end of code
-            ROM(to_integer(in_addr)) <= buf;
             state <= x"5";
           else
-            ROM(to_integer(in_addr)) <= buf;
             in_addr <= in_addr+1;
             state <= x"0";
           end if;
@@ -91,7 +79,7 @@ begin
     end if;
   end process;
 
-  instr <= ROM(to_integer(addr));
+  inst <= ROM(to_integer(pc));
   ready <= '1' when state = x"5" else
            '0';
 

@@ -17,45 +17,6 @@ end control;
 
 architecture arch_control of control is
 
-  component alu
-    port (
-      di : in  alu_in_t;
-      do : out alu_out_t);
-  end component;
-
-  component registers
-    port (
-      clk : in std_logic;
-      di : in reg_in_t;
-      do : out reg_out_t);
-  end component;
-
-  component detect_hazard is
-    port (
-      a1 : in unsigned(5 downto 0);
-      a2 : in unsigned(5 downto 0);
-      dest1 : in unsigned(5 downto 0);
-      dest2 : in unsigned(5 downto 0);
-      data_hazard : out std_logic);
-  end component;
-
-  component fadd is
-    port (
-      clk : in std_logic;
-      a   : in  std_logic_vector(31 downto 0);
-      b   : in  std_logic_vector(31 downto 0);
-      o   : out std_logic_vector(31 downto 0));
-  end component;
-
-  component fmul is
-    port (
-      clk : in std_logic;
-      a : in  std_logic_vector(31 downto 0);
-      b : in  std_logic_vector(31 downto 0);
-      o : out std_logic_vector(31 downto 0));
-  end component;
-
-
   signal r : cpu_t := init_r;
   signal data_hazard : std_logic := '0';
   signal alu_o : alu_out_t;
@@ -542,6 +503,10 @@ begin
           end case;
 
           r.mem <= default_mem_in;
+          --r.mem.go <= '1';
+          --r.mem.we <= '1';
+          --r.mem.d <= unsigned(inst);
+          --r.mem.a <= x"fffff";
 
         end if;
 

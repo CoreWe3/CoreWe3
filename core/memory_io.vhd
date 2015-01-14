@@ -27,49 +27,6 @@ end memory_io;
 
 architecture arch_memory_io of memory_io is
 
-  component bram is
-    port (
-      clk : in std_logic;
-      di : in std_logic_vector(31 downto 0);
-      do : out std_logic_vector(31 downto 0);
-      addr : in std_logic_vector(11 downto 0);
-      we : in std_logic);
-  end component;
-
-  component FIFO is
-    generic (
-      WIDTH : integer := 10);
-    port (
-      clk : in std_logic;
-      di : in std_logic_vector(7 downto 0);
-      do : out std_logic_vector(7 downto 0);
-      enq : in std_logic;
-      deq : in std_logic;
-      empty : out std_logic;
-      full : out std_logic);
-  end component;
-
-  component uart_receiver is
-    generic (
-      wtime : std_logic_vector(15 downto 0) := wtime);
-    port (
-      clk  : in  std_logic;
-      rx   : in  std_logic;
-      complete : out std_logic;
-      data : out std_logic_vector(7 downto 0));
-  end component;
-
-  component uart_transmitter is
-    generic (
-      wtime: std_logic_vector(15 downto 0) := wtime);
-    Port (
-      clk  : in  STD_LOGIC;
-      data : in  STD_LOGIC_VECTOR (7 downto 0);
-      go   : in  STD_LOGIC;
-      busy : out STD_LOGIC;
-      tx   : out STD_LOGIC);
-  end component;
-
   signal state : std_logic_vector(7 downto 0) := x"00";
 
   signal bram_i : std_logic_vector(31 downto 0);

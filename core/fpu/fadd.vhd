@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.util.all;
+
 entity fadd is
   port (
     clk : in  std_logic;
@@ -24,18 +27,6 @@ architecture blackbox of fadd is
   signal exp_1 : unsigned(7 downto 0);
   signal lead_zero : unsigned(4 downto 0);
 
-  component leading_zero_counter is
-    port (
-      data : in unsigned(27 downto 0);
-      n : out unsigned(4 downto 0));
-  end component;
-
-  component shift_right_round is
-    port (
-      d : in  unsigned(24 downto 0);
-      exp_dif  : in unsigned(7 downto 0);
-      o : out unsigned(27 downto 0));
-  end component;
 
 begin
 
