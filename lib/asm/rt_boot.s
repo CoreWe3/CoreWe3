@@ -1,3 +1,7 @@
+.min_caml_finv_table_a 0xEF000
+.min_caml_finv_table_b 0xEF400
+.min_caml_sqrt_table_a 0xEF800
+.min_caml_sqrt_table_b 0xEFC00
 .min_caml_n_objects 30
 .min_caml_objects 42
 .min_caml_screen 102

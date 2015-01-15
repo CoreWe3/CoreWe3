@@ -33,6 +33,8 @@ void fx86(unsigned int cx);
 void ret();
 void push(unsigned int ra);
 void pop(unsigned int ra);
+void fadd(unsigned int, unsigned int, unsigned int);
+void fmul(unsigned int, unsigned int, unsigned int);
 int dline = 1;
 
 int name2op(char* op){
@@ -323,10 +325,12 @@ int main(int argc, char* argv[])
 					case RET:
 						ret();
 						break;
+						/*
 					case FX86:
 						cx = strtok(NULL,tokens);
 						fx86(getimmediate(cx,line));
 						break;
+						*/
 					case PUSH:
 						ra = strtok(NULL,tokens);
 						push(name2reg(ra));
@@ -335,7 +339,19 @@ int main(int argc, char* argv[])
 						ra = strtok(NULL,tokens);
 						pop(name2reg(ra));
 						break;
-					default:
+				case FADD:
+					ra = strtok(NULL, tokens);
+					rb = strtok(NULL, tokens);
+					rc = strtok(NULL, tokens);
+					fadd(name2reg(ra),name2reg(rb),name2reg(rc));
+					break;
+				case FMUL:
+					ra = strtok(NULL, tokens);
+					rb = strtok(NULL, tokens);
+					rc = strtok(NULL, tokens);
+					fmul(name2reg(ra),name2reg(rb),name2reg(rc));
+					break;
+				default:
 						printf("no such instruction \"%s\" : line %d\n",op,line);
 						return 1;
 				}
@@ -493,11 +509,12 @@ void ret(){
 	ins.data = 0; ins.J.op = RET;
 	write(ins.data);
 }
+/*
 void fx86(unsigned int cx){
 	INS ins;
 	ins.data = 0; ins.J.op = FX86; ins.J.cx = cx;
 	write(ins.data);
-}
+	}*/
 void push(unsigned int ra){
 	INS ins;
 	ins.data = 0;
@@ -508,5 +525,19 @@ void pop(unsigned int ra){
 	INS ins;
 	ins.data = 0;
 	ins.A.op = POP; ins.A.ra = ra;
+	write(ins.data);
+}
+
+void fadd(unsigned int ra, unsigned int rb, unsigned int rc){
+	INS ins;
+	ins.data = 0;
+	ins.A.op = FADD; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
+	write(ins.data);
+}
+
+void fmul(unsigned int ra, unsigned int rb, unsigned int rc){
+	INS ins;
+	ins.data = 0;
+	ins.A.op = FMUL; ins.A.ra = ra; ins.A.rb = rb; ins.A.rc = rc;
 	write(ins.data);
 }
