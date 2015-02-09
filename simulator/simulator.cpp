@@ -171,13 +171,13 @@ int main(int argc, char* argv[]){
 
 			// 1 freg, 1 greg
 			case ITOF:
-				freg[fm.L.ra].r = greg[fm.L.rb].r;
+				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
 				pc+=1;
 				break;
 
 			// 1 greg, 1 freg
 			case FTOI:
-				greg[fm.L.ra].r = freg[fm.L.rb].r;
+				greg[fm.L.ra].r = FPU::ftoi(freg[fm.L.rb].r);
 				pc+=1;
 				break;
 
