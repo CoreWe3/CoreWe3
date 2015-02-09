@@ -3,6 +3,7 @@
 
 typedef union{
 	uint32_t r;
+	int d;
 	float f;
 }FU;
 
@@ -45,13 +46,29 @@ int FPU::fcmp(uint32_t x, uint32_t y){
 
 uint32_t FPU::fsqrt(uint32_t x){
 	FU xfu, yfu;
+	xfu.r = x;
 	yfu.f = std::sqrt(xfu.f);
 	return yfu.r;
 }
 
 uint32_t FPU::fabs(uint32_t x){
 	FU xfu, yfu;
+	xfu.r = x;
 	yfu.f = std::abs(xfu.f);
+	return yfu.r;
+}
+
+uint32_t FPU::ftoi(uint32_t x){
+	FU xfu, yfu;
+	xfu.r = x;
+	yfu.d = xfu.f;
+	return yfu.r;
+}
+
+uint32_t FPU::itof(uint32_t x){
+	FU xfu, yfu;
+	xfu.r = x;
+	yfu.f = xfu.d;
 	return yfu.r;
 }
 
