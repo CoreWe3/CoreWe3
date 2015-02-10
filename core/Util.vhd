@@ -118,8 +118,8 @@ package Util is
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
     op    : std_logic_vector(5 downto 0);
-    a1    : unsigned(4 downto 0);
-    a2    : unsigned(4 downto 0);
+    d1    : unsigned(31 downto 0);
+    d2    : unsigned(31 downto 0);
     dest  : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
   end record decode_t;
@@ -127,8 +127,8 @@ package Util is
   constant default_d : decode_t := (
     pc => (others => '-'),
     op => ADD,
-    a1 => (others => '0'),
-    a2 => (others => '0'),
+    d1 => (others => '0'),
+    d2 => (others => '0'),
     dest => (others => '0'),
     data => (others => '-'));
 
@@ -161,7 +161,7 @@ package Util is
   constant default_m : memory_access_t := (
     op => ADD,
     dest => (others => '0'),
-    data => (others => '-'),
+    data => (others => '0'),
     comp => '-');
 
 
