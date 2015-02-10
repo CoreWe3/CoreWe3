@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity uart_receiver is
+entity UartReceiver is
   generic (
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
   port (
@@ -10,9 +10,9 @@ entity uart_receiver is
     rx   : in  std_logic;
     complete : out std_logic;
     data : out std_logic_vector(7 downto 0));
-end uart_receiver;
+end UartReceiver;
 
-architecture arch_uart_receiver of uart_receiver is
+architecture UartReceiver_arch of UartReceiver is
   signal countdown : std_logic_vector(15 downto 0) := wtime;
   signal receivebuf : std_logic_vector(7 downto 0) := (others=>'1');
   signal state : std_logic_vector(3 downto 0) := x"9";
@@ -55,4 +55,4 @@ begin  -- structure
       end case;
     end if;
   end process;
-end arch_uart_receiver;
+end UartReceiver_arch;

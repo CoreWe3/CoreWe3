@@ -6,7 +6,6 @@
 --the value of odata is undef but queue is consistent
 --when queue is full and try to enque, enque fails
 --but queue is consistent.
---SIZE must be 2^(WIDTH) and WIDTH > 1.
 
 library ieee;
 use ieee.std_logic_1164.all;

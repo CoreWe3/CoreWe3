@@ -5,7 +5,7 @@ use ieee.std_logic_unsigned.all;
 
 entity SRAM is
   generic (
-    WIDTH : integer := 20);
+    WIDTH : integer := 10);
   port (
     clk : in std_logic;
     ZD : inout std_logic_vector(31 downto 0);

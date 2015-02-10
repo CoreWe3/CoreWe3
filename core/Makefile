@@ -1,28 +1,20 @@
 SOURCE = $(wildcard *.vhd) $(wildcard fpu/*.vhd)
-CODE = file/test.s
 TARGET = core.bit
 PRJ = core.prj
-SCRIPTS = core.xst core.ucf core.ut file/code.bin
+SCRIPTS = core.xst core.ucf core.ut
 
 all: configure
 
 .PHONY: configure bit all clean
 
-configure: bit $(CODE:.s=)
-	scp $(TARGET) troublesome:~/cpu_core/remote/remote.bit
-	scp $(CODE:.s=) troublesome:~/code
-	ssh troublesome ". ~/CAD/ise.sh && \
-	cd ~/cpu_core/remote/ && \
-	impact -batch exec.cmd"
+configure: bit
+	scp $(TARGET) troublesome:~/
+	ssh troublesome 'impact -batch config.cmd'
 
 bit: $(TARGET)
 
 $(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ)
 	./ise_cmd.sh
-
-$(CODE:.s=): $(CODE)
-	cd file && $(MAKE) $(basename $(notdir $<))
-
 
 $(PRJ): $(SOURCE)
 	echo $(SOURCE) | \
@@ -35,4 +27,3 @@ clean:
 	*.srp *.twr *.twx *.unroutes *.xpi *.xwbt *.map *.mrp \
 	*.ngm *.csv *.xml *.html *.log xlnx_auto_0_xdb/ dump.xst/ \
 	*_map* *_pad* work/ "file graph"
-	cd file && $(MAKE) clean

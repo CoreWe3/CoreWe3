@@ -3,15 +3,15 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-entity input_simulator is
+entity InputSimulator is
   generic (wtime : std_logic_vector(15 downto 0) := x"1ADB";
            INPUT_FILE  : string := "input");
   port( clk : in std_logic;
         RS_RX : out std_logic);
-end input_simulator;
+end InputSimulator;
 
-architecture sim_arch of input_simulator is
-  component uart_transmitter is
+architecture InputSimulator_arch of InputSimulator is
+  component UartTransmitter is
     generic(wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk  : in  std_logic;
@@ -29,7 +29,7 @@ architecture sim_arch of input_simulator is
   signal busy : std_logic;
 
 begin
-  
+
   process(clk)
     variable read_char : character;
   begin
@@ -44,12 +44,11 @@ begin
     end if;
   end process;
 
-  transmit : uart_transmitter port map (
+  transmit : UartTransmitter port map (
     clk => clk,
     data => data,
     go => go,
     busy => busy,
     tx => RS_RX);
 
-end sim_arch;
-    
+end InputSimulator_arch;

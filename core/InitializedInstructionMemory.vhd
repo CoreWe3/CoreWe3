@@ -5,17 +5,19 @@ use ieee.std_logic_textio.all;
 library std;
 use std.textio.all;
 library work;
-use work.util.all;
+use work.Util.all;
 
-entity init_code_rom is
+entity InitializedInstructionMemory is
   generic(
-    CODE  : string := "file/code.bin");
+    CODE  : string := "file/nops");
   port (
-    inst : out std_logic_vector(31 downto 0);
-    pc : in unsigned(ADDR_WIDTH-1 downto 0));
-end init_code_rom;
+    clk : in std_logic;
+    instruction_mem_o : out std_logic_vector(31 downto 0);
+    instruction_mem_i : in unsigned(ADDR_WIDTH-1 downto 0));
+end InitializedInstructionMemory;
 
-architecture arch_code_rom of init_code_rom is
+architecture InitializedInstructionMemory_arch of
+  InitializedInstructionMemory is
   constant SIZE : integer := 2 ** ADDR_WIDTH;
   type rom_t is array (0 to SIZE-1) of bit_vector(31 downto 0);
   --type rom_t is array (0 to SIZE-1) of std_logic_vector(31 downto 0);
@@ -39,5 +41,13 @@ architecture arch_code_rom of init_code_rom is
   attribute rom_style : string;
   attribute rom_style of ROM : signal is "block";
 begin
-  inst <= to_stdLogicVector(ROM(to_integer(pc)));
-end arch_code_rom;
+
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      instruction_mem_o <=
+        to_stdLogicVector(ROM(to_integer(instruction_mem_i)));
+    end if;
+  end process;
+
+end InitializedInstructionMemory_arch;

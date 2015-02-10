@@ -2,17 +2,17 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-entity output_simulator is
+entity OutputSimulator is
   generic(
     wtime : std_logic_vector(15 downto 0) := x"1ADB";
     OUTPUT_FILE : string := "output");
   port (
     clk : std_logic;
     RS_TX : std_logic);
-end output_simulator;
+end OutputSimulator;
 
-architecture arch_sim of output_simulator is
-  component uart_receiver
+architecture OutputSimulator_arch of OutputSimulator is
+  component UartReceiver
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
@@ -26,15 +26,15 @@ architecture arch_sim of output_simulator is
   file FP : BIN open write_mode is OUTPUT_FILE;
   signal data : std_logic_vector(7 downto 0);
   signal complete : std_logic;
-  
+
 begin
 
-  receive : uart_receiver port map (
+  receive : UartReceiver port map (
     clk => clk,
     rx => RS_TX,
     complete => complete,
     data => data);
-  
+
   process(clk)
     variable write_char : character;
   begin
@@ -46,5 +46,4 @@ begin
     end if;
   end process;
 
-end arch_sim;
-  
+end OutputSimulator_arch;

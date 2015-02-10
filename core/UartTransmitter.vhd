@@ -2,16 +2,16 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-entity uart_transmitter is
+entity UartTransmitter is
   generic (wtime: std_logic_vector(15 downto 0) := x"1ADB");
   port ( clk  : in  std_logic;
          data : in  std_logic_vector(7 downto 0);
          go   : in  std_logic;
          busy : out std_logic;
          tx   : out std_logic);
-end uart_transmitter;
+end UartTransmitter;
 
-architecture arch_uart_transmitter of uart_transmitter is
+architecture UartTransmitter_arch of UartTransmitter is
   signal countdown: std_logic_vector(15 downto 0) := (others=>'0');
   signal sendbuf: std_logic_vector(8 downto 0) := (others=>'1');
   signal state: std_logic_vector(3 downto 0) := "1100";
@@ -57,4 +57,4 @@ begin
   end process;
   tx<=sendbuf(0);
   busy<= '0' when state="1100" else '1';
-end arch_uart_transmitter;
+end UartTransmitter_arch;

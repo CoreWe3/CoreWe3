@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_textio.all;
 use std.textio.all;
 
-entity bram is
+entity BlockRAM is
   generic (file_name : string := "init.txt");
   port (
     clk : in std_logic;
@@ -12,9 +12,9 @@ entity bram is
     do : out std_logic_vector(31 downto 0);
     addr : in std_logic_vector(11 downto 0);
     we : in std_logic);
-end bram;
+end BlockRAM;
 
-architecture arch_bram of bram is
+architecture BlockRAM_arch of BlockRAM is
 
   type ram_t is array (0 to (2**12)-1) of bit_vector(31 downto 0);
 
@@ -29,7 +29,7 @@ architecture arch_bram of bram is
     end loop;
     return RAM;
   end function;
-  signal RAM : ram_t := init_ram(file_name);
+  signal RAM : ram_t; -- := init_ram(file_name);
 
   attribute rom_style : string;
   attribute rom_style of RAM : signal is "block";
@@ -45,4 +45,4 @@ begin
     end if;
   end process;
 
-end arch_bram;
+end BlockRAM_arch;
