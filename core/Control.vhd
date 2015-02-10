@@ -85,13 +85,13 @@ begin
         when FTOI =>
         when ADD | SUB | SH_L | SH_R | F_ADD | F_MUL =>
           r.d.dest <= unsigned(instruction_mem_o(25 downto 21));
-          r.d.a1 <= unsigned(instruction_mem_o(20 downto 16));
-          r.d.a2 <= unsigned(instruction_mem_o(15 downto 11));
+          r.d.d1 <= r.gpreg(to_integer(unsigned(instruction_mem_o(20 downto 16))));
+          r.d.d2 <= r.gpreg(to_integer(unsigned(instruction_mem_o(15 downto 11))));
           r.d.data <= (others => '-');
         when ADDI | SHLI | SHRI | LDIH | FLDIL | FLDIH =>
           r.d.dest <= unsigned(instruction_mem_o(25 downto 21));
-          r.d.a1 <= unsigned(instruction_mem_o(20 downto 16));
-          r.d.a2 <= (others => '-');
+          r.d.d1 <= r.gpreg(to_integer(unsigned(instruction_mem_o(20 downto 16))));
+          r.d.d2 <= (others => '0');
           r.d.data <= unsigned(resize(
             signed(instruction_mem_o(15 downto 0)), 32));
         when F_INV | F_SQRT | F_ABS =>
@@ -112,14 +112,14 @@ begin
         when ITOF =>
         when FTOI =>
         when ADD =>
-          r.e.alu.d1 <= r.gpreg(to_integer(r.d.a1));
-          r.e.alu.d2 <= r.gpreg(to_integer(r.d.a2));
+          r.e.alu.d1 <= r.d.d1;
+          r.e.alu.d2 <= r.d.d2;
           r.e.alu.ctrl <= "00";
           r.e.fpu <= default_fpu_in;
           r.e.data <= (others => '-');
         when SUB =>
         when ADDI =>
-          r.e.alu.d1 <= r.gpreg(to_integer(r.d.a1));
+          r.e.alu.d1 <= r.d.d1;
           r.e.alu.d2 <= r.d.data;
           r.e.alu.ctrl <= "00";
           r.e.fpu <= default_fpu_in;
@@ -135,7 +135,7 @@ begin
 
       -- memory
       r.m.op <= r.e.op;
-      r.m.dest <= r.m.dest;
+      r.m.dest <= r.e.dest;
       case r.e.op is
         when ADD | ADDI =>
           r.m.data <= alu_o.d;
