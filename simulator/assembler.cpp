@@ -79,7 +79,6 @@ int main(int argc, char* argv[]){
 	list<vector<string>> instructions;
 	string str;
 	while(*din && getline(*din, str)){
-		if(str.empty()) continue;
 		string tmp;
 		replace(str.begin(),str.end(),'\t',' ');
 		istringstream stream( str );
@@ -87,6 +86,8 @@ int main(int argc, char* argv[]){
 		while(getline(stream,tmp,' ')){
 			ins.push_back(tmp);
 		}
+		if(ins.size()<=0) continue;
+		if(ins[0][0]=='#') continue;
 		instructions.push_back(ins);
 	}
 
