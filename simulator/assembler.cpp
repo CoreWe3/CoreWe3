@@ -81,6 +81,7 @@ int main(int argc, char* argv[]){
 	while(*din && getline(*din, str)){
 		if(str.empty()) continue;
 		string tmp;
+		replace(str.begin(),str.end(),'\t',' ');
 		istringstream stream( str );
 		vector<string> ins;
 		while(getline(stream,tmp,' ')){
