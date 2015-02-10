@@ -1,8 +1,7 @@
 ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
-SOURCES = test.s
 
-all: test.b
+all: test_without_hazard.b
 
 .PHONY: assembler all clean
 

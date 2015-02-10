@@ -6,6 +6,8 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity Core is
+  generic (
+    wtime : std_logic_vector(15 downto 0) := x"023D");
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -29,7 +31,7 @@ end Core;
 architecture arch_core of Core is
   component Main is
     generic (
-      wtime : std_logic_vector(15 downto 0) := x"023D");
+      wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       clk   : in    std_logic;
       RS_TX : out   std_logic;
