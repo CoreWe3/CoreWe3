@@ -35,6 +35,7 @@ package Util is
   constant JSUB  : std_logic_vector(5 downto 0) := "011011";
   constant RET   : std_logic_vector(5 downto 0) := "011100";
 
+  constant EOF   : std_logic_vector(5 downto 0) := "111111";
 
   type mem_out_t is record
     d : unsigned(31 downto 0);
@@ -156,13 +157,15 @@ package Util is
     dest   : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
     comp   : std_logic;
+    mem    : mem_in_t;
   end record memory_access_t;
 
   constant default_m : memory_access_t := (
     op => ADD,
     dest => (others => '0'),
     data => (others => '0'),
-    comp => '-');
+    comp => '-',
+    mem => default_mem_in);
 
 
   type cpu_t is record
@@ -173,7 +176,6 @@ package Util is
     m : memory_access_t;
     gpreg : regfile_t;
     fpreg : regfile_t;
-    mem : mem_in_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
@@ -183,7 +185,6 @@ package Util is
     e => default_e,
     m => default_m,
     gpreg => init_regfile,
-    fpreg => init_regfile,
-    mem => default_mem_in);
+    fpreg => init_regfile);
 
 end package Util;

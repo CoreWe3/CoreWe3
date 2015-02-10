@@ -279,7 +279,7 @@ begin
     end if;
   end process;
 
-  data_mem_o.busy <= '0' when state = x"00" else
-          '1';
+  data_mem_o.busy <= '0' when state = x"00" or data_mem_i.go = '1' else
+                     '1';
 
 end MemoryIO_arch;

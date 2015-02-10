@@ -9,7 +9,7 @@ use work.Util.all;
 
 entity InitializedInstructionMemory is
   generic(
-    CODE  : string := "file/test.b");
+    CODE  : string := "file/test_without_hazard.b");
   port (
     clk : in std_logic;
     instruction_mem_o : out std_logic_vector(31 downto 0);
