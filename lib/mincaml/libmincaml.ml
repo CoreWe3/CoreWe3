@@ -38,6 +38,9 @@ let rec fiszero x = x = 0.0 in
 let rec fispos x = x > 0.0 in
 let rec fisneg x = x < 0.0 in 
 
+let rec fsub x y = 
+  x +. (-.y) in
+
 let rec finv x =
   let a = fasi x in
   let idx = (a lsl 9) lsr 22 in
@@ -179,6 +182,9 @@ let rec atan f =
 	    1.5707963267948966 -. (kernel_atan (1.0 /. a)) in
   if s = 0 then a else -.a in
 
+(* 絶対値の最大ビットの位置(+127)が指数部になる。 *)
+(* 切り捨てが発生する際は、最上位を0捨1入。 *)
+(* 繰り上がりも考慮して、論理orではなく加算でbodyを作る。 *)
 let rec float_of_int a =
   let rec find_largest_bit i a =
     if i < 0 then
@@ -187,32 +193,36 @@ let rec float_of_int a =
       i
     else
       find_largest_bit (i - 1) a in
-  let si = (a lsr 31) lsl 31 in
-  let a = if a < 0 then -a else a in
-  let lb = find_largest_bit 30 a in
+  let si = (a lsr 31) lsl 31 in (* sign bit *)
+  let a = if a < 0 then -a else a in (* absolute value*)
+  let lb = find_largest_bit 30 a in (* 2^lb <= a < 2^(lb+1) *)
   if lb < 0 then
-    0.0
+    0.0 (* all zero *)
   else
-    let sft = 32 - lb in
-    let ma = (a lsl sft) lsr 8 in
-    let ma = (ma + 1) lsr 1 in
-    let ex = (lb + 127) lsl 23 in
-    let sgl = si lor (ex + ma) in
+    let sft = 32 - lb in 
+    let ma = (a lsl sft) lsr 8 in (* make mantissa part *)
+    let ma = (ma + 1) lsr 1 in    (* round *)
+    let ex = (lb + 127) lsl 23 in (* exponent part *)
+    let sgl = si lor (ex + ma) in (* concat all parts (add exponent and mantissa for carry) *)
     iasf sgl in
 
+(* 指数部で場合分けを行う。 *)
+(* |x| < 2^23の時、小数点以下を切り捨て(0捨1入) *)
+(* 2^23 <= |x| < 2^31の時、仮数部を左シフトして桁合わせ *)
+(* 2^31 <= |x|の時、±2^31に丸める *)
 let rec int_of_float x =
   let a = fasi x in
-  let si = a lsr 31 in
-  let ex = (a lsl 1) lsr 24 in
-  let ma = (a lsl 9) lsr 9 in
-  let ma = (1 lsl 23) lor ma in
+  let si = a lsr 31 in (* sign bit *)
+  let ex = (a lsl 1) lsr 24 in (* expoent part *)
+  let ma = (a lsl 9) lsr 9 in (* mantissa *)
+  let ma = (1 lsl 23) lor ma in (* complement hiddeb bit *)
   if ex < 150 then (* x < 2^23 *)
-    let sft = 149 - ex in
-    let a = ((ma lsr sft) + 1) lsr 1 in
+    let sft = 149 - ex in 
+    let a = ((ma lsr sft) + 1) lsr 1 in　(* shift and round *)
     if si = 0 then a else -a
   else if ex < 158 then (* 2^23 <= x < 2^31 *)
     let sft = ex - 150 in
-    let a = ma lsl sft in
+    let a = ma lsl sft in (* shift *)
     if si = 0 then a else -a
   else (* 2^31 <= x *)
     if si = 0 then 2147483647 (* 2^31-1 *) else -2147483648 (* -2^31 *) in

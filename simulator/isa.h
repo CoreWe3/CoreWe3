@@ -1,83 +1,71 @@
+#pragma once
+
+#include <vector>
+#include <map>
+#include <string>
+
+// Instractions
+
+enum IS : unsigned int{
+	LD = 0x0, ST = 0x1, FLD= 0x2, FST = 0x3, ITOF = 0x4, FTOI= 0x5,
+	ADD = 0x6,  SUB = 0x7, ADDI = 0x8,  SHL = 0x9, SHR = 0xA, SHLI = 0xB, SHRI = 0xC, LDIH= 0xD,
+	FADD = 0xE, FSUB = 0xF, FMUL = 0x10, FDIV = 0x11, FSQRT = 0x12, FABS = 0x13, FCMP = 0x14, FLDIL = 0x15, FLDIH = 0x16,
+	J = 0x17, JEQ = 0x18, JLE = 0x19, JLT = 0x1A, JSUB = 0x1B, RET = 0x1C,
+	VLDI = 0x20, VFLDI = 0x21, VCMP = 0x22, VCMPI = 0x23
+};
+
+const std::map<std::string, unsigned int> INAMES {
+	{"LD", LD}, {"ST", ST}, {"FLD", FLD}, {"FST", FST}, {"ITOF", ITOF}, {"FTOI", FTOI},
+		{"ADD", ADD}, {"SUB", SUB}, {"ADDI", ADDI} , {"SHL", SHL}, {"SHR", SHR}, {"SHLI", SHLI}, {"SHRI", SHRI}, {"LDIH", LDIH},
+		{"FADD", FADD}, {"FSUB", FSUB}, {"FMUL", FMUL}, {"FDIV", FDIV}, {"FSQRT", FSQRT}, {"FABS",FABS}, {"FCMP", FCMP}, {"FLDIL", FLDIL}, {"FLDIH", FLDIH},
+		{"J", J}, {"JEQ", JEQ}, {"JLE", JLE}, {"JLT", JLT}, {"JSUB", JSUB}, {"RET", RET},
+		{"LDI", VLDI}, {"FLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI}
+};
+
+const std::vector<std::string> GREGNAMES {
+	"r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",  "r8",  "r9",
+		"r10", "r11", "r12", "r13", "r14", "r15", "r16", "r17", "r18", "r19",
+		"r20", "r21", "r22", "r23", "r24", "r25", "r26", "r27", "r28", "r29",
+		"r30", "r31" };
+
+const std::vector<std::string> FREGNAMES {
+	"f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",  "f8",  "f9",
+		"f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19",
+		"f20", "f21", "f22", "f23", "f24", "f25", "f26", "f27", "f28", "f29",
+		"f30", "f31"};
 
 typedef union{
-	unsigned int data;
+	uint32_t data;
 	struct {
-		int cx:8;
-		unsigned int rc:6;
-		unsigned int rb:6;
-		unsigned int ra:6;
+		int cx:11;
+		unsigned int rc:5;
+		unsigned int rb:5;
+		unsigned int ra:5;
 		unsigned int op:5;
 		unsigned int fg:1;
 	} A;
 	struct {
-		int cx:14;
-		unsigned int rb:6;
-		unsigned int ra:6;
+		int cx:16;
+		unsigned int rb:5;
+		unsigned int ra:5;
 		unsigned int op:5;
 		unsigned int fg:1;
 	} L;
 	struct {
-		int cx:20;
-		unsigned int ra:6;
-		unsigned int op:5;
-		unsigned int fg:1;
-	} X;
-	struct {
-		int cx:26;
+		int cx:25;
+		unsigned int br:1;
 		unsigned int op:5;
 		unsigned int fg:1;
 	} J;
-} INS;
+} FORMAT;
 
 
-#define ISANUM 0x1C
-const char* names[] = {"LD","ST","LDA","STA","LDIH","LDIL","ADD","SUB","FNEG","ADDI","AND","OR","XOR","SHL","SHR","SHLI","SHRI","BEQ","BLE","BLT","BFLE","JSUB","RET","PUSH","POP","FADD","FMUL","LDI"};
-#define LD   0x0
-#define ST   0x1
-#define LDA  0x2
-#define STA  0x3
-#define LDIH 0x4
-#define LDIL 0x5
-#define ADD  0x6
-#define SUB  0x7
-#define FNEG 0x8
-#define ADDI 0x9
-#define AND  0xA
-#define OR   0xB
-#define XOR  0xC
-#define SHL  0xD
-#define SHR  0xE
-#define SHLI 0xF
-#define SHRI 0x10
-#define BEQ  0x11
-#define BLE  0x12
-#define BLT  0x13
-#define BFLE 0x14
-#define JSUB 0x15
-#define RET  0x16
-#define PUSH 0x17
-#define POP  0x18
-#define FADD 0x19
-#define FMUL 0x1A
-#define LDI  0x1B
-
-#define REGNUM 64
-const char* rnames[] = {"r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12","r13","r14","r15","r16","r17","r18","r19","r20","r21","r22","r23","r24","r25","r26","r27","r28","r29","r30","r31","r32","r33","r34","r35","r36","r37","r38","r39","r40","r41","r42","r43","r44","r45","r46","r47","r48","r49","r50","r51","r52","r53","r54","r55","r56","r57","r58","r59","r60","r61","r62","r63"};
 typedef union{
+	uint32_t r;
 	unsigned int u;
 	int d;
-	float f;
 } REG;
-REG reg[REGNUM];
-
 
 #define RAMSIZE 0x100000
-#define ROMSIZE 0x100000
-unsigned int pc=0;
-unsigned int pcflag;
-unsigned int sp=0xffffe;
-#define STACKLIMIT 0xf0000
-unsigned int ram[RAMSIZE];
-unsigned int rom[ROMSIZE];
-#define IOADDR 0xfffff
+#define IOADDR   0xfffff
 

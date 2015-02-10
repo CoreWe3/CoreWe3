@@ -1,83 +1,208 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "isa.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <list>
+#include <string>
+using namespace std;
 
-const char* op2name(unsigned int op);
-const char* reg2name(unsigned int reg);
+#include <getopt.h>
+#include "isa_class.h"
 
-int main(int argc, char* argv[])
-{
-	if(argc < 0){
-		printf("Need Binary ilename\n");
-		return 1;
+string int2hexstring(unsigned int i){
+	stringstream stream;
+	stream << hex << "0x" << i;
+	return stream.str();
+}
+
+int main(int argc, char* argv[]){
+
+	//Option Handler
+	char result;
+	char *filename = nullptr, *outputfilename = nullptr;
+	while((result=getopt(argc,argv,"f:o:"))!=-1){
+		switch(result){
+			case 'o':
+				outputfilename = optarg;
+				break;
+			case 'f':
+				filename = optarg;
+				break;
+			case ':':
+				cerr << result << " needs value" << endl;
+				return 1;
+			case '?':
+				cerr << "unknown option" << endl;
+				return 1;
+		}
 	}
 
-	int num = 1;
-	INS ins;
-	FILE *fpr = fopen(argv[1],"rb");
-	if (fpr == NULL){
-		printf("Can't open %s\n",argv[1]);
-		return 1;
+	//Initilaize
+	ifstream fin;
+	if(filename != nullptr){
+		fin.open(filename, ios::in|ios::binary);
+		if(fin.fail()){
+			cerr << "Can't open file" << endl;
+			return 1;
+		}
+	}else{
+		cerr << "No input file." << endl;
 	}
 
-	while(fread(&(ins.data),sizeof(unsigned int),1,fpr) > 0){
-		switch(ins.A.op){
+	//Read Data
+	list<uint32_t> instructions;
+	uint32_t ins;
+	while(fin.read(reinterpret_cast<char*>(&ins),sizeof(ins))){
+		instructions.push_back(ins);
+	}
+
+	//Disassembling
+	list<string> results;
+	for(auto el : instructions){
+		FORMAT fm;
+		fm.data = el;
+		string str = "";
+		switch(fm.J.op){
+			// no regs and imm
+			case RET:
+				str += ISA::isa2name(fm.J.op);
+				break;
+
+				// 1 imm
+			case J:
+			case JEQ:
+			case JLE:
+			case JLT:
+			case JSUB:
+				str += ISA::isa2name(fm.J.op);
+				str += "\t";
+				str += int2hexstring(fm.J.cx);
+				break;
+
+				// 1 greg, 1 imm
+			case LDIH:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::greg2name(fm.L.ra);
+				str += "\t";
+				str += int2hexstring(fm.L.cx);
+				break;
+
+				// 1 freg, 1 imm
+			case FLDIL:
+			case FLDIH:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::freg2name(fm.L.ra);
+				str += "\t";
+				str += int2hexstring(fm.L.cx);
+				break;
+
+				// 1 freg, 1 greg
+			case ITOF:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::freg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::greg2name(fm.L.rb);
+				break;
+
+				// 1 greg, 1 freg
+			case FTOI:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::greg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::freg2name(fm.L.rb);
+				break;
+
+				// 2 freg
+			case FSQRT:
+			case FABS:
+			case FCMP:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::freg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::freg2name(fm.L.rb);
+				break;
+
+				// 2 gregs, 1 imm
 			case LD:
 			case ST:
 			case ADDI:
 			case SHLI:
 			case SHRI:
-			case BEQ:
-			case BLE:
-			case BLT:
-			case BFLE:
-				printf("%s\t%s\t%s\t%d\n",op2name(ins.L.op),reg2name(ins.L.ra),reg2name(ins.L.rb),ins.L.cx);
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::greg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::greg2name(fm.L.rb);
+				str += "\t";
+				str += int2hexstring(fm.L.cx);
 				break;
+
+				// 1 freg, 1greg, 1 imm
+			case FLD:
+			case FST:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::freg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::greg2name(fm.L.rb);
+				str += "\t";
+				str += int2hexstring(fm.L.cx);
+				break;
+
+				// 3 gregs
 			case ADD:
 			case SUB:
-			case AND:
-			case OR:
-			case XOR:
 			case SHL:
 			case SHR:
-				printf("%s\t%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb),reg2name(ins.A.rc));
+				str += ISA::isa2name(fm.A.op);
+				str += "\t";
+				str += ISA::greg2name(fm.A.ra);
+				str += "\t";
+				str += ISA::greg2name(fm.A.rb);
+				str += "\t";
+				str += ISA::greg2name(fm.A.rc);
 				break;
-			case FNEG:
-				printf("%s\t%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra),reg2name(ins.A.rb));
+
+				// 3 fregs
+			case FADD:
+			case FSUB:
+			case FMUL:
+			case FDIV:
+				str += ISA::isa2name(fm.A.op);
+				str += "\t";
+				str += ISA::freg2name(fm.A.ra);
+				str += "\t";
+				str += ISA::freg2name(fm.A.rb);
+				str += "\t";
+				str += ISA::freg2name(fm.A.rc);
 				break;
-			case PUSH:
-			case POP:
-				printf("%s\t%s\n",op2name(ins.A.op),reg2name(ins.A.ra));
-				break;
-			case JSUB:
-				printf("%s\t%d\n",op2name(ins.J.op),ins.L.cx);
-				break;
-			case RET:
-				printf("%s\n",op2name(ins.J.op));
-				break;
-			case LDA:
-			case STA:
-			case LDIH:
-			case LDIL:
-				printf("%s\t%s\t%d\n",op2name(ins.X.op),reg2name(ins.X.ra), ins.X.cx);
-				break;
+
 			default:
-				printf("no such instruction \"%d\" : line %d\n",ins.A.op,num);
-				break;
+				cerr << "This disassembler has bug!" << endl;
+				exit(1);
 		}
-		num++;
+		results.push_back(str);
 	}
-	fclose(fpr);
+	
+	//Output Assembly File
+	ostream *dout = &cout;
+	ofstream fout;
+	if(outputfilename != nullptr){
+		fout.open(outputfilename);
+		if(fout.fail()){
+			cerr << "Can't open file : " << outputfilename << endl;
+			return 1;
+		}
+		dout = &fout;
+	}
+	for(auto x : results){
+		(*dout) << x << endl;
+	}
+
 	return 0;
 }
 
-
-
-
-const char* op2name(unsigned int op){
-	return names[op];
-}
-const char* reg2name(unsigned  int reg){
-	return rnames[reg];
-}
