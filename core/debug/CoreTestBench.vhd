@@ -5,9 +5,11 @@ entity CoreTestBench is
 end CoreTestBench;
 
 architecture CoreTestBench_arch of CoreTestBench is
-  constant wtime : std_logic_vector := x"0008";
+  constant wtime : std_logic_vector(15 downto 0) := x"0008";
 
   component Core is
+    generic (
+      wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       MCLK1  : in    std_logic;
       RS_RX  : in    std_logic;
