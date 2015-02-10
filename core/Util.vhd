@@ -79,24 +79,6 @@ package Util is
     d1 => (others => '-'),
     d2 => (others => '-'));
 
-  type reg_in_t is record
-    we : std_logic;
-    a1 : unsigned(5 downto 0);
-    a2 : unsigned(5 downto 0);
-    d  : unsigned(31 downto 0);
-  end record reg_in_t;
-
-  constant default_reg_in : reg_in_t := (
-    we => '0',
-    a1 => (others => '-'),
-    a2 => (others => '-'),
-    d => (others => '-'));
-
-  type reg_out_t is record
-    d1 : unsigned(31 downto 0);
-    d2 : unsigned(31 downto 0);
-  end record reg_out_t;
-
   type regfile_t is array(0 to 31) of unsigned(31 downto 0);
 
   constant init_regfile : regfile_t := (
@@ -123,6 +105,7 @@ package Util is
     d2    : unsigned(31 downto 0);
     dest  : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
+    forward : std_logic_vector(1 downto 0);
   end record decode_t;
 
   constant default_d : decode_t := (
@@ -131,7 +114,8 @@ package Util is
     d1 => (others => '0'),
     d2 => (others => '0'),
     dest => (others => '0'),
-    data => (others => '-'));
+    data => (others => '-'),
+    forward => "00");
 
   type execute_t is record
     op     : std_logic_vector(5 downto 0);
@@ -172,6 +156,7 @@ package Util is
     state : std_logic;
     f : fetch_t;
     d : decode_t;
+    d_backup : decode_t;
     e : execute_t;
     m : memory_access_t;
     gpreg : regfile_t;
@@ -182,6 +167,7 @@ package Util is
     state => '0',
     f => default_f,
     d => default_d,
+    d_backup => default_d,
     e => default_e,
     m => default_m,
     gpreg => init_regfile,
