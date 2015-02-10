@@ -85,7 +85,9 @@ int main(int argc, char* argv[]){
 		istringstream stream( str );
 		vector<string> ins;
 		while(getline(stream,tmp,' ')){
-			ins.push_back(tmp);
+			if(tmp.length() > 0){
+				ins.push_back(tmp);
+			}
 		}
 		instructions.push_back(ins);
 	}
@@ -261,7 +263,7 @@ int main(int argc, char* argv[]){
 				results.push_back(fm.data);
 				line++;
 				break;
-			
+
 			case VFLDI:
 				fm.L.op = ISA::name2isa("FLDIH");
 				fm.L.ra = ISA::name2reg(el[1]);
@@ -299,7 +301,7 @@ int main(int argc, char* argv[]){
 				exit(1);
 		}
 	}
-	
+
 	//Output Assembly File
 	ofstream fout;
 	if(outputfilename != nullptr){
@@ -319,4 +321,3 @@ int main(int argc, char* argv[]){
 
 	return 0;
 }
-
