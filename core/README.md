@@ -10,13 +10,14 @@
 	write register
 
 メモリアクセスはストールする。executeで結果がわかるものについてはフォワーディングする。
+分岐する場合、3clkの遅延、STは1clkの遅延が生じる。
 
 * 実装済み命令
-ST ADD SUB ADDI
+ST ADD SUB ADDI J JEQ
 
 ## TODO
 
-* 分岐命令（静的分岐予測）
+* float IO
 
 * FPU組み込み
 

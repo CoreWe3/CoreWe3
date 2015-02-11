@@ -135,17 +135,17 @@ int main(int argc, char* argv[]){
 				break;
 
 			case JEQ:
-				if(greg[30].d == 0) pc += 1;
-				else pc += fm.J.cx;
+				if(greg[30].d == 0) pc += fm.J.cx;
+				else pc += 1;
 				break;
 
 			case JLE:
-				if(greg[30].d <= 0) pc += 1;
-				else pc += fm.J.cx;
+				if(greg[30].d <= 0) pc += fm.J.cx;
+				else pc += 1;
 
 			case JLT:
-				if(greg[30].d < 0) pc += 1;
-				else pc += fm.J.cx;
+				if(greg[30].d < 0) pc += fm.J.cx;
+				else pc += 1;
 
 			case JSUB:
 				greg[31].u = pc + 1;
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 				freg[fm.L.ra].r = FPU::fsqrt(freg[fm.L.rb].r);
 				pc+=1;
 				break;
-				
+
 
 			case FABS:
 				freg[fm.L.ra].r = FPU::fabs(freg[fm.L.rb].r);
@@ -306,7 +306,7 @@ int main(int argc, char* argv[]){
 	}
 
 END_MAIN:
-	
+
 
 	//Dump RAM
 	ofstream fout;
@@ -320,7 +320,7 @@ END_MAIN:
 			fout.write((char *)&x,sizeof(x));
 		}
 	}
-	
+
 	cout << "Program Counter = " << pc << endl;
 	cout << "Instructions = " << counter << endl;
 
@@ -335,4 +335,3 @@ END_MAIN:
 	cout << endl;
 	return 0;
 }
-
