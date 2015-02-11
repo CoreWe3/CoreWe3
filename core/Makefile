@@ -2,7 +2,7 @@ SOURCE = $(wildcard *.vhd) $(wildcard fpu/*.vhd)
 TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
-CODE = file/test_without_hazard.b
+CODE = file/fib_loop.b
 
 all: configure
 

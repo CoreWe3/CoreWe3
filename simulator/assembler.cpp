@@ -79,7 +79,6 @@ int main(int argc, char* argv[]){
 	list<vector<string>> instructions;
 	string str;
 	while(*din && getline(*din, str)){
-		if(str.empty()) continue;
 		string tmp;
 		replace(str.begin(),str.end(),'\t',' ');
 		istringstream stream( str );
@@ -89,6 +88,8 @@ int main(int argc, char* argv[]){
 				ins.push_back(tmp);
 			}
 		}
+		if(ins.size()<=0) continue;
+		if(ins[0][0]=='#') continue;
 		instructions.push_back(ins);
 	}
 
@@ -150,11 +151,13 @@ int main(int argc, char* argv[]){
 
 	//Detect Dinamic Label
 	int line = 0;
-	for(auto it = instructions.begin(); it != instructions.end(); it++){
+	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0] == ':'){
 			labels[(*it)[0]] = line;
+			// cout << (*it)[0] << ' ' << line << endl;
 			it = instructions.erase(it);
 		}else{
+			// cout << (*it)[0] << ' ' << line << endl;
 			switch(ISA::name2isa((*it)[0])){
 				case VLDI:
 				case VFLDI:
@@ -162,6 +165,7 @@ int main(int argc, char* argv[]){
 				default:
 					line+=1;
 			}
+			it++;
 		}
 	}
 

@@ -39,14 +39,10 @@ architecture Control_arch of Control is
   --    o : out std_logic_vector(31 downto 0));
   --end component;
 
-
   signal r : cpu_t := init_r;
   signal alu_o : alu_out_t;
   --signal fadd_o : std_logic_vector(31 downto 0);
   --signal fmul_o : std_logic_vector(31 downto 0);
-  --signal setup : unsigned(1 downto 0) := (others => '0');
-  --signal data_hazard : std_logic;
-  --signal branch_hazard : std_logic;
 
 begin
   instruction_mem_i <= r.f.pc;
@@ -72,8 +68,11 @@ begin
     variable da, db, dc : unsigned(31 downto 0);
     variable da_hazard, db_hazard, dc_hazard : std_logic;
     variable da_forward, db_forward, dc_forward : std_logic;
+    variable cr : unsigned(31 downto 0);
+    variable cr_hazard, cr_forward : std_logic;
     variable data_hazard : std_logic;
     variable d_save, d_restore : decode_t;
+    variable d1_forwarded, d2_forwarded : unsigned(31 downto 0);
   begin
 
     if rising_edge(clk) then
@@ -187,6 +186,42 @@ begin
         dc := r.gpreg(to_integer(unsigned(instruction_mem_o(15 downto 11))));
       end if;
 
+      if "11110" = r.d.dest then
+        cr := (others => '-');
+        case r.d.op is
+          when ADD | SUB | ADDI =>
+            cr_hazard := '0';
+            cr_forward := '1';
+          when others =>
+            cr_hazard := '1';
+            cr_forward := '0';
+        end case;
+      elsif "11110" = r.e.dest then
+        cr_forward := '0';
+        case r.e.op is
+          when ADD | SUB | ADDI =>
+            cr_hazard := '0';
+            cr := alu_o.d;
+          when others =>
+            cr_hazard := '1';
+            cr := (others => '-');
+        end case;
+      elsif "11110" = r.m.dest then
+        cr_forward := '0';
+        case r.m.op is
+          when ADD | SUB | ADDI =>
+            cr_hazard := '0';
+            cr := r.m.data;
+          when others =>
+            cr_hazard := '1';
+            cr := (others => '-');
+        end case;
+      else
+        cr_hazard := '0';
+        cr_forward := '0';
+        cr := r.gpreg(30);
+      end if;
+
       --data_hazard detection
       case instruction_mem_o(31 downto 26) is
         when ST =>
@@ -195,12 +230,14 @@ begin
           data_hazard := db_hazard or dc_hazard;
         when ADDI =>
           data_hazard := db_hazard;
+        when JEQ =>
+          data_hazard := cr_hazard;
         when others =>
           data_hazard := '0';
       end case;
 
       -- decode
-      d_save.pc := r.f.pc;
+      d_save.pc := r.f.pc-1;
       d_save.op := instruction_mem_o(31 downto 26);
       case instruction_mem_o(31 downto 26) is
         when LD | FLD =>
@@ -226,10 +263,37 @@ begin
           d_save.forward := db_forward & '0';
         when F_INV | F_SQRT | F_ABS =>
         when FCMP =>
-        when J | JEQ | JLE | JLT | JSUB =>
+        when J =>
+          d_save.dest := (others => '0');
+          d_save.d1 := (others => '-');
+          d_save.d2 := (others => '-');
+          d_save.data := unsigned(resize(
+            signed(instruction_mem_o(24 downto 0)), 32));
+          d_save.forward := "00";
+        when JEQ =>
+          d_save.dest := (others => '0');
+          d_save.d1 := cr;
+          d_save.d2 := (others => '-');
+          d_save.data := unsigned(resize(
+            signed(instruction_mem_o(24 downto 0)), 32));
+          d_save.forward := cr_forward & '0';
         when RET =>
         when others =>
       end case;
+
+      --execute
+      if r.d.forward(1) = '0' then
+        d1_forwarded := r.d.d1;
+      else
+        d1_forwarded := alu_o.d;
+      end if;
+
+      if r.d.forward(0) = '0' then
+        d2_forwarded := r.d.d2;
+      else
+        d2_forwarded := alu_o.d;
+      end if;
+
 
       if data_mem_o.busy = '0' then -- stall of memory
 
@@ -237,84 +301,102 @@ begin
 
         if data_hazard = '0' then -- stall of data hazard
 
-          --fetch
-          r.f.pc <= r.f.pc+1;
+          if r.branching = '0' then --stall of control hazard
 
-          --decode
-          if r.state = '0' then
-            r.d <= d_save;
-          else
-            r.d <= r.d_backup;
+            r.branched <= '0';
+
+            --fetch
+            r.f.pc <= r.f.pc+1;
+
+            --decode
+            if r.branched = '0' then
+              if r.state = '0' then
+                r.d <= d_save;
+              else
+                r.d <= r.d_backup;
+              end if;
+            else
+              r.d <= default_d;
+            end if;
+
+            --execute
+            r.e.op <= r.d.op;
+            r.e.dest <= r.d.dest;
+            r.e.pc <= r.d.pc;
+            case r.d.op is
+              when LD | FLD =>
+              when ST | FST =>
+                r.e.alu.d1 <= d2_forwarded;
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "00";
+                r.branching <= '0';
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= d1_forwarded;
+              when ITOF =>
+              when FTOI =>
+              when ADD =>
+                r.e.alu.d1 <= d1_forwarded;
+                r.e.alu.d2 <= d2_forwarded;
+                r.e.alu.ctrl <= "00";
+                r.branching <= '0';
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= (others => '-');
+              when SUB =>
+                r.e.alu.d1 <= d1_forwarded;
+                r.e.alu.d2 <= d2_forwarded;
+                r.e.alu.ctrl <= "01";
+                r.branching <= '0';
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= (others => '-');
+              when ADDI =>
+                r.e.alu.d1 <= d1_forwarded;
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "00";
+                r.branching <= '0';
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= (others => '-');
+              when SH_L =>
+              when SH_R =>
+              when SHLI =>
+              when SHRI =>
+              when J =>
+                r.e.alu.d1 <= resize(r.d.pc, 32);
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "00";
+                r.branching <= '1';
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= (others => '-');
+              when JEQ =>
+                r.e.alu.d1 <= resize(r.d.pc, 32);
+                r.e.alu.d2 <= r.d.data;
+                r.e.alu.ctrl <= "00";
+                if d1_forwarded = 0 then
+                  r.branching <= '1';
+                else
+                  r.branching <= '0';
+                end if;
+                r.e.fpu <= default_fpu_in;
+                r.e.data <= (others => '-');
+              when JSUB =>
+              when RET =>
+              when others =>
+            end case;
+
+          else --control hazard
+
+            r.branching <= '0';
+            r.branched <= '1';
+
+            --fetch
+            r.f.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
+
+            --decode
+            r.d <= default_d;
+
+            --execute
+            r.e <= default_e;
+
           end if;
-
-          --execute
-          r.e.op <= r.d.op;
-          r.e.dest <= r.d.dest;
-          r.e.pc <= r.d.pc;
-          case r.d.op is
-            when LD | FLD =>
-            when ST | FST =>
-              if r.d.forward(0) = '0' then
-                r.e.alu.d1 <= r.d.d2;
-              else
-                r.e.alu.d1 <= alu_o.d;
-              end if;
-              r.e.alu.d2 <= r.d.data;
-              r.e.alu.ctrl <= "00";
-              r.e.fpu <= default_fpu_in;
-              if r.d.forward(1) = '0' then
-                r.e.data <= r.d.d1;
-              else
-                r.e.data <= alu_o.d;
-              end if;
-            when ITOF =>
-            when FTOI =>
-            when ADD =>
-              if r.d.forward(1) = '0' then
-                r.e.alu.d1 <= r.d.d1;
-              else
-                r.e.alu.d1 <= alu_o.d;
-              end if;
-              if r.d.forward(0) = '0' then
-                r.e.alu.d2 <= r.d.d2;
-              else
-                r.e.alu.d2 <= alu_o.d;
-              end if;
-              r.e.alu.ctrl <= "00";
-              r.e.fpu <= default_fpu_in;
-              r.e.data <= (others => '-');
-            when SUB =>
-              if r.d.forward(1) = '0' then
-                r.e.alu.d1 <= r.d.d1;
-              else
-                r.e.alu.d1 <= alu_o.d;
-              end if;
-              if r.d.forward(0) = '0' then
-                r.e.alu.d2 <= r.d.d2;
-              else
-                r.e.alu.d2 <= alu_o.d;
-              end if;
-              r.e.alu.ctrl <= "01";
-              r.e.fpu <= default_fpu_in;
-              r.e.data <= (others => '-');
-            when ADDI =>
-              if r.d.forward(1) = '0' then
-                r.e.alu.d1 <= r.d.d1;
-              else
-                r.e.alu.d1 <= alu_o.d;
-              end if;
-              r.e.alu.d2 <= r.d.data;
-              r.e.alu.ctrl <= "00";
-              r.e.fpu <= default_fpu_in;
-              r.e.data <= (others => '-');
-            when SH_L =>
-            when SH_R =>
-            when SHLI =>
-            when SHRI =>
-            when JSUB =>
-            when RET =>
-            when others =>
-          end case;
 
         else -- data hazard
 
@@ -334,6 +416,9 @@ begin
             r.m.mem.we <= '1';
           when ADD | SUB | ADDI =>
             r.m.data <= alu_o.d;
+            r.m.mem <= default_mem_in;
+          when J | JEQ =>
+            r.m.data <= (others => '-');
             r.m.mem <= default_mem_in;
           when others =>
         end case;
