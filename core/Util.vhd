@@ -122,7 +122,6 @@ package Util is
     pc     : unsigned(ADDR_WIDTH-1 downto 0);
     dest   : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
-    branch : std_logic;
     alu    : alu_in_t;
     fpu    : fpu_in_t;
   end record execute_t;
@@ -132,7 +131,6 @@ package Util is
     pc => (others => '-'),
     dest => (others => '0'),
     data => (others => '-'),
-    branch => '0',
     alu => default_alu,
     fpu => default_fpu_in);
 
@@ -154,6 +152,8 @@ package Util is
 
   type cpu_t is record
     state : std_logic;
+    branching : std_logic;
+    branched : std_logic;
     f : fetch_t;
     d : decode_t;
     d_backup : decode_t;
@@ -165,6 +165,8 @@ package Util is
 
   constant init_r : cpu_t := (
     state => '0',
+    branching => '0',
+    branched => '0',
     f => default_f,
     d => default_d,
     d_backup => default_d,

@@ -1,18 +1,27 @@
 ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
+SIM = $(ROOT)/simulator/bin/simulator
 
-all: test_with_hazard.b
+all: fib_loop.b
 
-.PHONY: assembler all clean
+.PHONY: simulator all clean
 
-assembler:
+simulator:
 	cd $(ROOT)/simulator && $(MAKE)
 
-%.o: %.s assembler
+%.o: %.s simulator
 	$(AS) -f $@ -i $<
 
 %.b: %.o
 	python convert01.py < $< > $@
+#	./hex.sh < $<
+
+%: %.o simulator input
+	$(SIM) -f $< -o output -i input
+#	python endian_convert.py < $< > $@
+
+%: %.s
+
 
 claen:
 	rm -rf *.o
