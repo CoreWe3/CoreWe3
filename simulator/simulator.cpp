@@ -155,7 +155,7 @@ int main(int argc, char* argv[]){
 
 			case JSUB:
 				greg[31].u = pc + 1;
-				pc = greg[31].u;
+				pc += fm.J.cx;
 				break;
 
 			// 1 greg, 1 imm
