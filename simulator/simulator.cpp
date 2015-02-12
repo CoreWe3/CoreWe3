@@ -86,26 +86,32 @@ int main(int argc, char* argv[]){
 	}
 
 	//Initilaize IO
-	ifstream input;
+	istream *input;
+	ifstream fileinput;
 	if(io_inputfilename != nullptr){
-		input.open(io_inputfilename, ios::binary);
-		if(input.fail()){
+		fileinput.open(io_inputfilename, ios::binary);
+		if(fileinput.fail()){
 			cerr << "Can't open file : " << io_inputfilename << endl;
 			return 1;
 		}
+		input = &fileinput;
 	}else{
-		cout << "IO input always returns zero." << endl;
+		cout << "IO input from stdin." << endl;
+		input = &cin;
 	}
 
-	ofstream output;
+	ostream *output;
+	ofstream fileoutput;
 	if(io_outputfilename != nullptr){
-		output.open(io_outputfilename, ios::binary);
-		if(output.fail()){
+		fileoutput.open(io_outputfilename, ios::binary);
+		if(fileoutput.fail()){
 			cerr << "Can't open file : " << io_outputfilename << endl;
 			return 1;
 		}
+		output = &fileoutput;
 	}else{
-		cout << "IO output is trushed." << endl;
+		cout << "IO output to stdout." << endl;
+		output = &cout;
 	}
 
 	//Initilaize REG and PC
@@ -202,8 +208,13 @@ int main(int argc, char* argv[]){
 			case LD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
-					if (address>=RAMSIZE){ cerr << "Invalid Address : 0x" << hex << address << endl; goto END_MAIN;}
-					if (io_inputfilename != nullptr && address== IOADDR) input.read((char*)&(greg[fm.L.ra].r), sizeof(greg[fm.L.ra].r));
+					if (address>=RAMSIZE)
+						{
+							cerr << "Invalid Address : 0x" << hex << address << endl;
+							goto END_MAIN;
+						}
+					if (io_inputfilename != nullptr && address== IOADDR)
+						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 					else greg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -212,8 +223,13 @@ int main(int argc, char* argv[]){
 			case ST:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
-					if (address>=RAMSIZE){ cerr << "Invalid Address : 0x" << hex << address << endl; goto END_MAIN;}
-					if (io_outputfilename != nullptr && address == IOADDR) output.write((char*)&(greg[fm.L.ra].r), sizeof(greg[fm.L.ra].r));
+					if (address>=RAMSIZE)
+						{
+							cerr << "Invalid Address : 0x" << hex << address << endl;
+							goto END_MAIN;
+						}
+					if (io_outputfilename != nullptr && address == IOADDR)
+						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 					else ram[address] = greg[fm.L.ra].r;
 				}
 				pc+=1;
@@ -238,8 +254,13 @@ int main(int argc, char* argv[]){
 			case FLD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
-					if (address>=RAMSIZE){ cerr << "Invalid Address : 0x" << hex << address << endl; goto END_MAIN;}
-					if (io_inputfilename != nullptr && address== IOADDR) input.read((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
+					if (address>=RAMSIZE)
+						{
+							cerr << "Invalid Address : 0x" << hex << address << endl;
+							goto END_MAIN;
+						}
+					if (io_inputfilename != nullptr && address== IOADDR)
+						input->read((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
 					else freg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -248,8 +269,13 @@ int main(int argc, char* argv[]){
 			case FST:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
-					if (address>=RAMSIZE){ cerr << "Invalid Address : 0x" << hex << address << endl; goto END_MAIN;}
-					if (io_outputfilename != nullptr && address == IOADDR) output.write((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
+					if (address>=RAMSIZE)
+						{
+							cerr << "Invalid Address : 0x" << hex << address << endl;
+							goto END_MAIN;
+						}
+					if (io_outputfilename != nullptr && address == IOADDR)
+						output->write((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
 					else ram[address] = freg[fm.L.ra].r;
 				}
 				pc+=1;

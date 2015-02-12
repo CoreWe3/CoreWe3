@@ -23,5 +23,5 @@ simulator:
 %: %.s
 
 
-claen:
-	rm -rf *.o
+clean:
+	rm -rf *.o *.b

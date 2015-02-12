@@ -13,7 +13,7 @@
 分岐する場合、3clkの遅延、STは1clkの遅延が生じる。
 
 * 実装済み命令
-ST ADD SUB ADDI J JEQ
+LD ST ADD SUB ADDI J JEQ
 
 ## TODO
 
