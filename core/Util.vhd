@@ -144,7 +144,6 @@ package Util is
     op     : std_logic_vector(5 downto 0);
     dest   : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
-    comp   : std_logic;
     mem    : mem_in_t;
   end record memory_access_t;
 
@@ -152,7 +151,6 @@ package Util is
     op => ADD,
     dest => (others => '0'),
     data => (others => '0'),
-    comp => '-',
     mem => default_mem_in);
 
 
@@ -223,13 +221,18 @@ package body Util is
      d : out data_t) is
   begin
     if n = r.d.dest and n /= 0 then
-      d.d := (others => '-');
       d.mem_forward := '0';
       case r.d.op is
         when ADD | SUB | ADDI =>
+          d.d := (others => '-');
           d.hazard := '0';
           d.alu_forward := '1';
+        when JSUB =>
+          d.d := resize(r.d.pc, 32);
+          d.hazard := '0';
+          d.alu_forward := '0';
         when others =>
+          d.d := (others => '-');
           d.hazard := '1';
           d.alu_forward := '0';
       end case;
@@ -244,6 +247,14 @@ package body Util is
           d.d := alu;
           d.hazard := '0';
           d.mem_forward := '0';
+        when LDIH =>
+          d.d := r.e.data;
+          d.hazard := '0';
+          d.mem_forward := '0';
+        when JSUB =>
+          d.d := resize(r.e.pc, 32);
+          d.hazard := '0';
+          d.mem_forward := '0';
         when others =>
           d.d := (others => '-');
           d.hazard := '1';
@@ -256,7 +267,7 @@ package body Util is
         when LD =>
           d.d := mem;
           d.hazard := '0';
-        when ADD | SUB | ADDI =>
+        when ADD | SUB | ADDI | JSUB | LDIH =>
           d.d := r.m.data;
           d.hazard := '0';
         when others =>
@@ -293,7 +304,7 @@ package body Util is
      mem : in unsigned(31 downto 0);
      d : out decode_t;
      data_hazard : out std_logic) is
-    variable da, db, dc, cr : data_t;
+    variable da, db, dc, cr, lr : data_t;
   begin
 
     ---forwarding
@@ -301,6 +312,7 @@ package body Util is
     get_gpreg(r, unsigned(i(20 downto 16)), alu, mem, db);
     get_gpreg(r, unsigned(i(15 downto 11)), alu, mem, dc);
     get_gpreg(r, "11110", alu, mem, cr);
+    get_gpreg(r, "11111", alu, mem, lr);
 
     d.pc := r.pc-1;
     d.op := i(31 downto 26);
@@ -329,18 +341,36 @@ package body Util is
         d.d2 := default_data;
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
         data_hazard := db.hazard;
+      when LDIH =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := da;
+        d.d2 := default_data;
+        d.imm := resize(unsigned(i(15 downto 0)), 32);
+        data_hazard := da.hazard;
       when J =>
         d.dest := (others => '0');
         d.d1 := default_data;
         d.d2 := default_data;
         d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
         data_hazard := '0';
-      when JEQ =>
+      when JEQ | JLE | JLT =>
         d.dest := (others => '0');
         d.d1 := cr;
         d.d2 := default_data;
         d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
         data_hazard := cr.hazard;
+      when JSUB =>
+        d.dest := "11111";
+        d.d1 := default_data;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        data_hazard := '0';
+      when RET =>
+        d.dest := (others => '0');
+        d.d1 := lr;
+        d.d2 := default_data;
+        d.imm := (others => '-');
+        data_hazard := lr.hazard;
       when others =>
         d := default_d;
         data_hazard := '0';
@@ -387,6 +417,11 @@ package body Util is
         e.branching := '0';
         e.fpu := default_fpu_in;
         e.data := (others => '-');
+      when LDIH =>
+        e.alu := default_alu;
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := r.d.imm(15 downto 0) & d1_forwarded(15 downto 0);
       when J =>
         e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
         e.branching := '1';
@@ -399,6 +434,34 @@ package body Util is
         else
           e.branching := '0';
         end if;
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when JLE =>
+        e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
+        if d1_forwarded(31) = '1' or d1_forwarded = 0 then
+          e.branching := '1';
+        else
+          e.branching := '0';
+        end if;
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when JLT =>
+        e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
+        if d1_forwarded(31) = '1' then
+          e.branching := '1';
+        else
+          e.branching := '0';
+        end if;
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when JSUB =>
+        e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
+        e.branching := '1';
+        e.fpu := default_fpu_in;
+        e.data := resize(r.d.pc, 32);
+      when RET =>
+        e.alu := (d1_forwarded, x"00000001", "00");
+        e.branching := '1';
         e.fpu := default_fpu_in;
         e.data := (others => '-');
       when others =>
@@ -424,7 +487,16 @@ package body Util is
       when ADD | SUB | ADDI =>
         m.data := alu;
         m.mem := default_mem_in;
-      when J | JEQ =>
+      when LDIH =>
+        m.data := r.e.data;
+        m.mem := default_mem_in;
+      when J | JEQ | JLE | JLT =>
+        m.data := (others => '-');
+        m.mem := default_mem_in;
+      when JSUB =>
+        m.data := r.e.data;
+        m.mem := default_mem_in;
+      when RET =>
         m.data := (others => '-');
         m.mem := default_mem_in;
       when others =>

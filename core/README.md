@@ -13,9 +13,11 @@
 分岐する場合、3clkの遅延、STは1clkの遅延が生じる。
 
 * 実装済み命令
-LD ST ADD SUB ADDI J JEQ
+LD ST ADD SUB ADDI LDIH J JEQ JLE JLT JSUB RET
 
 ## TODO
+
+* bootloader
 
 * float IO
 
