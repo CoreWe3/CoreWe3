@@ -91,37 +91,42 @@ package Util is
     x"00000000", x"00000000", x"00000000", x"00000000",
     x"00000000", x"00000000", x"00000000", x"00000000");
 
-  type fetch_t is record
-    pc    : unsigned(ADDR_WIDTH-1 downto 0);
-  end record fetch_t;
+  type data_t is record
+    d : unsigned(31 downto 0);
+    hazard : std_logic;
+    alu_forward : std_logic;
+    mem_forward : std_logic;
+  end record;
 
-  constant default_f :fetch_t :=
-    (pc => (others => '0'));
+  constant default_data : data_t :=
+    (d => (others => '0'),
+     hazard => '0',
+     alu_forward => '0',
+     mem_forward => '0');
 
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
     op    : std_logic_vector(5 downto 0);
-    d1    : unsigned(31 downto 0);
-    d2    : unsigned(31 downto 0);
+    d1    : data_t;
+    d2    : data_t;
     dest  : unsigned(4 downto 0);
-    data   : unsigned(31 downto 0);
-    forward : std_logic_vector(1 downto 0);
+    imm   : unsigned(31 downto 0);
   end record decode_t;
 
   constant default_d : decode_t := (
     pc => (others => '-'),
     op => ADD,
-    d1 => (others => '0'),
-    d2 => (others => '0'),
+    d1 => default_data,
+    d2 => default_data,
     dest => (others => '0'),
-    data => (others => '-'),
-    forward => "00");
+    imm => (others => '-'));
 
   type execute_t is record
     op     : std_logic_vector(5 downto 0);
     pc     : unsigned(ADDR_WIDTH-1 downto 0);
     dest   : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
+    branching : std_logic;
     alu    : alu_in_t;
     fpu    : fpu_in_t;
   end record execute_t;
@@ -131,6 +136,7 @@ package Util is
     pc => (others => '-'),
     dest => (others => '0'),
     data => (others => '-'),
+    branching => '0',
     alu => default_alu,
     fpu => default_fpu_in);
 
@@ -151,12 +157,11 @@ package Util is
 
 
   type cpu_t is record
-    state : std_logic;
-    branching : std_logic;
+    state : std_logic_vector(1 downto 0);
     branched : std_logic;
-    f : fetch_t;
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    inst_buf : std_logic_vector(31 downto 0);
     d : decode_t;
-    d_backup : decode_t;
     e : execute_t;
     m : memory_access_t;
     gpreg : regfile_t;
@@ -164,15 +169,269 @@ package Util is
   end record cpu_t;
 
   constant init_r : cpu_t := (
-    state => '0',
-    branching => '0',
+    state => "00",
     branched => '0',
-    f => default_f,
+    pc => (others => '0'),
+    inst_buf => (others => '-'),
     d => default_d,
-    d_backup => default_d,
     e => default_e,
     m => default_m,
     gpreg => init_regfile,
     fpreg => init_regfile);
 
+  procedure get_gpreg
+    (r : in cpu_t;
+     n : in unsigned(4 downto 0);
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     d : out data_t);
+
+  procedure forwarding
+    (data_in : in data_t;
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     data_out : out unsigned(31 downto 0));
+
+  procedure decode
+    (r : in cpu_t;
+     i : in std_logic_vector(31 downto 0);
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     d : out decode_t;
+     data_hazard : out std_logic);
+
+  procedure execute
+    (r : in cpu_t;
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     e : out execute_t);
+
+  procedure memory_access
+    (r : in cpu_t;
+     alu : in unsigned(31 downto 0);
+     m : out memory_access_t);
+
 end package Util;
+
+package body Util is
+
+  procedure get_gpreg
+    (r : in cpu_t;
+     n : in unsigned(4 downto 0);
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     d : out data_t) is
+  begin
+    if n = r.d.dest and n /= 0 then
+      d.d := (others => '-');
+      d.mem_forward := '0';
+      case r.d.op is
+        when ADD | SUB | ADDI =>
+          d.hazard := '0';
+          d.alu_forward := '1';
+        when others =>
+          d.hazard := '1';
+          d.alu_forward := '0';
+      end case;
+    elsif n = r.e.dest and n /= 0 then
+      d.alu_forward := '0';
+      case r.e.op is
+        when LD =>
+          d.d := (others => '-');
+          d.hazard := '0';
+          d.mem_forward := '1';
+        when ADD | SUB | ADDI =>
+          d.d := alu;
+          d.hazard := '0';
+          d.mem_forward := '0';
+        when others =>
+          d.d := (others => '-');
+          d.hazard := '1';
+          d.mem_forward := '0';
+      end case;
+    elsif n = r.m.dest and n /= 0 then
+      d.alu_forward := '0';
+      d.mem_forward := '0';
+      case r.m.op is
+        when LD =>
+          d.d := mem;
+          d.hazard := '0';
+        when ADD | SUB | ADDI =>
+          d.d := r.m.data;
+          d.hazard := '0';
+        when others =>
+          d.d := (others => '-');
+          d.hazard := '1';
+      end case;
+    else
+      d.d := r.gpreg(to_integer(n));
+      d.hazard := '0';
+      d.alu_forward := '0';
+      d.mem_forward := '0';
+    end if;
+  end get_gpreg;
+
+  procedure forwarding
+    (data_in : in data_t;
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     data_out : out unsigned(31 downto 0)) is
+  begin
+    if data_in.alu_forward = '1' then
+      data_out := alu;
+    elsif data_in.mem_forward = '1' then
+      data_out := mem;
+    else
+      data_out := data_in.d;
+    end if;
+  end forwarding;
+
+  procedure decode
+    (r : in cpu_t;
+     i : in std_logic_vector(31 downto 0);
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     d : out decode_t;
+     data_hazard : out std_logic) is
+    variable da, db, dc, cr : data_t;
+  begin
+
+    ---forwarding
+    get_gpreg(r, unsigned(i(25 downto 21)), alu, mem, da);
+    get_gpreg(r, unsigned(i(20 downto 16)), alu, mem, db);
+    get_gpreg(r, unsigned(i(15 downto 11)), alu, mem, dc);
+    get_gpreg(r, "11110", alu, mem, cr);
+
+    d.pc := r.pc-1;
+    d.op := i(31 downto 26);
+    case i(31 downto 26) is
+      when LD =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := db;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+        data_hazard := db.hazard;
+      when ST =>
+        d.dest := (others => '0');
+        d.d1 := da;
+        d.d2 := db;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+        data_hazard := da.hazard or db.hazard;
+      when ADD | SUB =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := db;
+        d.d2 := dc;
+        d.imm := (others => '-');
+        data_hazard := db.hazard or dc.hazard;
+      when ADDI =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := db;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+        data_hazard := db.hazard;
+      when J =>
+        d.dest := (others => '0');
+        d.d1 := default_data;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        data_hazard := '0';
+      when JEQ =>
+        d.dest := (others => '0');
+        d.d1 := cr;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        data_hazard := cr.hazard;
+      when others =>
+        d := default_d;
+        data_hazard := '0';
+    end case;
+  end decode;
+
+  procedure execute
+    (r : in cpu_t;
+     alu : in unsigned(31 downto 0);
+     mem : in unsigned(31 downto 0);
+     e : out execute_t) is
+    variable d1_forwarded, d2_forwarded : unsigned(31 downto 0);
+  begin
+
+    forwarding(r.d.d1, alu, mem, d1_forwarded);
+    forwarding(r.d.d2, alu, mem, d2_forwarded);
+
+    e.pc := r.d.pc;
+    e.op := r.d.op;
+    e.dest := r.d.dest;
+    case r.d.op is
+      when LD =>
+        e.alu := (d1_forwarded, r.d.imm, "00");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when ST =>
+        e.alu := (d2_forwarded, r.d.imm, "00");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := d1_forwarded;
+      when ADD =>
+        e.alu := (d1_forwarded, d2_forwarded, "00");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when SUB =>
+        e.alu := (d1_forwarded, d2_forwarded, "01");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when ADDI =>
+        e.alu := (d1_forwarded, r.d.imm, "00");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when J =>
+        e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
+        e.branching := '1';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when JEQ =>
+        e.alu := (resize(r.d.pc, 32), r.d.imm, "00");
+        if d1_forwarded = 0 then
+          e.branching := '1';
+        else
+          e.branching := '0';
+        end if;
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when others =>
+        e := default_e;
+    end case;
+  end execute;
+
+  procedure memory_access
+    (r : in cpu_t;
+     alu : in unsigned(31 downto 0);
+     m : out memory_access_t) is
+  begin
+
+    m.op := r.e.op;
+    m.dest := r.e.dest;
+    case r.e.op is
+      when LD =>
+        m.data := (others => '-');
+        m.mem := (alu(19 downto 0), (others => '-'), '1', '0');
+      when ST =>
+        m.data := (others => '-');
+        m.mem := (alu(19 downto 0), r.e.data, '1', '1');
+      when ADD | SUB | ADDI =>
+        m.data := alu;
+        m.mem := default_mem_in;
+      when J | JEQ =>
+        m.data := (others => '-');
+        m.mem := default_mem_in;
+      when others =>
+        m.data := (others => '-');
+        m.mem := default_mem_in;
+    end case;
+  end memory_access;
+
+
+end Util;

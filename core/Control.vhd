@@ -45,7 +45,7 @@ architecture Control_arch of Control is
   --signal fmul_o : std_logic_vector(31 downto 0);
 
 begin
-  instruction_mem_i <= r.f.pc;
+  instruction_mem_i <= r.pc;
   data_mem_i <= r.m.mem;
 
   alu_unit : alu port map (
@@ -65,382 +65,77 @@ begin
   --  o => fmul_o);
 
   control_unit : process(clk)
-    variable da, db, dc : unsigned(31 downto 0);
-    variable da_hazard, db_hazard, dc_hazard : std_logic;
-    variable da_forward, db_forward, dc_forward : std_logic;
-    variable cr : unsigned(31 downto 0);
-    variable cr_hazard, cr_forward : std_logic;
+    variable inst : std_logic_vector(31 downto 0);
+    variable v_d : decode_t;
+    variable v_e : execute_t;
+    variable v_m : memory_access_t;
     variable data_hazard : std_logic;
-    variable d_save, d_restore : decode_t;
-    variable d1_forwarded, d2_forwarded : unsigned(31 downto 0);
+    variable control_hazard : std_logic;
+    variable mem_stall : std_logic;
   begin
 
     if rising_edge(clk) then
 
-      ---forwarding
-      if unsigned(instruction_mem_o(25 downto 21)) = r.d.dest and r.d.dest /= 0 then
-        da := (others => '-');
-        case r.d.op is
-          when ADD | SUB | ADDI =>
-            da_hazard := '0';
-            da_forward := '1';
-          when others =>
-            da_hazard := '1';
-            da_forward := '0';
-        end case;
-      elsif unsigned(instruction_mem_o(25 downto 21)) = r.e.dest and r.e.dest /= 0 then
-        da_forward := '0';
-        case r.e.op is
-          when ADD | SUB | ADDI =>
-            da_hazard := '0';
-            da := alu_o.d;
-          when others =>
-            da_hazard := '1';
-            da := (others => '-');
-        end case;
-      elsif unsigned(instruction_mem_o(25 downto 21)) = r.m.dest and r.m.dest /= 0 then
-        da_forward := '0';
-        case r.m.op is
-          when ADD | SUB | ADDI =>
-            da_hazard := '0';
-            da := r.m.data;
-          when others =>
-            da_hazard := '1';
-            da := (others => '-');
-        end case;
+      if r.state = "00" then
+        inst := instruction_mem_o;
       else
-        da_hazard := '0';
-        da_forward := '0';
-        da := r.gpreg(to_integer(unsigned(instruction_mem_o(25 downto 21))));
+        inst := r.inst_buf;
       end if;
 
-      if unsigned(instruction_mem_o(20 downto 16)) = r.d.dest and r.d.dest /= 0 then
-        db := (others => '-');
-        case r.d.op is
-          when ADD | SUB | ADDI =>
-            db_hazard := '0';
-            db_forward := '1';
-          when others =>
-            db_hazard := '1';
-            db_forward := '0';
-        end case;
-      elsif unsigned(instruction_mem_o(20 downto 16)) = r.e.dest and r.e.dest /= 0 then
-        db_forward := '0';
-        case r.e.op is
-          when ADD | SUB | ADDI =>
-            db_hazard := '0';
-            db := alu_o.d;
-          when others =>
-            db_hazard := '1';
-            db := (others => '-');
-        end case;
-      elsif unsigned(instruction_mem_o(20 downto 16)) = r.m.dest and r.m.dest /= 0 then
-        db_forward := '0';
-        case r.m.op is
-          when ADD | SUB | ADDI =>
-            db_hazard := '0';
-            db := r.m.data;
-          when others =>
-            db_hazard := '1';
-            db := (others => '-');
-        end case;
-      else
-        db_hazard := '0';
-        db_forward := '0';
-        db := r.gpreg(to_integer(unsigned(instruction_mem_o(20 downto 16))));
-      end if;
+      decode(r, inst, alu_o.d, data_mem_o.d, v_d, data_hazard);
+      execute(r, alu_o.d, data_mem_o.d , v_e);
+      memory_access(r, alu_o.d, v_m);
 
-      if unsigned(instruction_mem_o(15 downto 11)) = r.d.dest and r.d.dest /= 0 then
-        dc := (others => '-');
-        case r.d.op is
-          when ADD | SUB | ADDI =>
-            dc_hazard := '0';
-            dc_forward := '1';
-          when others =>
-            dc_hazard := '1';
-            dc_forward := '0';
-        end case;
-      elsif unsigned(instruction_mem_o(15 downto 11)) = r.e.dest and r.e.dest /= 0 then
-        dc_forward := '0';
-        case r.e.op is
-          when ADD | SUB | ADDI =>
-            dc_hazard := '0';
-            dc := alu_o.d;
-          when others =>
-            dc_hazard := '1';
-            dc := (others => '-');
-        end case;
-      elsif unsigned(instruction_mem_o(15 downto 11)) = r.m.dest and r.m.dest /= 0 then
-        dc_forward := '0';
-        case r.m.op is
-          when ADD | SUB | ADDI =>
-            dc_hazard := '0';
-            dc := r.m.data;
-          when others =>
-            dc_hazard := '1';
-            dc := (others => '-');
-        end case;
-      else
-        dc_hazard := '0';
-        dc_forward := '0';
-        dc := r.gpreg(to_integer(unsigned(instruction_mem_o(15 downto 11))));
-      end if;
+      mem_stall := data_mem_o.busy;
+      control_hazard := r.e.branching;
 
-      if "11110" = r.d.dest then
-        cr := (others => '-');
-        case r.d.op is
-          when ADD | SUB | ADDI =>
-            cr_hazard := '0';
-            cr_forward := '1';
-          when others =>
-            cr_hazard := '1';
-            cr_forward := '0';
-        end case;
-      elsif "11110" = r.e.dest then
-        cr_forward := '0';
-        case r.e.op is
-          when ADD | SUB | ADDI =>
-            cr_hazard := '0';
-            cr := alu_o.d;
-          when others =>
-            cr_hazard := '1';
-            cr := (others => '-');
-        end case;
-      elsif "11110" = r.m.dest then
-        cr_forward := '0';
-        case r.m.op is
-          when ADD | SUB | ADDI =>
-            cr_hazard := '0';
-            cr := r.m.data;
-          when others =>
-            cr_hazard := '1';
-            cr := (others => '-');
-        end case;
-      else
-        cr_hazard := '0';
-        cr_forward := '0';
-        cr := r.gpreg(30);
-      end if;
-
-      --data_hazard detection
-      case instruction_mem_o(31 downto 26) is
-        when ST =>
-          data_hazard := da_hazard or db_hazard;
-        when ADD | SUB =>
-          data_hazard := db_hazard or dc_hazard;
-        when ADDI =>
-          data_hazard := db_hazard;
-        when JEQ =>
-          data_hazard := cr_hazard;
-        when others =>
-          data_hazard := '0';
-      end case;
-
-      -- decode
-      d_save.pc := r.f.pc-1;
-      d_save.op := instruction_mem_o(31 downto 26);
-      case instruction_mem_o(31 downto 26) is
-        when LD | FLD =>
-        when ST =>
-          d_save.dest := (others => '0');
-          d_save.d1 := da;
-          d_save.d2 := db;
-          d_save.data := unsigned(resize(
-            signed(instruction_mem_o(15 downto 0)), 32));
-          d_save.forward := da_forward & db_forward;
-        when ADD | SUB | SH_L | SH_R | F_ADD | F_MUL =>
-          d_save.dest := unsigned(instruction_mem_o(25 downto 21));
-          d_save.d1 := db;
-          d_save.d2 := dc;
-          d_save.data := (others => '-');
-          d_save.forward := db_forward & dc_forward;
-        when ADDI | SHLI | SHRI | LDIH | FLDIL | FLDIH =>
-          d_save.dest := unsigned(instruction_mem_o(25 downto 21));
-          d_save.d1 := db;
-          d_save.d2 := (others => '0');
-          d_save.data := unsigned(resize(
-            signed(instruction_mem_o(15 downto 0)), 32));
-          d_save.forward := db_forward & '0';
-        when F_INV | F_SQRT | F_ABS =>
-        when FCMP =>
-        when J =>
-          d_save.dest := (others => '0');
-          d_save.d1 := (others => '-');
-          d_save.d2 := (others => '-');
-          d_save.data := unsigned(resize(
-            signed(instruction_mem_o(24 downto 0)), 32));
-          d_save.forward := "00";
-        when JEQ =>
-          d_save.dest := (others => '0');
-          d_save.d1 := cr;
-          d_save.d2 := (others => '-');
-          d_save.data := unsigned(resize(
-            signed(instruction_mem_o(24 downto 0)), 32));
-          d_save.forward := cr_forward & '0';
-        when RET =>
-        when others =>
-      end case;
-
-      --execute
-      if r.d.forward(1) = '0' then
-        d1_forwarded := r.d.d1;
-      else
-        d1_forwarded := alu_o.d;
-      end if;
-
-      if r.d.forward(0) = '0' then
-        d2_forwarded := r.d.d2;
-      else
-        d2_forwarded := alu_o.d;
-      end if;
-
-
-      if data_mem_o.busy = '0' then -- stall of memory
-
-        r.state <= '0';
-
-        if data_hazard = '0' then -- stall of data hazard
-
-          if r.branching = '0' then --stall of control hazard
-
-            r.branched <= '0';
-
-            --fetch
-            r.f.pc <= r.f.pc+1;
-
-            --decode
-            if r.branched = '0' then
-              if r.state = '0' then
-                r.d <= d_save;
-              else
-                r.d <= r.d_backup;
-              end if;
-            else
-              r.d <= default_d;
+      if mem_stall = '0' then
+        if control_hazard = '0' then
+          if data_hazard = '0' then
+            r.state <= "00";
+            r.pc <= r.pc+1;
+          else -- data_hazard = '1'
+            r.state <= "01";
+            if r.state = "00" then
+              r.inst_buf <= instruction_mem_o;
             end if;
-
-            --execute
-            r.e.op <= r.d.op;
-            r.e.dest <= r.d.dest;
-            r.e.pc <= r.d.pc;
-            case r.d.op is
-              when LD | FLD =>
-              when ST | FST =>
-                r.e.alu.d1 <= d2_forwarded;
-                r.e.alu.d2 <= r.d.data;
-                r.e.alu.ctrl <= "00";
-                r.branching <= '0';
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= d1_forwarded;
-              when ITOF =>
-              when FTOI =>
-              when ADD =>
-                r.e.alu.d1 <= d1_forwarded;
-                r.e.alu.d2 <= d2_forwarded;
-                r.e.alu.ctrl <= "00";
-                r.branching <= '0';
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= (others => '-');
-              when SUB =>
-                r.e.alu.d1 <= d1_forwarded;
-                r.e.alu.d2 <= d2_forwarded;
-                r.e.alu.ctrl <= "01";
-                r.branching <= '0';
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= (others => '-');
-              when ADDI =>
-                r.e.alu.d1 <= d1_forwarded;
-                r.e.alu.d2 <= r.d.data;
-                r.e.alu.ctrl <= "00";
-                r.branching <= '0';
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= (others => '-');
-              when SH_L =>
-              when SH_R =>
-              when SHLI =>
-              when SHRI =>
-              when J =>
-                r.e.alu.d1 <= resize(r.d.pc, 32);
-                r.e.alu.d2 <= r.d.data;
-                r.e.alu.ctrl <= "00";
-                r.branching <= '1';
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= (others => '-');
-              when JEQ =>
-                r.e.alu.d1 <= resize(r.d.pc, 32);
-                r.e.alu.d2 <= r.d.data;
-                r.e.alu.ctrl <= "00";
-                if d1_forwarded = 0 then
-                  r.branching <= '1';
-                else
-                  r.branching <= '0';
-                end if;
-                r.e.fpu <= default_fpu_in;
-                r.e.data <= (others => '-');
-              when JSUB =>
-              when RET =>
-              when others =>
-            end case;
-
-          else --control hazard
-
-            r.branching <= '0';
-            r.branched <= '1';
-
-            --fetch
-            r.f.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
-
-            --decode
-            r.d <= default_d;
-
-            --execute
-            r.e <= default_e;
-
           end if;
-
-        else -- data hazard
-
-          r.e <= default_e;
-
+        else -- control_hazard = '1'
+          r.state <= "10";
+          r.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
         end if;
-
-        -- memory
-        r.m.op <= r.e.op;
-        r.m.dest <= r.e.dest;
-        case r.e.op is
-          when ST | FST =>
-            r.m.data <= (others => '-');
-            r.m.mem.a <= alu_o.d(19 downto 0);
-            r.m.mem.d <= r.e.data;
-            r.m.mem.go <= '1';
-            r.m.mem.we <= '1';
-          when ADD | SUB | ADDI =>
-            r.m.data <= alu_o.d;
-            r.m.mem <= default_mem_in;
-          when J | JEQ =>
-            r.m.data <= (others => '-');
-            r.m.mem <= default_mem_in;
-          when others =>
-        end case;
-
+        --decode
+        if control_hazard = '0' and r.state /= "10" then
+          if data_hazard = '0' then
+            r.d <= v_d;
+          else
+            r.d <= default_d;
+          end if;
+        else
+          r.d <= default_d;
+        end if;
+        --execute
+        if control_hazard = '0' then
+          r.e <= v_e;
+        else
+          r.e <= default_e;
+        end if;
+        --memory
+        r.m <= v_m;
         -- write
         case r.m.op is
-          when LD | FLD | LDIH | FTOI | ADD | SUB | ADDI |
-            SH_L | SH_R | SHLI | SHRI | JSUB =>
+          when LD =>
+            r.gpreg(to_integer(r.m.dest)) <= data_mem_o.d;
+          when ADD | SUB | ADDI =>
             r.gpreg(to_integer(r.m.dest)) <= r.m.data;
           when others =>
         end case;
-
-      else -- stalling
-
-        r.state <= '1';
-
-        if r.state = '0' then
-          r.d_backup <= d_save;
+      else -- mem_stall = '1'
+        r.state <= "11";
+        if r.state = "00" then
+          r.inst_buf <= instruction_mem_o;
         end if;
-
         r.m.mem <= default_mem_in;
-
       end if;
 
     end if;
