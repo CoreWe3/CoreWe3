@@ -126,7 +126,7 @@ begin
         case r.m.op is
           when LD =>
             r.gpreg(to_integer(r.m.dest)) <= data_mem_o.d;
-          when ADD | SUB | ADDI =>
+          when ADD | SUB | ADDI | LDIH | JSUB =>
             r.gpreg(to_integer(r.m.dest)) <= r.m.data;
           when others =>
         end case;
