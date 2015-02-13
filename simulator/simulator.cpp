@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
 				pc = greg[31].u;
 				break;
 
-			// 1 imm
+				// 1 imm
 			case J:
 				if(fm.J.cx==0){
 					cout << "Detect Halt." << endl;
@@ -158,13 +158,13 @@ int main(int argc, char* argv[]){
 				pc += fm.J.cx;
 				break;
 
-			// 1 greg, 1 imm
+				// 1 greg, 1 imm
 			case LDIH:
 				greg[fm.L.ra].u = (fm.L.cx << 16) + (greg[fm.L.ra].u & 0xffff);
 				pc+=1;
 				break;
 
-			// 1 freg, 1 imm
+				// 1 freg, 1 imm
 			case FLDIL:
 				freg[fm.L.ra].u = (fm.L.cx & 0xffff) + (freg[fm.L.ra].u & 0xffff0000);
 				pc+=1;
@@ -175,19 +175,19 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 1 freg, 1 greg
+				// 1 freg, 1 greg
 			case ITOF:
 				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
 				pc+=1;
 				break;
 
-			// 1 greg, 1 freg
+				// 1 greg, 1 freg
 			case FTOI:
 				greg[fm.L.ra].r = FPU::ftoi(freg[fm.L.rb].r);
 				pc+=1;
 				break;
 
-			// 2 freg
+				// 2 freg
 			case FSQRT:
 				freg[fm.L.ra].r = FPU::fsqrt(freg[fm.L.rb].r);
 				pc+=1;
@@ -204,25 +204,25 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 2 gregs, 1 imm
+				// 2 gregs, 1 imm
 			case LD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address >= RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
 						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
+							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-					if (address == IOADDR)
-						{
-							if (input->eof())
-								{
-									cerr << "No input any longer" << endl;
-									goto END_MAIN;
-								}
-							else
-								input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
-						}
+						else
+							input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
+					}
 					else greg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -232,13 +232,15 @@ int main(int argc, char* argv[]){
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
-						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
-							goto END_MAIN;
-						}
-					if (address == IOADDR)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
-					else ram[address] = greg[fm.L.ra].r;
+					}else{
+						ram[address] = greg[fm.L.ra].r;
+					}
 				}
 				pc+=1;
 				break;
@@ -258,17 +260,25 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 1 freg, 1greg, 1 imm
+				// 1 freg, 1greg, 1 imm
 			case FLD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
 						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
+							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-					if (io_inputfilename != nullptr && address== IOADDR)
-						input->read((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
+						else
+							input->read((char*)&(freg[fm.L.ra].r), sizeof(char));
+					}
 					else freg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -278,18 +288,20 @@ int main(int argc, char* argv[]){
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
-						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
-							goto END_MAIN;
-						}
-					if (io_outputfilename != nullptr && address == IOADDR)
-						output->write((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
-					else ram[address] = freg[fm.L.ra].r;
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
+						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
+					}else{
+						ram[address] = greg[fm.L.ra].r;
+					}
 				}
 				pc+=1;
 				break;
 
-			// 3 gregs
+				// 3 gregs
 			case ADD:
 				greg[fm.A.ra].u = greg[fm.A.rb].u + greg[fm.A.rc].u;
 				pc+=1;
@@ -310,7 +322,7 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 3 fregs
+				// 3 fregs
 			case FADD:
 				freg[fm.A.ra].r = FPU::fadd(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
