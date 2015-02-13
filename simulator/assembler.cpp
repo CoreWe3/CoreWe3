@@ -143,23 +143,30 @@ int main(int argc, char* argv[]){
 			continue;
 		}
 		switch(ISA::name2isa((*it)[0])){
+			// ADDI rx rx 0
 			case ADDI:
 			case SHRI:
 			case SHLI:
-				// ADDI rx rx 0
 				if((*it)[3][0]!=':' && ISA::name2reg((*it)[1]) == ISA::name2reg((*it)[2]) && getlabelvalue((*it)[3]) == 0){
 					it = instructions.erase(it);
 					break;
 				}
-				it++;
-				break;
-			default:
-				// HOGE r0 rx
-				/*if (ISA::name2reg((*it)[1]) == 0){
+			// HOGE r0 rx
+			case LD:
+			case ST:
+			case FTOI:
+			case ADD:
+			case SUB:
+			case SHR:
+			case SHL:
+			case LDIH:
+			case VLDI:
+				if (ISA::name2reg((*it)[1]) == 0){
 					it = instructions.erase(it);
 					break;
 				}
-				else*/ it++;
+			default:
+				it++;
 				break;
 		}
 	}
