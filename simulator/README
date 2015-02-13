@@ -5,7 +5,7 @@
 ./disassembler -f [Binary File] (-o [Output Assembly])
 
 ##Simulate
-./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump])
+./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
 
 #View Binary File
 ./hex.sh [Binary File]
