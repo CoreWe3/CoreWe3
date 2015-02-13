@@ -151,13 +151,15 @@ int main(int argc, char* argv[]){
 					it = instructions.erase(it);
 					break;
 				}
+				it++;
+				break;
 			default:
 				// HOGE r0 rx
-				if (ISA::name2reg((*it)[1]) == 0){
+				/*if (ISA::name2reg((*it)[1]) == 0){
 					it = instructions.erase(it);
 					break;
 				}
-				else it++;
+				else*/ it++;
 				break;
 		}
 	}
