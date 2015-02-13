@@ -123,7 +123,7 @@ begin
         case r.m.op is
           when LD =>
             r.gpreg(to_integer(r.m.dest)) <= mem_o.d;
-          when ADD | SUB | ADDI | SHLI | SHRI | LDIH | JSUB =>
+          when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI | LDIH | JSUB =>
             r.gpreg(to_integer(r.m.dest)) <= r.m.data;
           when others =>
         end case;
