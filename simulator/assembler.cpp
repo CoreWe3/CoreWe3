@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	//Detect Dinamic Label
+	//Detect Dynamic Label
 	int line = 0;
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0] == ':'){
@@ -173,6 +173,7 @@ int main(int argc, char* argv[]){
 					break;
 				default:
 					line+=1;
+					break;
 			}
 			it++;
 		}
@@ -201,7 +202,7 @@ int main(int argc, char* argv[]){
 				{
 					fm.J.op = ISA::name2isa(el[0]);
 					unsigned int v = getlabelvalue(el[1], line);
-					if(v>0x1FFFFFF){
+					if(v>0xFFFFFF&&v<0xFF000000){
 						cerr << "overflow immidiate : around " << line << endl;
 					}
 					fm.J.cx = v;

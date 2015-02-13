@@ -20,6 +20,8 @@ int main(int argc, char* argv[]){
 
 	//Option Handler
 	char result;
+	long long int breakpoint = -1;
+	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
 	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:"))!=-1){
 		switch(result){
@@ -39,8 +41,10 @@ int main(int argc, char* argv[]){
 				outputramfilename = optarg;
 				break;
 			case 'l': // Instruction Limit
+				limit = stoul(optarg, nullptr, 0);
 				break;
 			case 'b': // Break Point
+				breakpoint = stoul(optarg, nullptr, 0);
 				break;
 			case ':':
 				cerr << result << " needs value" << endl;
@@ -82,7 +86,7 @@ int main(int argc, char* argv[]){
 			c++;
 		}
 	}else{
-		cout << "RAM is initilaized with zero." << endl;
+		cerr << "RAM is initilaized with zero." << endl;
 	}
 
 	//Initilaize IO
@@ -96,7 +100,7 @@ int main(int argc, char* argv[]){
 		}
 		input = &fileinput;
 	}else{
-		cout << "IO input from stdin." << endl;
+		cerr << "IO input from stdin." << endl;
 		input = &cin;
 	}
 
@@ -110,7 +114,7 @@ int main(int argc, char* argv[]){
 		}
 		output = &fileoutput;
 	}else{
-		cout << "IO output to stdout." << endl;
+		cerr << "IO output to stdout." << endl;
 		output = &cout;
 	}
 
@@ -123,6 +127,15 @@ int main(int argc, char* argv[]){
 	//Main
 	unsigned long counter = 0;
 	while(pc < instructions.size()){
+		if(pc == breakpoint){
+			cerr << "Break Point." << endl;
+			goto END_MAIN;
+		}
+		if(counter == limit){
+			cerr << "Stop by Instruction Limit." << endl;
+			goto END_MAIN;
+		}
+
 		FORMAT fm;
 		fm.data = instructions[pc];
 		switch(fm.J.op){
@@ -134,7 +147,7 @@ int main(int argc, char* argv[]){
 				// 1 imm
 			case J:
 				if(fm.J.cx==0){
-					cout << "Detect Halt." << endl;
+					cerr << "Detect Halt." << endl;
 					goto END_MAIN;
 				}
 				pc += fm.J.cx;
@@ -148,10 +161,12 @@ int main(int argc, char* argv[]){
 			case JLE:
 				if(greg[30].d <= 0) pc += fm.J.cx;
 				else pc += 1;
+				break;
 
 			case JLT:
 				if(greg[30].d < 0) pc += fm.J.cx;
 				else pc += 1;
+				break;
 
 			case JSUB:
 				greg[31].u = pc + 1;
@@ -277,7 +292,7 @@ int main(int argc, char* argv[]){
 							goto END_MAIN;
 						}
 						else
-							input->read((char*)&(freg[fm.L.ra].r), sizeof(char));
+							input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}
 					else freg[fm.L.ra].r = ram[address];
 				}
@@ -293,7 +308,7 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
-						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
+						output->write((char*)&(greg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
 						ram[address] = greg[fm.L.ra].r;
 					}
@@ -367,17 +382,17 @@ END_MAIN:
 		}
 	}
 
-	cout << "Program Counter = " << pc << endl;
-	cout << "Instructions = " << counter << endl;
+	cerr << "Program Counter = " << pc << endl;
+	cerr << "Instructions = " << counter << endl;
 
 	//Print Reg
 	for(int i=0;i<greg.size();i++){
-		cout << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << oct << "(" << greg[i].d  << ")" << " ";
+		cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
 	}
-	cout << endl;
+	cerr << endl;
 	for(int i=0;i<freg.size();i++){
-		cout << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << oct << "(" << greg[i].f << ")" <<  " ";
+		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << greg[i].f << ")" <<  " ";
 	}
-	cout << endl;
+	cerr << endl;
 	return 0;
 }
