@@ -126,6 +126,11 @@ int main(int argc, char* argv[]){
 
 	//Main
 	unsigned long counter = 0;
+	map<string,unsigned long> profile;
+	for(auto el : INAMES){
+		profile[el.first] = 0;
+	}
+
 	while(pc < instructions.size()){
 		if(pc == breakpoint){
 			cerr << "Break Point." << endl;
@@ -138,6 +143,7 @@ int main(int argc, char* argv[]){
 
 		FORMAT fm;
 		fm.data = instructions[pc];
+		profile[ISA::isa2name(fm.J.op)]++;
 		switch(fm.J.op){
 			// no regs and imm
 			case RET:
@@ -207,7 +213,6 @@ int main(int argc, char* argv[]){
 				freg[fm.L.ra].r = FPU::fsqrt(freg[fm.L.rb].r);
 				pc+=1;
 				break;
-
 
 			case FABS:
 				freg[fm.L.ra].r = FPU::fabs(freg[fm.L.rb].r);
@@ -392,6 +397,10 @@ END_MAIN:
 	cerr << endl;
 	for(int i=0;i<freg.size();i++){
 		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << greg[i].f << ")" <<  " ";
+	}
+	cerr << endl;
+	for(auto el : profile){
+		cerr << el.first << ":" << el.second << " ";
 	}
 	cerr << endl;
 	return 0;
