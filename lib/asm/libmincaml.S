@@ -12,4 +12,3 @@
 	ADDI	r3	r1	0
 	ADD	r1	r1	r5
 	RET
-
