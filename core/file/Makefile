@@ -19,7 +19,7 @@ simulator:
 %: %.o simulator input
 	$(SIM) -f $< -o output -i input
 	hexdump output
-#	python endian_convert.py < $< > $@
+	cat $< eof > $@
 
 %: %.s
 

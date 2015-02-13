@@ -8,11 +8,8 @@ use work.Util.all;
 entity Control is
   port(
     clk   : in std_logic;
-    data_mem_o : in mem_out_t;
-    data_mem_i : out mem_in_t;
-    ready : in std_logic;
-    instruction_mem_o : in std_logic_vector(31 downto 0);
-    instruction_mem_i : out unsigned(ADDR_WIDTH-1 downto 0));
+    mem_o : in mem_out_t;
+    mem_i : out mem_in_t);
 end Control;
 
 architecture Control_arch of Control is
@@ -45,8 +42,8 @@ architecture Control_arch of Control is
   --signal fmul_o : std_logic_vector(31 downto 0);
 
 begin
-  instruction_mem_i <= r.pc;
-  data_mem_i <= r.m.mem;
+  mem_i.pc <= r.pc;
+  mem_i.m <= r.m.mem;
 
   alu_unit : alu port map (
     di => r.e.alu,
@@ -77,16 +74,16 @@ begin
     if rising_edge(clk) then
 
       if r.state = "00" then
-        inst := instruction_mem_o;
+        inst := mem_o.i;
       else
         inst := r.inst_buf;
       end if;
 
-      decode(r, inst, alu_o.d, data_mem_o.d, v_d, data_hazard);
-      execute(r, alu_o.d, data_mem_o.d , v_e);
+      decode(r, inst, alu_o.d, mem_o.d, v_d, data_hazard);
+      execute(r, alu_o.d, mem_o.d , v_e);
       memory_access(r, alu_o.d, v_m);
 
-      mem_stall := data_mem_o.busy;
+      mem_stall := mem_o.busy;
       control_hazard := r.e.branching;
 
       if mem_stall = '0' then
@@ -97,12 +94,12 @@ begin
           else -- data_hazard = '1'
             r.state <= "01";
             if r.state = "00" then
-              r.inst_buf <= instruction_mem_o;
+              r.inst_buf <= mem_o.i;
             end if;
           end if;
         else -- control_hazard = '1'
           r.state <= "10";
-          r.pc <= alu_o.d(ADDR_WIDTH-1 downto 0);
+          r.pc <= alu_o.d(11 downto 0);
         end if;
         --decode
         if control_hazard = '0' and r.state /= "10" then
@@ -125,17 +122,17 @@ begin
         -- write
         case r.m.op is
           when LD =>
-            r.gpreg(to_integer(r.m.dest)) <= data_mem_o.d;
-          when ADD | SUB | ADDI | LDIH | JSUB =>
+            r.gpreg(to_integer(r.m.dest)) <= mem_o.d;
+          when ADD | SUB | ADDI | SHLI | SHRI | LDIH | JSUB =>
             r.gpreg(to_integer(r.m.dest)) <= r.m.data;
           when others =>
         end case;
       else -- mem_stall = '1'
         r.state <= "11";
         if r.state = "00" then
-          r.inst_buf <= instruction_mem_o;
+          r.inst_buf <= mem_o.i;
         end if;
-        r.m.mem <= default_mem_in;
+        r.m.mem <= default_mem;
       end if;
 
     end if;

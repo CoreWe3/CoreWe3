@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package Util is
-  constant ADDR_WIDTH : integer := 10;
+  constant ADDR_WIDTH : integer := 12;
 
   constant LD    : std_logic_vector(5 downto 0) := "000000";
   constant ST    : std_logic_vector(5 downto 0) := "000001";
@@ -38,18 +38,24 @@ package Util is
   constant EOF   : std_logic_vector(5 downto 0) := "111111";
 
   type mem_out_t is record
+    i : std_logic_vector(31 downto 0);
     d : unsigned(31 downto 0);
     busy : std_logic;
   end record mem_out_t;
 
-  type mem_in_t is record
+  type mem_t is record
     a : unsigned(19 downto 0);
     d : unsigned(31 downto 0);
     go : std_logic;
     we : std_logic;
+  end record mem_t;
+
+  type mem_in_t is record
+    pc : unsigned(11 downto 0);
+    m : mem_t;
   end record mem_in_t;
 
-  constant default_mem_in : mem_in_t := (
+  constant default_mem : mem_t := (
     a => (others => '-'),
     d => (others => '-'),
     go => '0',
@@ -144,20 +150,20 @@ package Util is
     op     : std_logic_vector(5 downto 0);
     dest   : unsigned(4 downto 0);
     data   : unsigned(31 downto 0);
-    mem    : mem_in_t;
+    mem    : mem_t;
   end record memory_access_t;
 
   constant default_m : memory_access_t := (
     op => ADD,
     dest => (others => '0'),
     data => (others => '0'),
-    mem => default_mem_in);
+    mem => default_mem);
 
 
   type cpu_t is record
     state : std_logic_vector(1 downto 0);
     branched : std_logic;
-    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    pc : unsigned(11 downto 0);
     inst_buf : std_logic_vector(31 downto 0);
     d : decode_t;
     e : execute_t;
@@ -223,7 +229,7 @@ package body Util is
     if n = r.d.dest and n /= 0 then
       d.mem_forward := '0';
       case r.d.op is
-        when ADD | SUB | ADDI =>
+        when ADD | SUB | ADDI | SHLI | SHRI =>
           d.d := (others => '-');
           d.hazard := '0';
           d.alu_forward := '1';
@@ -243,7 +249,7 @@ package body Util is
           d.d := (others => '-');
           d.hazard := '0';
           d.mem_forward := '1';
-        when ADD | SUB | ADDI =>
+        when ADD | SUB | ADDI | SHLI | SHRI =>
           d.d := alu;
           d.hazard := '0';
           d.mem_forward := '0';
@@ -267,7 +273,7 @@ package body Util is
         when LD =>
           d.d := mem;
           d.hazard := '0';
-        when ADD | SUB | ADDI | JSUB | LDIH =>
+        when ADD | SUB | ADDI | SHLI | SHRI | JSUB | LDIH =>
           d.d := r.m.data;
           d.hazard := '0';
         when others =>
@@ -336,6 +342,12 @@ package body Util is
         d.imm := (others => '-');
         data_hazard := db.hazard or dc.hazard;
       when ADDI =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := db;
+        d.d2 := default_data;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+        data_hazard := db.hazard;
+      when SHLI | SHRI =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := db;
         d.d2 := default_data;
@@ -417,6 +429,16 @@ package body Util is
         e.branching := '0';
         e.fpu := default_fpu_in;
         e.data := (others => '-');
+      when SHLI =>
+        e.alu := (d1_forwarded, r.d.imm, "10");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when SHRI =>
+        e.alu := (d1_forwarded, r.d.imm, "11");
+        e.branching := '0';
+        e.fpu := default_fpu_in;
+        e.data := (others => '-');
       when LDIH =>
         e.alu := default_alu;
         e.branching := '0';
@@ -484,24 +506,24 @@ package body Util is
       when ST =>
         m.data := (others => '-');
         m.mem := (alu(19 downto 0), r.e.data, '1', '1');
-      when ADD | SUB | ADDI =>
+      when ADD | SUB | ADDI | SHLI | SHRI =>
         m.data := alu;
-        m.mem := default_mem_in;
+        m.mem := default_mem;
       when LDIH =>
         m.data := r.e.data;
-        m.mem := default_mem_in;
+        m.mem := default_mem;
       when J | JEQ | JLE | JLT =>
         m.data := (others => '-');
-        m.mem := default_mem_in;
+        m.mem := default_mem;
       when JSUB =>
         m.data := r.e.data;
-        m.mem := default_mem_in;
+        m.mem := default_mem;
       when RET =>
         m.data := (others => '-');
-        m.mem := default_mem_in;
+        m.mem := default_mem;
       when others =>
         m.data := (others => '-');
-        m.mem := default_mem_in;
+        m.mem := default_mem;
     end case;
   end memory_access;
 

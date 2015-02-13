@@ -208,13 +208,21 @@ int main(int argc, char* argv[]){
 			case LD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
-					if (address>=RAMSIZE)
+					if (address >= RAMSIZE)
 						{
 							cerr << "Invalid Address : 0x" << hex << address << endl;
 							goto END_MAIN;
 						}
-					if (io_inputfilename != nullptr && address== IOADDR)
-						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
+					if (address == IOADDR)
+						{
+							if (input->eof())
+								{
+									cerr << "No input any longer" << endl;
+									goto END_MAIN;
+								}
+							else
+								input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
+						}
 					else greg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -228,7 +236,7 @@ int main(int argc, char* argv[]){
 							cerr << "Invalid Address : 0x" << hex << address << endl;
 							goto END_MAIN;
 						}
-					if (io_outputfilename != nullptr && address == IOADDR)
+					if (address == IOADDR)
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 					else ram[address] = greg[fm.L.ra].r;
 				}
