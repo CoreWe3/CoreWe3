@@ -141,6 +141,16 @@ int main(int argc, char* argv[]){
 			continue;
 		}
 		switch(ISA::name2isa((*it)[0])){
+			case ADDI:
+			case SHRI:
+			case SHLI:
+				// ADDI rx rx 0
+				if((*it)[3][0]!=':' && ISA::name2reg((*it)[1]) == ISA::name2reg((*it)[2]) && getlabelvalue((*it)[3]) == 0){
+					it = instructions.erase(it);
+				}else{
+					it++;
+				}
+				break;
 			default:
 				it++;
 				break;
@@ -184,8 +194,14 @@ int main(int argc, char* argv[]){
 			case JLE:
 			case JLT:
 			case JSUB:
-				fm.J.op = ISA::name2isa(el[0]);
-				fm.J.cx = getlabelvalue(el[1], line);
+				{
+					fm.J.op = ISA::name2isa(el[0]);
+					unsigned int v = getlabelvalue(el[1], line);
+					if(v>0x1FFFFFF){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.J.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
@@ -194,9 +210,15 @@ int main(int argc, char* argv[]){
 			case LDIH:
 			case FLDIL:
 			case FLDIH:
-				fm.L.op = ISA::name2isa(el[0]);
-				fm.L.ra = ISA::name2reg(el[1]);
-				fm.L.cx = getlabelvalue(el[2], line);
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					unsigned int v = getlabelvalue(el[2], line);
+					if(v>0xFFF&&v<0xFFFFF000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
@@ -222,10 +244,16 @@ int main(int argc, char* argv[]){
 			case ADDI:
 			case SHLI:
 			case SHRI:
-				fm.L.op = ISA::name2isa(el[0]);
-				fm.L.ra = ISA::name2reg(el[1]);
-				fm.L.rb = ISA::name2reg(el[2]);
-				fm.L.cx = getlabelvalue(el[3], line);
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+					if(v>0xFFF&&v<0xFFFFF000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
@@ -287,10 +315,16 @@ int main(int argc, char* argv[]){
 				break;
 
 			case VCMPI:
-				fm.L.op = ISA::name2isa("ADDI");
-				fm.L.ra = ISA::name2reg("r30");
-				fm.L.rb = ISA::name2reg(el[1]);
-				fm.L.cx = getlabelvalue(el[2], line)*-1;
+				{
+					fm.L.op = ISA::name2isa("ADDI");
+					fm.L.ra = ISA::name2reg("r30");
+					fm.L.rb = ISA::name2reg(el[1]);
+					unsigned int v = getlabelvalue(el[2], line)*-1;
+					if(v>0xFFF&&v<0xFFFFF000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
