@@ -84,7 +84,9 @@ int main(int argc, char* argv[]){
 		istringstream stream( str );
 		vector<string> ins;
 		while(getline(stream,tmp,' ')){
-			ins.push_back(tmp);
+			if(tmp.length() > 0){
+				ins.push_back(tmp);
+			}
 		}
 		if(ins.size()<=0) continue;
 		if(ins[0][0]=='#') continue;
@@ -159,11 +161,13 @@ int main(int argc, char* argv[]){
 
 	//Detect Dinamic Label
 	int line = 0;
-	for(auto it = instructions.begin(); it != instructions.end(); it++){
+	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0] == ':'){
 			labels[(*it)[0]] = line;
+			// cout << (*it)[0] << ' ' << line << endl;
 			it = instructions.erase(it);
 		}else{
+			// cout << (*it)[0] << ' ' << line << endl;
 			switch(ISA::name2isa((*it)[0])){
 				case VLDI:
 				case VFLDI:
@@ -171,6 +175,7 @@ int main(int argc, char* argv[]){
 				default:
 					line+=1;
 			}
+			it++;
 		}
 	}
 
@@ -290,7 +295,7 @@ int main(int argc, char* argv[]){
 				results.push_back(fm.data);
 				line++;
 				break;
-			
+
 			case VFLDI:
 				fm.L.op = ISA::name2isa("FLDIH");
 				fm.L.ra = ISA::name2reg(el[1]);
@@ -334,7 +339,7 @@ int main(int argc, char* argv[]){
 				exit(1);
 		}
 	}
-	
+
 	//Output Assembly File
 	ofstream fout;
 	if(outputfilename != nullptr){
@@ -354,4 +359,3 @@ int main(int argc, char* argv[]){
 
 	return 0;
 }
-
