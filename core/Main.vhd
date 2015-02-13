@@ -19,24 +19,6 @@ end Main;
 
 architecture Main_arch of Main is
 
-  --component InitializedInstructionMemory is
-  --  port (
-  --    clk : in std_logic;
-  --    instruction_mem_o : out std_logic_vector(31 downto 0);
-  --    instruction_mem_i : in  unsigned(ADDR_WIDTH-1 downto 0));
-  --end component;
-
-  --component bootload_code_rom is
-  --  generic (
-  --    wtime : std_logic_vector(15 downto 0) := wtime);
-  --  port (
-  --    clk   : in  std_logic;
-  --    RS_RX : in  std_logic;
-  --    ready : out std_logic;
-  --    addr  : in  unsigned(ADDR_WIDTH-1 downto 0);
-  --    instr : out std_logic_vector(31 downto 0));
-  --end component;
-
   component MemoryIO is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
@@ -68,25 +50,6 @@ architecture Main_arch of Main is
 
 begin
 
-  --rom_unit : InitializedInstructionMemory port map (
-  --  clk            => clk,
-  --  instruction_mem_o => imem_o,
-  --  instruction_mem_i => imem_i);
-  --ready <= '1';
-
-  --RS_RX_init <= RS_RX when ready = '0' else
-  --              '1';
-
-  --RS_RX_exec <= RS_RX when ready = '1' else
-  --              '1';
-
-  --rom : bootload_code_rom port map (
-  --  clk   => clk,
-  --  RS_RX => RS_RX_init,
-  --  ready => ready,
-  --  addr  => pc,
-  --  instr => inst);
-
   ram_unit : MemoryIO port map (
     clk   => clk,
     RS_RX => RS_RX,
@@ -94,13 +57,12 @@ begin
     ZD    => ZD,
     ZA    => ZA,
     XWA   => XWA,
-    mem_i  => dmem_i,
-    mem_o  => dmem_o);
+    mem_i => dmem_i,
+    mem_o => dmem_o);
 
   contol_unit : Control port map (
-    clk     => clk,
-    mem_o  => dmem_o,
-    mem_i  => dmem_i);
-
+    clk   => clk,
+    mem_o => dmem_o,
+    mem_i => dmem_i);
 
 end Main_arch;
