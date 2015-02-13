@@ -229,7 +229,7 @@ package body Util is
     if n = r.d.dest and n /= 0 then
       d.mem_forward := '0';
       case r.d.op is
-        when ADD | SUB | ADDI | SHLI | SHRI =>
+        when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
           d.d := (others => '-');
           d.hazard := '0';
           d.alu_forward := '1';
@@ -249,7 +249,7 @@ package body Util is
           d.d := (others => '-');
           d.hazard := '0';
           d.mem_forward := '1';
-        when ADD | SUB | ADDI | SHLI | SHRI =>
+        when ADD | SUB | ADDI | SH_L | SH_R |SHLI | SHRI =>
           d.d := alu;
           d.hazard := '0';
           d.mem_forward := '0';
@@ -273,7 +273,8 @@ package body Util is
         when LD =>
           d.d := mem;
           d.hazard := '0';
-        when ADD | SUB | ADDI | SHLI | SHRI | JSUB | LDIH =>
+        when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI |
+          JSUB | LDIH =>
           d.d := r.m.data;
           d.hazard := '0';
         when others =>
@@ -335,19 +336,13 @@ package body Util is
         d.d2 := db;
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
         data_hazard := da.hazard or db.hazard;
-      when ADD | SUB =>
+      when ADD | SUB | SH_L | SH_R =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := db;
         d.d2 := dc;
         d.imm := (others => '-');
         data_hazard := db.hazard or dc.hazard;
-      when ADDI =>
-        d.dest := unsigned(i(25 downto 21));
-        d.d1 := db;
-        d.d2 := default_data;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
-        data_hazard := db.hazard;
-      when SHLI | SHRI =>
+      when ADDI | SHLI | SHRI =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := db;
         d.d2 := default_data;
@@ -429,6 +424,16 @@ package body Util is
         e.branching := '0';
         e.fpu := default_fpu_in;
         e.data := (others => '-');
+      when SH_L =>
+        r.alu := (d1_forwarded, d2_forwarded, "10");
+        e.branching := '0';
+        r.fpu := default_fpu_in;
+        e.data := (others => '-');
+      when SH_R =>
+        r.alu := (d1_forwarded, d2_forwarded, "11");
+        e.branching := '0';
+        r.fpu := default_fpu_in;
+        e.data := (others => '-');
       when SHLI =>
         e.alu := (d1_forwarded, r.d.imm, "10");
         e.branching := '0';
@@ -506,7 +511,7 @@ package body Util is
       when ST =>
         m.data := (others => '-');
         m.mem := (alu(19 downto 0), r.e.data, '1', '1');
-      when ADD | SUB | ADDI | SHLI | SHRI =>
+      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
         m.data := alu;
         m.mem := default_mem;
       when LDIH =>
