@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
-						if (v > 0xffff){
+						if (v > 0xfff){
 							vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
 							vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
 							instructions.insert(it,itmp1);
