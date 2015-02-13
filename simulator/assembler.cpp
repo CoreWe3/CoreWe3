@@ -149,12 +149,15 @@ int main(int argc, char* argv[]){
 				// ADDI rx rx 0
 				if((*it)[3][0]!=':' && ISA::name2reg((*it)[1]) == ISA::name2reg((*it)[2]) && getlabelvalue((*it)[3]) == 0){
 					it = instructions.erase(it);
-				}else{
-					it++;
+					break;
 				}
-				break;
 			default:
-				it++;
+				// HOGE r0 rx
+				if (ISA::name2reg((*it)[1]) == 0){
+					it = instructions.erase(it);
+					break;
+				}
+				else it++;
 				break;
 		}
 	}
