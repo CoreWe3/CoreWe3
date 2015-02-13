@@ -11,24 +11,24 @@
 
 メモリアクセスはストールする。executeで結果がわかるものについてはフォワーディングする。
 分岐する場合、3clkの遅延、STは1clkの遅延が生じる。
+ブロックRAM(0xff000 ~ 0xffffe) をコード領域として利用。
+pcの実際に指すアドレスはpc+0xff000。
 
 * 実装済み命令
-LD ST ADD SUB ADDI LDIH J JEQ JLE JLT JSUB RET
+LD ST ADD SUB ADDI SHLI SHRI LDIH J JEQ JLE JLT JSUB RET
 
 ## TODO
-
-* bootloader
 
 * float IO
 
 * FPU組み込み
 
-* 動的分岐予測
-
 * キャッシュ
+
+* 動的分岐予測
 
 * パイプライン深化
 
-FPUストール
+* FPUストール
 
 * フォワーディングをexecuteステージで？

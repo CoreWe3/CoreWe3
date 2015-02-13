@@ -2,9 +2,10 @@ SOURCE = $(wildcard *.vhd) $(wildcard fpu/*.vhd)
 TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
-CODE = file/fib_loop.b
+BOOTLOADER = file/bootloader.b
+CODE = file/loopback
 
-all: configure
+all: configure code
 
 .PHONY: configure bit all clean code
 
@@ -16,10 +17,10 @@ bit: $(TARGET)
 
 code:
 	cd file && $(MAKE) $(notdir $(CODE))
+	scp $(CODE) troublesome:~/
 
-$(CODE): code
 
-$(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ) $(CODE)
+$(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ) $(BOOTLOADER)
 	./ise_cmd.sh
 
 $(PRJ): $(SOURCE)
