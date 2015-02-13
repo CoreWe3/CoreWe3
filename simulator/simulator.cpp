@@ -326,11 +326,11 @@ END_MAIN:
 
 	//Print Reg
 	for(int i=0;i<greg.size();i++){
-		cout << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << " ";
+		cout << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << oct << "(" << greg[i].d  << ")" << " ";
 	}
 	cout << endl;
 	for(int i=0;i<freg.size();i++){
-		cout << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << " ";
+		cout << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << oct << "(" << greg[i].f << ")" <<  " ";
 	}
 	cout << endl;
 	return 0;

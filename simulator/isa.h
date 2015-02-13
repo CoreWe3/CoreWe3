@@ -64,6 +64,7 @@ typedef union{
 	uint32_t r;
 	unsigned int u;
 	int d;
+	float f;
 } REG;
 
 #define RAMSIZE 0x100000
