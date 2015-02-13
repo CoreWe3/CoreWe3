@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 use ieee.std_logic_textio.all;
 use std.textio.all;
 
@@ -9,8 +9,10 @@ entity BlockRAM is
   port (
     clk : in std_logic;
     di : in std_logic_vector(31 downto 0);
-    do : out std_logic_vector(31 downto 0);
-    addr : in std_logic_vector(11 downto 0);
+    do1 : out std_logic_vector(31 downto 0);
+    do2 : out std_logic_vector(31 downto 0);
+    ad1 : in unsigned(11 downto 0);
+    ad2 : in unsigned(11 downto 0);
     we : in std_logic);
 end BlockRAM;
 
@@ -29,7 +31,7 @@ architecture BlockRAM_arch of BlockRAM is
     end loop;
     return RAM;
   end function;
-  signal RAM : ram_t; -- := init_ram(file_name);
+  signal RAM : ram_t := init_ram(file_name);
 
   attribute rom_style : string;
   attribute rom_style of RAM : signal is "block";
@@ -39,9 +41,10 @@ begin
   begin
     if rising_edge(clk) then
       if we = '1' then
-        RAM(conv_integer(addr)) <= to_bitvector(di);
+        RAM(to_integer(ad1)) <= to_bitvector(di);
       end if;
-      do <= to_stdLogicVector(RAM(conv_integer(addr)));
+      do1 <= to_stdLogicVector(RAM(to_integer(ad1)));
+      do2 <= to_stdLogicVector(RAM(to_integer(ad2)));
     end if;
   end process;
 

@@ -21,18 +21,21 @@ entity MemoryIO is
     ZD    : inout std_logic_vector(31 downto 0);
     ZA    : out   std_logic_vector(19 downto 0);
     XWA   : out   std_logic;
-    data_mem_i : in    mem_in_t;
-    data_mem_o : out   mem_out_t);
+    mem_i : in    mem_in_t;
+    mem_o : out   mem_out_t);
 end MemoryIO;
 
 architecture MemoryIO_arch of MemoryIO is
 
   component BlockRAM is
+    generic (file_name : string := "file/bootloader.b");
     port (
       clk : in std_logic;
       di : in std_logic_vector(31 downto 0);
-      do : out std_logic_vector(31 downto 0);
-      addr : in std_logic_vector(11 downto 0);
+      do1 : out std_logic_vector(31 downto 0);
+      do2 : out std_logic_vector(31 downto 0);
+      ad1 : in unsigned(11 downto 0);
+      ad2 : in unsigned(11 downto 0);
       we : in std_logic);
   end component;
 
@@ -74,7 +77,7 @@ architecture MemoryIO_arch of MemoryIO is
 
   signal bram_i : std_logic_vector(31 downto 0);
   signal bram_o : std_logic_vector(31 downto 0);
-  signal bram_a : std_logic_vector(11 downto 0);
+  signal bram_a : unsigned(11 downto 0);
   signal bwe : std_logic := '0';
   signal buf : std_logic_vector(31 downto 0);
 
@@ -101,8 +104,10 @@ begin
   bram_unit : BlockRAM port map (
     clk => clk,
     di => bram_i,
-    do => bram_o,
-    addr => bram_a,
+    do1 => bram_o,
+    do2 => mem_o.i,
+    ad1 => bram_a,
+    ad2 => mem_i.pc,
     we => bwe);
 
   receiver : UartReceiver port map (
@@ -141,13 +146,13 @@ begin
     if rising_edge(clk) then
       case state is
         when x"00" =>
-          if data_mem_i.go = '1' then
-            if data_mem_i.we = '1' then -- write
+          if mem_i.m.go = '1' then
+            if mem_i.m.we = '1' then -- write
               rdeq <= '0';
-              if data_mem_i.a = x"FFFFF" then  -- transmit
+              if mem_i.m.a = x"FFFFF" then  -- transmit
                 bwe <= '0';
                 XWA <= '1';
-                tdi <= std_logic_vector(data_mem_i.d(7 downto 0));
+                tdi <= std_logic_vector(mem_i.m.d(7 downto 0));
                 if tfull = '0' then -- not full
                   tenq <= '1';
                   state <= x"00";
@@ -155,25 +160,25 @@ begin
                   tenq <= '0';
                   state <= x"50";
                 end if;
-              elsif data_mem_i.a(19 downto 12) = x"EF" then -- bram
+              elsif mem_i.m.a(19 downto 12) = x"FF" then -- bram
                 bwe <= '1';
                 XWA <= '1';
                 tenq <= '0';
                 state <= x"00";
-                bram_i <= std_logic_vector(data_mem_i.d);
-                bram_a <= std_logic_vector(data_mem_i.a(11 downto 0));
+                bram_i <= std_logic_vector(mem_i.m.d);
+                bram_a <= mem_i.m.a(11 downto 0);
               else -- sram
                 bwe <= '0';
                 XWA <= '0';
                 tenq <= '0';
-                buf <= std_logic_vector(data_mem_i.d);
+                buf <= std_logic_vector(mem_i.m.d);
                 state <= x"20";
               end if;
             else  -- read
               XWA <= '1';
               bwe <= '0';
               tenq <= '0';
-              if data_mem_i.a = x"FFFFF" then -- receive
+              if mem_i.m.a = x"FFFFF" then -- receive
                 if rempty = '0' then
                   rdeq <= '1';
                   state <= x"61";
@@ -181,16 +186,16 @@ begin
                   rdeq <= '0';
                   state <= x"60";
                 end if;
-              elsif data_mem_i.a(19 downto 12) = x"EF" then -- bram
+              elsif mem_i.m.a(19 downto 12) = x"EF" then -- bram
                 rdeq <= '0';
-                bram_a <= std_logic_vector(data_mem_i.a(11 downto 0));
+                bram_a <= mem_i.m.a(11 downto 0);
                 state <= x"30";
               else -- sram
                 rdeq <= '0';
                 state <= x"40";
               end if;
             end if;
-            ZA <= std_logic_vector(data_mem_i.a);
+            ZA <= std_logic_vector(mem_i.m.a);
           else
             bwe <= '0';
             XWA <= '1';
@@ -205,7 +210,7 @@ begin
         when x"30" => --read bram
           state <= x"31";
         when x"31" => --read bram
-          data_mem_o.d <= unsigned(bram_o);
+          mem_o.d <= unsigned(bram_o);
           state <= x"00";
         when x"40" => --read sram
           state <= x"41";
@@ -213,7 +218,7 @@ begin
         when x"41" => --read sram
           state <= x"42";
         when x"42" => --read sram
-          data_mem_o.d <= unsigned(ZD);
+          mem_o.d <= unsigned(ZD);
           state <= x"00";
         when x"50" => --transmit
           if tfull = '0' then
@@ -229,7 +234,7 @@ begin
           rdeq <= '0';
           state <= x"62";
         when x"62" => --received
-          data_mem_o.d <= unsigned(x"000000" & rdo);
+          mem_o.d <= unsigned(x"000000" & rdo);
           state <= x"00";
         when others =>
           state <= x"00";
@@ -279,7 +284,7 @@ begin
     end if;
   end process;
 
-  data_mem_o.busy <= '0' when state = x"00" and data_mem_i.go = '0' else
-                     '1';
+  mem_o.busy <= '0' when state = x"00" and mem_i.m.go = '0' else
+                '1';
 
 end MemoryIO_arch;
