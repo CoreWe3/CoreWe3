@@ -164,14 +164,13 @@ int main(int argc, char* argv[]){
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0] == ':'){
 			labels[(*it)[0]] = line;
-			// cout << (*it)[0] << ' ' << line << endl;
 			it = instructions.erase(it);
 		}else{
-			// cout << (*it)[0] << ' ' << line << endl;
 			switch(ISA::name2isa((*it)[0])){
 				case VLDI:
 				case VFLDI:
 					line+=2;
+					break;
 				default:
 					line+=1;
 			}
@@ -193,7 +192,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 1 imm
+				// 1 imm
 			case J:
 			case JEQ:
 			case JLE:
@@ -211,7 +210,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 1 reg, 1 imm
+				// 1 reg, 1 imm
 			case LDIH:
 			case FLDIL:
 			case FLDIH:
@@ -228,7 +227,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 2 regs
+				// 2 regs
 			case ITOF:
 			case FTOI:
 			case FSQRT:
@@ -241,7 +240,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 2 regs, 1 imm
+				// 2 regs, 1 imm
 			case LD:
 			case ST:
 			case FLD:
@@ -263,7 +262,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 3 regs
+				// 3 regs
 			case ADD:
 			case SUB:
 			case SHL:
@@ -280,7 +279,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			//Virtual Instructions
+				//Virtual Instructions
 			case VLDI:
 				fm.L.op = ISA::name2isa("ADDI");
 				fm.L.ra = ISA::name2reg(el[1]);
