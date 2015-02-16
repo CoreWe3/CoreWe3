@@ -2,7 +2,7 @@ ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
 SIM = $(ROOT)/simulator/bin/simulator
 
-all: fib_loop.b
+all: fib_rec.b
 
 .PHONY: simulator all clean
 
