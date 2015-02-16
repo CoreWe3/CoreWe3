@@ -1,5 +1,5 @@
 	ldi	r1	0xeefff
-	ldi	r3	10
+	ldi	r3	5
 	jsub	:fib
 	st	r3	r0	-1
 	j	0

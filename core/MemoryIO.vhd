@@ -1,10 +1,3 @@
--- bram write 1 clk
---      read  1 clk
--- sram write 2 clk
---      read  3 clk
--- io   write 0 clk (best)
---      read  2 clk (best)
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -28,7 +21,7 @@ end MemoryIO;
 architecture MemoryIO_arch of MemoryIO is
 
   component BlockRAM is
-    generic (file_name : string := "file/bootloader.b");
+    generic (file_name : string := "file/fib_rec.b");
     port (
       clk : in std_logic;
       di : in std_logic_vector(31 downto 0);
@@ -41,7 +34,7 @@ architecture MemoryIO_arch of MemoryIO is
 
   component FIFO is
     generic (
-      WIDTH : integer := 5);
+      WIDTH : integer := 8);
     port (
       clk : in std_logic;
       di : in std_logic_vector(7 downto 0);
@@ -75,11 +68,13 @@ architecture MemoryIO_arch of MemoryIO is
 
   signal state : std_logic_vector(7 downto 0) := x"00";
 
+  signal sbuf1 : std_logic_vector(31 downto 0) := (others => '0');
+  signal sbuf2 : std_logic_vector(31 downto 0) := (others => '0');
+
   signal bram_i : std_logic_vector(31 downto 0);
   signal bram_o : std_logic_vector(31 downto 0);
   signal bram_a : unsigned(11 downto 0);
   signal bwe : std_logic := '0';
-  signal buf : std_logic_vector(31 downto 0);
 
   signal rcomplete : std_logic;
   signal rdo : std_logic_vector(7 downto 0);
@@ -153,13 +148,18 @@ begin
                 bwe <= '0';
                 XWA <= '1';
                 tdi <= std_logic_vector(mem_i.m.d(7 downto 0));
-                if tfull = '0' then -- not full
-                  tenq <= '1';
-                  state <= x"00";
-                else -- full
-                  tenq <= '0';
-                  state <= x"50";
-                end if;
+                -----non blocking -----
+                tenq <= '1';
+                state <= x"00";
+                ------ blocking -------
+                --if tfull = '0' then -- not full
+                --  tenq <= '1';
+                --  state <= x"00";
+                --else -- full
+                --  tenq <= '0';
+                --  state <= x"50";
+                --end if;
+                ----------------------
               elsif mem_i.m.a(19 downto 12) = x"FF" then -- bram
                 bwe <= '1';
                 XWA <= '1';
@@ -171,8 +171,8 @@ begin
                 bwe <= '0';
                 XWA <= '0';
                 tenq <= '0';
-                buf <= std_logic_vector(mem_i.m.d);
-                state <= x"20";
+                sbuf1 <= std_logic_vector(mem_i.m.d);
+                state <= x"00";
               end if;
             else  -- read
               XWA <= '1';
@@ -201,12 +201,6 @@ begin
             XWA <= '1';
             tenq <= '0';
           end if;
-        when x"20" => --write sram
-          XWA <= '1';
-          state <= x"21";
-        when x"21" => --write sram
-          ZD <= buf;
-          state <= x"00";
         when x"30" => --read bram
           state <= x"31";
         when x"31" => --read bram
@@ -214,8 +208,8 @@ begin
           state <= x"00";
         when x"40" => --read sram
           state <= x"41";
-          ZD <= (others => 'Z');
         when x"41" => --read sram
+          ZD <= (others => 'Z');
           state <= x"42";
         when x"42" => --read sram
           mem_o.d <= unsigned(ZD);
@@ -241,6 +235,12 @@ begin
           XWA <= '1';
           bwe <= '0';
       end case;
+
+      sbuf2 <= sbuf1;
+      if state /= x"41" then
+        ZD <= sbuf2;
+      end if;
+
     end if;
   end process;
 
@@ -285,6 +285,7 @@ begin
   end process;
 
   mem_o.busy <= '0' when state = x"00" and mem_i.m.go = '0' else
+                '0' when state = x"00" and mem_i.m.go = '1' and mem_i.m.we = '1' else
                 '1';
 
 end MemoryIO_arch;
