@@ -43,7 +43,7 @@ architecture CoreTestBench_arch of CoreTestBench is
   component InputSimulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      INPUT_FILE : string := "fib_loop");
+      INPUT_FILE : string := "input");
     port (
       clk  : in  std_logic;
       RS_RX   : out std_logic);
