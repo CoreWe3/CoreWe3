@@ -61,6 +61,7 @@ int main(int argc, char* argv[]){
 		FORMAT fm;
 		fm.data = el;
 		string str = "";
+		if(fm.J.fg==1) str += "@";
 		switch(fm.J.op){
 			// no regs and imm
 			case RET:
@@ -69,13 +70,24 @@ int main(int argc, char* argv[]){
 
 				// 1 imm
 			case J:
-			case JEQ:
-			case JLE:
-			case JLT:
 			case JSUB:
 				str += ISA::isa2name(fm.J.op);
 				str += "\t";
 				str += int2hexstring(fm.J.cx);
+				break;
+
+			case JEQ:
+			case JLE:
+			case JLT:
+				str += ISA::isa2name(fm.J.op);
+				str += "\t";
+				str += int2hexstring(fm.J.cx);
+				str += "\t#";
+				if(fm.J.br == 0){
+					str += "f";
+				}else{
+					str += "t";
+				}
 				break;
 
 				// 1 greg, 1 imm
@@ -118,12 +130,19 @@ int main(int argc, char* argv[]){
 				// 2 freg
 			case FSQRT:
 			case FABS:
+				str += ISA::isa2name(fm.A.op);
+				str += "\t";
+				str += ISA::freg2name(fm.A.ra);
+				str += "\t";
+				str += ISA::freg2name(fm.A.rb);
+				break;
+
 			case FCMP:
-				str += ISA::isa2name(fm.L.op);
+				str += ISA::isa2name(fm.A.op);
 				str += "\t";
-				str += ISA::freg2name(fm.L.ra);
+				str += ISA::freg2name(fm.A.rb);
 				str += "\t";
-				str += ISA::freg2name(fm.L.rb);
+				str += ISA::freg2name(fm.A.rc);
 				break;
 
 				// 2 gregs, 1 imm

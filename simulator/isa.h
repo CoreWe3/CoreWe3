@@ -19,7 +19,12 @@ const std::map<std::string, unsigned int> INAMES {
 		{"ADD", ADD}, {"SUB", SUB}, {"ADDI", ADDI} , {"SHL", SHL}, {"SHR", SHR}, {"SHLI", SHLI}, {"SHRI", SHRI}, {"LDIH", LDIH},
 		{"FADD", FADD}, {"FSUB", FSUB}, {"FMUL", FMUL}, {"FDIV", FDIV}, {"FSQRT", FSQRT}, {"FABS",FABS}, {"FCMP", FCMP}, {"FLDIL", FLDIL}, {"FLDIH", FLDIH},
 		{"J", J}, {"JEQ", JEQ}, {"JLE", JLE}, {"JLT", JLT}, {"JSUB", JSUB}, {"RET", RET},
-		{"LDI", VLDI}, {"FLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI}
+		{"LDI", VLDI}, {"FLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI},
+	{"@LD", LD}, {"@ST", ST}, {"@FLD", FLD}, {"@FST", FST}, {"@ITOF", ITOF}, {"@FTOI", FTOI},
+		{"@ADD", ADD}, {"@SUB", SUB}, {"@ADDI", ADDI} , {"@SHL", SHL}, {"@SHR", SHR}, {"@SHLI", SHLI}, {"@SHRI", SHRI}, {"@LDIH", LDIH},
+		{"@FADD", FADD}, {"@FSUB", FSUB}, {"@FMUL", FMUL}, {"@FDIV", FDIV}, {"@FSQRT", FSQRT}, {"@FABS",FABS}, {"@FCMP", FCMP}, {"@FLDIL", FLDIL}, {"@FLDIH", FLDIH},
+		{"@J", J}, {"@JEQ", JEQ}, {"@JLE", JLE}, {"@JLT", JLT}, {"@JSUB", JSUB}, {"@RET", RET},
+		{"@LDI", VLDI}, {"@FLDI", VFLDI}, {"@CMP", VCMP}, {"@CMPI", VCMPI}
 };
 
 const std::vector<std::string> GREGNAMES {
