@@ -116,13 +116,25 @@ int main(int argc, char* argv[]){
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
 						if (v > 0xfff){
-							vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
-							vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
-							instructions.insert(it,itmp1);
-							instructions.insert(it,itmp2);
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}else{
+								vector<string> itmp1 {"@ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"@LDIH", (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}
 						}else{
-							vector<string> itmp1 {"ADDI", (*it)[1], "r0", (*it)[2]};
-							instructions.insert(it,itmp1);
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"ADDI", (*it)[1], "r0", (*it)[2]};
+								instructions.insert(it,itmp1);
+							}else{
+								vector<string> itmp1 {"@ADDI", (*it)[1], "r0", (*it)[2]};
+								instructions.insert(it,itmp1);
+							}
 						}
 						it = instructions.erase(it);
 					}else{
@@ -197,6 +209,9 @@ int main(int argc, char* argv[]){
 	for(auto el : instructions){
 		FORMAT fm;
 		fm.data = 0;
+		if(el[0][0]=='@'){
+			fm.J.fg = 1;
+		}
 		switch(ISA::name2isa(el[0])){
 			// no regs and imm
 			case RET:
