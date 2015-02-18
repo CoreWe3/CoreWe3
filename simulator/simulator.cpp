@@ -23,7 +23,8 @@ int main(int argc, char* argv[]){
 	long long int breakpoint = -1;
 	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
-	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:"))!=-1){
+	bool branchprofile_flag = false;
+	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
 			case 'f': // Input Binary File
 				filename = optarg;
@@ -45,6 +46,9 @@ int main(int argc, char* argv[]){
 				break;
 			case 'b': // Break Point
 				breakpoint = stoul(optarg, nullptr, 0);
+				break;
+			case 'p': // Make Profile
+				branchprofile_flag = true;
 				break;
 			case ':':
 				cerr << result << " needs value" << endl;
@@ -71,6 +75,9 @@ int main(int argc, char* argv[]){
 	while(fin.read(reinterpret_cast<char*>(&tmp),sizeof(tmp))){
 		instructions.push_back(tmp);
 	}
+
+	//Initilaize Branch Profile
+	vector<int> branchprofile(instructions.size());
 
 	//Initilaize RAM
 	vector<uint32_t> ram(RAMSIZE);
@@ -160,18 +167,33 @@ int main(int argc, char* argv[]){
 				break;
 
 			case JEQ:
-				if(greg[30].d == 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d == 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
 				break;
 
 			case JLE:
-				if(greg[30].d <= 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d <= 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
 				break;
 
 			case JLT:
-				if(greg[30].d < 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d < 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
 				break;
 
 			case JSUB:
@@ -210,17 +232,17 @@ int main(int argc, char* argv[]){
 
 				// 2 freg
 			case FSQRT:
-				freg[fm.L.ra].r = FPU::fsqrt(freg[fm.L.rb].r);
+				freg[fm.A.ra].r = FPU::fsqrt(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FABS:
-				freg[fm.L.ra].r = FPU::fabs(freg[fm.L.rb].r);
+				freg[fm.A.ra].r = FPU::fabs(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FCMP:
-				greg[30].d = FPU::fcmp(freg[fm.L.ra].r, freg[fm.L.rb].r);
+				greg[30].d = FPU::fcmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
@@ -386,6 +408,19 @@ END_MAIN:
 			fout.write((char *)&x,sizeof(x));
 		}
 	}
+
+	ofstream fout2;
+	if(branchprofile_flag){
+		fout2.open("branch.profile", ios::binary);
+		if(fout2.fail()){
+			cerr << "Can't open file : " << "branch.profile" << endl;
+			return 1;
+		}
+		for(auto x : branchprofile){
+			fout2.write((char *)&x,sizeof(x));
+		}
+	}
+
 
 	cerr << "Program Counter = " << pc << endl;
 	cerr << "Instructions = " << counter << endl;

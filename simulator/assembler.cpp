@@ -245,10 +245,17 @@ int main(int argc, char* argv[]){
 			case FTOI:
 			case FSQRT:
 			case FABS:
-			case FCMP:
 				fm.A.op = ISA::name2isa(el[0]);
 				fm.A.ra = ISA::name2reg(el[1]);
 				fm.A.rb = ISA::name2reg(el[2]);
+				results.push_back(fm.data);
+				line++;
+				break;
+
+			case FCMP:
+				fm.A.op = ISA::name2isa(el[0]);
+				fm.A.rb = ISA::name2reg(el[1]);
+				fm.A.rc = ISA::name2reg(el[2]);
 				results.push_back(fm.data);
 				line++;
 				break;
