@@ -21,6 +21,7 @@
 	RET
 
 :min_caml_read_int
+:min_caml_read_float
 	LDA	r3	0xfffff
 	SHLI	r3	r3	8
 	LDA	r4	0xfffff
@@ -32,27 +33,19 @@
 	LDA	r4	0xfffff
 	OR	r3	r3	r4
 	RET
-	
-:min_caml_read_float
-	JSUB	:min_caml_read_int
-	RET
 
 :min_caml_print_char
 	STA	r3	0xfffff
 	RET
 
 :min_caml_print_int
-	STA	r3	0xfffff
-	RET
-
-:min_caml_print_int32
 	ADDI	r4	r0	24	
 	ADDI	r5	r3	0
-:min_caml_print_int32_L1
+:min_caml_print_int_L1
 	SHR	r3	r5	r4
 	STA	r3	0xfffff
 	ADDI	r4	r4	-8
-	BLE	r0	r4	:min_caml_print_int32_L1
+	BLE	r0	r4	:min_caml_print_int_L1
 	RET
 
 :min_caml_fadd
@@ -65,6 +58,14 @@
 	ADDI	r3	r4	r0
 	ADDI	r4	r7	r0
 :min_caml_fadd_L1
+	SHRI	r9	r3	31	#r9(10) = sig
+	SHRI	r10	r4	31
+	BEQ	r9	r10	:min_caml_fadd_abscmp
+	BLT	r5	r6	:min_caml_fadd_abscmp
+	BLT	r6	r5	:min_caml_fadd_abscmp
+	LDI	r3	0x0
+	RET
+:min_caml_fadd_abscmp
 	SHLI	r5	r3	1
 	SHRI	r5	r5	24
 	SHLI	r6	r4	1
@@ -74,13 +75,11 @@
 	SHRI	r7	r7	9
 	SHLI	r8	r4	9
 	SHRI	r8	r8	9
-	LDI	r9	0x800000
-	OR	r7	r9	r7
-	OR	r8	r9	r8
+	LDI	r12	0x800000
+	OR	r7	r12	r7
+	OR	r8	r12	r8
 	SHR	r8	r8	r6	#shift man of smaller one
-	SHRI	r9	r3	31	#r9(10) = sig
-	SHRI	r10	r4	31
-	BEQ	r9	r10	:min_caml_fadd_L2 	#r9 = man
+	BEQ	r9	r10	:min_caml_fadd_L2 	
 	SUB	r11	r7	r8
 	BEQ	r0	r0	:min_caml_fadd_L3
 :min_caml_fadd_L2
