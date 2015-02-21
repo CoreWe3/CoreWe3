@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 package Util is
   constant ADDR_WIDTH : integer := 12;
+  constant CACHE_WIDTH : integer := 8;
 
   constant LD    : std_logic_vector(5 downto 0) := "000000";
   constant ST    : std_logic_vector(5 downto 0) := "000001";
@@ -40,7 +41,7 @@ package Util is
   type mem_out_t is record
     i : std_logic_vector(31 downto 0);
     d : unsigned(31 downto 0);
-    busy : std_logic;
+    stall : std_logic;
   end record mem_out_t;
 
   type mem_t is record
@@ -355,13 +356,13 @@ package body Util is
   begin
     do := di;
     if di.h = '1' then
-      if ma_d.a = di.a and ma_d.f = di.f then
+      if ma_d.r = '1' and ma_d.a = di.a and ma_d.f = di.f then
         do.d := ma_d.d;
         do.h := '0';
-      elsif mw_d.a = di.a and mw_d.f = di.f then
+      elsif mw_d.r = '1' and mw_d.a = di.a and mw_d.f = di.f then
         do.d := mw_d.d;
         do.h := '0';
-      elsif w_d.a = di.a and w_d.f = di.f then
+      elsif w_d.r = '1' and w_d.a = di.a and w_d.f = di.f then
         do.d := w_d.d;
         do.h := '0';
       end if;
