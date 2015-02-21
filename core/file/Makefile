@@ -17,7 +17,7 @@ simulator:
 #	./hex.sh < $<
 
 %: %.o simulator input
-	$(SIM) -f $< # -o output -i input
+	$(SIM) -f $< -o output -i input
 	hexdump output
 	cat $< eof > $@
 

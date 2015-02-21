@@ -19,7 +19,7 @@ end Main;
 
 architecture Main_arch of Main is
 
-  component MemoryIO is
+  component Memory is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
@@ -40,17 +40,12 @@ architecture Main_arch of Main is
       mem_i  : out mem_in_t);
   end component;
 
-  signal imem_o  : std_logic_vector(31 downto 0);
-  signal imem_i  : unsigned(ADDR_WIDTH-1 downto 0);
-  signal dmem_i  : mem_in_t;
-  signal dmem_o  : mem_out_t;
-  signal ready : std_logic;
-  signal RS_RX_init : std_logic;
-  signal RS_RX_exec : std_logic;
+  signal dmem_i : mem_in_t;
+  signal dmem_o : mem_out_t;
 
 begin
 
-  ram_unit : MemoryIO port map (
+  ram_unit : Memory port map (
     clk   => clk,
     RS_RX => RS_RX,
     RS_TX => RS_TX,

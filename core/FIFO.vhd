@@ -32,9 +32,9 @@ architecture arch_fifo of FIFO is
     := (others => '0'); --enque addr
   signal deq_addr : std_logic_vector(WIDTH-1 downto 0)
     := (others => '0'); --deque addr
-  
+
 begin
-  
+
   process(clk)
   begin
     if rising_edge(clk) then
@@ -50,11 +50,9 @@ begin
       end if;
     end if;
   end process;
-  
+
   empty <= '1' when enq_addr = deq_addr else
            '0';
   full <= '1' when enq_addr+1 = deq_addr else
           '0';
 end arch_fifo;
-    
-    
