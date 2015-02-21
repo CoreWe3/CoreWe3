@@ -48,6 +48,7 @@ architecture arch_core of Core is
   signal sysclk : std_logic;
   --signal gmemclk : std_logic;
   --signal memclk : std_logic;
+
 begin  -- arch_core
 
   ib : IBUFG port map (

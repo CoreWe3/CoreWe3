@@ -33,7 +33,7 @@ architecture Memory_arch of Memory is
 
   component CodeSegmentRAM is
     generic (
-      file_name : string := "file/test.b");
+      file_name : string := "file/bootloader.b");
     port (
       clk : in std_logic;
       mem_i : in mem_in_t;
