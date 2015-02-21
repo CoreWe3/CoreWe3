@@ -92,7 +92,7 @@ begin
       execute(r.d, v_ma.wd, v_mw.wd, v_wd, v_e, data_hazard);
       decode(inst, r.pc, r.gpreg, r.fpreg, v_e.wd, v_ma.wd, v_mw.wd, v_wd, v_d);
 
-      mem_stall := mem_o.busy;
+      mem_stall := mem_o.stall;
       control_hazard := r.e.branching;
 
       if mem_stall = '0' then
