@@ -23,24 +23,23 @@ architecture arch_sram of SRAM is
   signal xwa2 : std_logic := '1';
   signal addr1: std_logic_vector(WIDTH-1 downto 0) := (others => '0');
   signal addr2: std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+  signal d : std_logic_vector(31 downto 0);
 begin
+
+  ZD <= RAM(conv_integer(addr2)) when xwa2 = '1' else
+        (others => 'Z');
 
   process(clk)
     variable vzd : std_logic_vector(31 downto 0);
   begin
     if rising_edge(clk) then
-      vzd := ZD;
+      d <= ZD;
       xwa1 <= XWA;
       xwa2 <= xwa1;
       addr1 <= ZA(WIDTH-1 downto 0);
       addr2 <= addr1;
-      if xwa1 = '1' then
-        ZD <= RAM(conv_integer(addr1));
-      else
-        ZD <= (others => 'Z');
-      end if;
       if xwa2 = '0' then
-        RAM(conv_integer(addr2)) <= vzd;
+        RAM(conv_integer(addr2)) <= ZD;
       end if;
     end if;
   end process;

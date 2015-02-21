@@ -29,24 +29,31 @@ architecture MemoryCache_arch of MemoryCache is
     buf1 : mem_in_t;
     buf2 : mem_in_t;
     stall : unsigned(1 downto 0);
+    data : unsigned(31 downto 0);
+    we : std_logic;
   end record;
 
   signal cache : cache_t;
   signal tag : tag_t;
   signal r : memory_cache_t;
-  signal d : std_logic_vector(31 downto 0);
 
 begin
   ZA <= std_logic_vector(mem_i.m.a);
   XWA <= not mem_i.m.we;
+  ZD <= std_logic_vector(r.data) when r.we = '1' else
+        (others => 'Z');
 
   process(clk)
     variable vmem_i1, vmem_i2 : mem_in_t;
     variable tagd : unsigned(20 downto CACHE_WIDTH);
     variable data : unsigned(31 downto 0);
+    variable we : std_logic;
     variable stall : std_logic;
   begin
     if rising_edge(clk) then
+      data := (others => '-');
+      we := '0';
+      stall := '0';
 
       if r.stall = "00" then
         vmem_i1 := mem_i;
@@ -55,8 +62,6 @@ begin
         vmem_i1 := r.buf1;
         vmem_i2 := r.buf2;
       end if;
-
-      stall := '0';
 
       case r.stall is
         when "00" =>
@@ -80,20 +85,16 @@ begin
 
           if vmem_i2.m.go = '1' and vmem_i2.m.we = '1' and
             vmem_i2.m.a(19 downto 12) /= x"FF" then
-            ZD <= std_logic_vector(vmem_i2.m.d);
-          else
-            ZD <= (others => 'Z');
+            data := vmem_i2.m.d;
+            we := '1';
           end if;
         when "01" =>
           mem_o.d <= (others => '-');
-          ZD <= (others => 'Z');
           stall := '1';
         when "10" =>
-          ZD <= (others => 'Z');
           mem_o.d <= unsigned(ZD);
         when others =>
           mem_o.d <= (others => '-');
-          ZD <= (others => 'Z');
       end case;
 
       if stall = '0' then
@@ -105,6 +106,8 @@ begin
       end if;
 
       mem_o.stall <= stall;
+      r.data <= data;
+      r.we <= we;
 
     end if;
   end process;
