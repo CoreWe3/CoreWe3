@@ -50,7 +50,7 @@ then
     scp $INPUT $SERVER:~/ || exit 1
 fi
 
-ssh $SERVER ./config_run.sh $FLAG_H $FLAG_I $INPUT $FLAG_L $LOG
+ssh $SERVER ./config_run.sh $FLAG_H $FLAG_I `basename $INPUT` $FLAG_L $LOG
 
 if [ $FLAG_L ]
 then

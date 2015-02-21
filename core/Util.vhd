@@ -414,7 +414,7 @@ package body Util is
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when LDIH =>
         d.dest := unsigned(i(25 downto 21));
-        d.d1 := rb;
+        d.d1 := ra; -- ISA should rb
         d.imm := resize(unsigned(i(15 downto 0)), 32);
       when J =>
         d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
