@@ -13,7 +13,7 @@ fpu.o: fpu.cpp fpu.h
 	$(CC) fpu.cpp $(CFLAGS) -c -o $@
 
 fpu_n.o: fpu.cpp fpu.h
-	$(CC) fpu.cpp $(CFLAGS) -c -o $@
+	$(CC) fpu_n.cpp $(CFLAGS) -c -o $@
 
 $(DIR)assembler: assembler.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
