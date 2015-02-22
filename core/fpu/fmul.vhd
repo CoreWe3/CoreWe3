@@ -7,6 +7,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity fmul is
   port (
     clk : in std_logic;
+    stall : in std_logic;
     a : in  std_logic_vector(31 downto 0);
     b : in  std_logic_vector(31 downto 0);
     o : out std_logic_vector(31 downto 0));
@@ -27,7 +28,7 @@ architecture pipeline of fmul is
 begin
   fmul1:process(clk)
   begin
-    if rising_edge(clk) then
+    if rising_edge(clk) and stall = '0' then
       --stage1
       hh <= ("1" & a(22 downto 11)) * ("1" & b(22 downto 11));
       hl <= ("1" & a(22 downto 11)) * b(10 downto 0);
