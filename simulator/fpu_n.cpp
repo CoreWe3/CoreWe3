@@ -7,35 +7,35 @@ typedef union{
 	float f;
 }FU;
 
-uint32_t FPU::fadd(uint32_t x, uint32_t y){
+uint32_t FPU::add(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f + yfu.f;
 	return zfu.r;
 }
 
-uint32_t FPU::fsub(uint32_t x, uint32_t y){
+uint32_t FPU::sub(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f - yfu.f;
 	return zfu.r;
 }
 
-uint32_t FPU::fmul(uint32_t x, uint32_t y){
+uint32_t FPU::mul(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f * yfu.f;
 	return zfu.r;
 }
 
-uint32_t FPU::fdiv(uint32_t x, uint32_t y){
+uint32_t FPU::div(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f / yfu.f;
 	return zfu.r;
 }
 
-int FPU::fcmp(uint32_t x, uint32_t y){
+int FPU::cmp(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f - yfu.f;
@@ -44,28 +44,28 @@ int FPU::fcmp(uint32_t x, uint32_t y){
 	else return 0;
 }
 
-uint32_t FPU::fsqrt(uint32_t x){
+uint32_t FPU::sqrt(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = std::sqrt(xfu.f);
 	return yfu.r;
 }
 
-uint32_t FPU::fabs(uint32_t x){
+uint32_t FPU::abs(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = std::abs(xfu.f);
 	return yfu.r;
 }
 
-uint32_t FPU::ftoi(uint32_t x){
+uint32_t FPU::_ftoi(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.d = xfu.f;
 	return yfu.r;
 }
 
-uint32_t FPU::itof(uint32_t x){
+uint32_t FPU::_itof(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = xfu.d;
