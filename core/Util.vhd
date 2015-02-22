@@ -38,31 +38,35 @@ package Util is
 
   constant EOF   : std_logic_vector(5 downto 0) := "111111";
 
-  type mem_out_t is record
-    i : std_logic_vector(31 downto 0);
+  type memory_reply_t is record
     d : unsigned(31 downto 0);
     stall : std_logic;
-  end record mem_out_t;
+  end record;
 
-  type mem_t is record
+  type memory_request_t is record
     a : unsigned(19 downto 0);
     d : unsigned(31 downto 0);
     go : std_logic;
     we : std_logic;
     f : std_logic;
-  end record mem_t;
+  end record;
 
-  type mem_in_t is record
-    pc : unsigned(11 downto 0);
-    m : mem_t;
-  end record mem_in_t;
-
-  constant default_mem : mem_t := (
+  constant default_memory_request : memory_request_t := (
     a => (others => '-'),
     d => (others => '-'),
     go => '0',
     we => '0',
     f => '0');
+
+  type bus_in_t is record
+    i : std_logic_vector(31 downto 0);
+    m : memory_reply_t;
+  end record;
+
+  type bus_out_t is record
+    pc : unsigned(11 downto 0);
+    m : memory_request_t;
+  end record;
 
   type alu_in_t is record
     d1 : unsigned(31 downto 0);
@@ -161,14 +165,14 @@ package Util is
     wd => default_write_data);
 
   type memory_access_t is record
-    op     : std_logic_vector(5 downto 0);
-    mem    : mem_t;
-    wd     : write_data_t;
+    op : std_logic_vector(5 downto 0);
+    m  : memory_request_t;
+    wd : write_data_t;
   end record memory_access_t;
 
   constant default_ma : memory_access_t := (
     op => ADD,
-    mem => default_mem,
+    m  => default_memory_request,
     wd => default_write_data);
 
   type memory_wait_t is record
@@ -538,9 +542,9 @@ package body Util is
     ma.wd := e.wd;
     case e.op is
       when LD =>
-        ma.mem := (alu(19 downto 0), (others => '-'), '1', '0', '0');
+        ma.m := (alu(19 downto 0), (others => '-'), '1', '0', '0');
       when ST =>
-        ma.mem := (alu(19 downto 0), e.data, '1', '1', '0');
+        ma.m := (alu(19 downto 0), e.data, '1', '1', '0');
       when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
         ma.wd.d := alu;
         ma.wd.r := '1';

@@ -36,10 +36,6 @@ LD ST ADD SUB ADDI SHR SHL SHLI SHRI LDIH J JEQ JLE JLT JSUB RET
 
 ## TODO
 
-* メモリパイプライン
-
-* キャッシュ
-
 * float IO
 
 * FPU組み込み
