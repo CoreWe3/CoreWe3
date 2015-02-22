@@ -173,6 +173,14 @@ architecture Control_arch of Control is
         d.d1 := rb;
         d.d2 := ra;
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+      when FLD =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := rb;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+      when FST =>
+        d.d1 := rb;
+        d.d2 := fa;
+        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when ADD | SUB | SH_L | SH_R =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := rb;
@@ -232,7 +240,11 @@ architecture Control_arch of Control is
       when LD =>
         e.alu := (d1.d, d.imm, "00");
         hazard := d1.h;
-      when ST =>
+      when FLD =>
+        e.alu := (d1.d, d.imm, "00");
+        hazard := d1.h;
+        e.wd.f := '1';
+      when ST | FST =>
         e.alu := (d1.d, d.imm, "00");
         e.data := d2.d;
         e.wd.r := '1';
@@ -276,7 +288,7 @@ architecture Control_arch of Control is
         e.wd.r := '1';
         hazard := d1.h;
       when FLDI =>
-        e.wd.d := d.imm(15 downto 0) & d.d1(31 downto 16);
+        e.wd.d := d.imm(15 downto 0) & d1.d(31 downto 16);
         e.wd.f := '1';
         e.wd.r := '1';
         hazard := d1.h;
@@ -336,8 +348,12 @@ architecture Control_arch of Control is
     case e.op is
       when LD =>
         ma.m := (alu(19 downto 0), (others => '-'), '1', '0', '0');
+      when FLD =>
+        ma.m := (alu(19 downto 0), (others => '-'), '1', '0', '1');
       when ST =>
         ma.m := (alu(19 downto 0), e.data, '1', '1', '0');
+      when FST =>
+        ma.m := (alu(19 downto 0), e.data, '1', '1', '1');
       when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
         ma.wd.d := alu;
         ma.wd.r := '1';
@@ -362,7 +378,7 @@ architecture Control_arch of Control is
   begin
     w := mw.wd;
     case mw.op is
-      when LD =>
+      when LD | FLD =>
         w.d := mem;
         w.r := '1';
       when F_ADD =>
