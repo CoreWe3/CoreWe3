@@ -20,8 +20,11 @@ int main(int argc, char* argv[]){
 
 	//Option Handler
 	char result;
+	long long int breakpoint = -1;
+	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
-	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:"))!=-1){
+	bool branchprofile_flag = false;
+	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
 			case 'f': // Input Binary File
 				filename = optarg;
@@ -39,8 +42,13 @@ int main(int argc, char* argv[]){
 				outputramfilename = optarg;
 				break;
 			case 'l': // Instruction Limit
+				limit = stoul(optarg, nullptr, 0);
 				break;
 			case 'b': // Break Point
+				breakpoint = stoul(optarg, nullptr, 0);
+				break;
+			case 'p': // Make Profile
+				branchprofile_flag = true;
 				break;
 			case ':':
 				cerr << result << " needs value" << endl;
@@ -68,6 +76,9 @@ int main(int argc, char* argv[]){
 		instructions.push_back(tmp);
 	}
 
+	//Initilaize Branch Profile
+	vector<int> branchprofile(instructions.size());
+
 	//Initilaize RAM
 	vector<uint32_t> ram(RAMSIZE);
 	if(ramfilename != nullptr){
@@ -82,7 +93,7 @@ int main(int argc, char* argv[]){
 			c++;
 		}
 	}else{
-		cout << "RAM is initilaized with zero." << endl;
+		cerr << "RAM is initilaized with zero." << endl;
 	}
 
 	//Initilaize IO
@@ -96,7 +107,7 @@ int main(int argc, char* argv[]){
 		}
 		input = &fileinput;
 	}else{
-		cout << "IO input from stdin." << endl;
+		cerr << "IO input from stdin." << endl;
 		input = &cin;
 	}
 
@@ -110,7 +121,7 @@ int main(int argc, char* argv[]){
 		}
 		output = &fileoutput;
 	}else{
-		cout << "IO output to stdout." << endl;
+		cerr << "IO output to stdout." << endl;
 		output = &cout;
 	}
 
@@ -122,107 +133,135 @@ int main(int argc, char* argv[]){
 
 	//Main
 	unsigned long counter = 0;
+	map<string,unsigned long> profile;
+	for(auto el : INAMES){
+		profile[el.first] = 0;
+	}
+
 	while(pc < instructions.size()){
+		if(pc == breakpoint){
+			//Print Reg
+			cerr << "== counter : " << counter << endl;
+			for(int i=0;i<greg.size();i++){
+				cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
+			}
+			cerr << endl;
+			for(int i=0;i<freg.size();i++){
+				cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
+			}
+			cerr << endl;
+		}
+		if(counter == limit){
+			cerr << "Stop by Instruction Limit." << endl;
+			goto END_MAIN;
+		}
+
 		FORMAT fm;
 		fm.data = instructions[pc];
+		profile[ISA::isa2name(fm.J.op)]++;
 		switch(fm.J.op){
 			// no regs and imm
 			case RET:
 				pc = greg[31].u;
 				break;
 
-			// 1 imm
+				// 1 imm
 			case J:
 				if(fm.J.cx==0){
-					cout << "Detect Halt." << endl;
+					cerr << "Detect Halt." << endl;
 					goto END_MAIN;
 				}
 				pc += fm.J.cx;
 				break;
 
 			case JEQ:
-				if(greg[30].d == 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d == 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
 				break;
 
 			case JLE:
-				if(greg[30].d <= 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d <= 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
+				break;
 
 			case JLT:
-				if(greg[30].d < 0) pc += fm.J.cx;
-				else pc += 1;
+				if(greg[30].d < 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
+				break;
 
 			case JSUB:
 				greg[31].u = pc + 1;
 				pc += fm.J.cx;
 				break;
 
-			// 1 greg, 1 imm
+				// 1 greg, 1 imm
 			case LDIH:
 				greg[fm.L.ra].u = (fm.L.cx << 16) + (greg[fm.L.ra].u & 0xffff);
 				pc+=1;
 				break;
 
-			// 1 freg, 1 imm
-			case FLDIL:
-				freg[fm.L.ra].u = (fm.L.cx & 0xffff) + (freg[fm.L.ra].u & 0xffff0000);
-				pc+=1;
-				break;
-
-			case FLDIH:
-				freg[fm.L.ra].u = (fm.L.cx << 16);
-				pc+=1;
-				break;
-
-			// 1 freg, 1 greg
+				// 1 freg, 1 greg
 			case ITOF:
 				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
 				pc+=1;
 				break;
 
-			// 1 greg, 1 freg
+				// 1 greg, 1 freg
 			case FTOI:
 				greg[fm.L.ra].r = FPU::ftoi(freg[fm.L.rb].r);
 				pc+=1;
 				break;
 
-			// 2 freg
+				// 2 freg
 			case FSQRT:
-				freg[fm.L.ra].r = FPU::fsqrt(freg[fm.L.rb].r);
+				freg[fm.A.ra].r = FPU::fsqrt(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
-
 			case FABS:
-				freg[fm.L.ra].r = FPU::fabs(freg[fm.L.rb].r);
+				freg[fm.A.ra].r = FPU::fabs(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FCMP:
-				greg[30].d = FPU::fcmp(freg[fm.L.ra].r, freg[fm.L.rb].r);
+				greg[30].d = FPU::fcmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
-			// 2 gregs, 1 imm
+				// 2 gregs, 1 imm
 			case LD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address >= RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
 						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
+							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-					if (address == IOADDR)
-						{
-							if (input->eof())
-								{
-									cerr << "No input any longer" << endl;
-									goto END_MAIN;
-								}
-							else
-								input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
-						}
+						else
+							input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
+					}
 					else greg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -232,13 +271,15 @@ int main(int argc, char* argv[]){
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
-						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
-							goto END_MAIN;
-						}
-					if (address == IOADDR)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
-					else ram[address] = greg[fm.L.ra].r;
+					}else{
+						ram[address] = greg[fm.L.ra].r;
+					}
 				}
 				pc+=1;
 				break;
@@ -258,17 +299,25 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 1 freg, 1greg, 1 imm
+				// 1 freg, 1greg, 1 imm
 			case FLD:
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
 						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
+							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-					if (io_inputfilename != nullptr && address== IOADDR)
-						input->read((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
+						else
+							input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
+					}
 					else freg[fm.L.ra].r = ram[address];
 				}
 				pc+=1;
@@ -278,18 +327,26 @@ int main(int argc, char* argv[]){
 				{
 					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
 					if (address>=RAMSIZE)
-						{
-							cerr << "Invalid Address : 0x" << hex << address << endl;
-							goto END_MAIN;
-						}
-					if (io_outputfilename != nullptr && address == IOADDR)
-						output->write((char*)&(freg[fm.L.ra].r), sizeof(freg[fm.L.ra].r));
-					else ram[address] = freg[fm.L.ra].r;
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
+						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
+					}else{
+						ram[address] = freg[fm.L.ra].r;
+					}
 				}
 				pc+=1;
 				break;
 
-			// 3 gregs
+				// 2 freg, 1 imm
+			case FLDI:
+				freg[fm.L.ra].u = (fm.L.cx << 16) + (freg[fm.L.rb].u >> 16);
+				pc+=1;
+				break;
+
+				// 3 gregs
 			case ADD:
 				greg[fm.A.ra].u = greg[fm.A.rb].u + greg[fm.A.rc].u;
 				pc+=1;
@@ -310,7 +367,7 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-			// 3 fregs
+				// 3 fregs
 			case FADD:
 				freg[fm.A.ra].r = FPU::fadd(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
@@ -336,6 +393,7 @@ int main(int argc, char* argv[]){
 				exit(1);
 		}
 		greg[0].r = 0;
+		freg[0].f = 0;
 		counter++;
 	}
 
@@ -355,17 +413,34 @@ END_MAIN:
 		}
 	}
 
-	cout << "Program Counter = " << pc << endl;
-	cout << "Instructions = " << counter << endl;
+	ofstream fout2;
+	if(branchprofile_flag){
+		fout2.open("branch.profile", ios::binary);
+		if(fout2.fail()){
+			cerr << "Can't open file : " << "branch.profile" << endl;
+			return 1;
+		}
+		for(auto x : branchprofile){
+			fout2.write((char *)&x,sizeof(x));
+		}
+	}
+
+
+	cerr << "Program Counter = " << pc << endl;
+	cerr << "Instructions = " << counter << endl;
 
 	//Print Reg
 	for(int i=0;i<greg.size();i++){
-		cout << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << " ";
+		cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
 	}
-	cout << endl;
+	cerr << endl;
 	for(int i=0;i<freg.size();i++){
-		cout << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << " ";
+		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
 	}
-	cout << endl;
+	cerr << endl;
+	for(auto el : profile){
+		cerr << el.first << ":" << el.second << " ";
+	}
+	cerr << endl;
 	return 0;
 }

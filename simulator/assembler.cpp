@@ -24,7 +24,12 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 		}
 		return (unsigned int)(labels[str] - (int)line);
 	}else{
-		return (unsigned int)stoul(str, nullptr, 0);
+		try{
+			return (unsigned int)stoul(str, nullptr, 0);
+		}catch(...){
+			cerr << "Invalid Argument :" << str << endl;
+			exit(1);
+		}
 	}
 }
 
@@ -104,7 +109,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	//Optimize LDI
+	//Optimize LDI and VFLDI
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0]==':'){
 			it++;
@@ -115,14 +120,57 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
-						if (v > 0xffff){
-							vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
-							vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
-							instructions.insert(it,itmp1);
-							instructions.insert(it,itmp2);
+						if (v > 0x7fff){
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}else{
+								vector<string> itmp1 {"@ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"@LDIH", (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}
 						}else{
-							vector<string> itmp1 {"ADDI", (*it)[1], "r0", (*it)[2]};
-							instructions.insert(it,itmp1);
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"ADDI", (*it)[1], "r0", (*it)[2]};
+								instructions.insert(it,itmp1);
+							}else{
+								vector<string> itmp1 {"@ADDI", (*it)[1], "r0", (*it)[2]};
+								instructions.insert(it,itmp1);
+							}
+						}
+						it = instructions.erase(it);
+					}else{
+						it++;
+					}
+				}
+				break;
+			case VFLDI:
+				{
+					if((*it)[2][0]!=':'){
+						unsigned int v = getlabelvalue((*it)[2]);
+						if ((v & 0xffff)!=0){
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"FLDI", (*it)[1], (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}else{
+								vector<string> itmp1 {"@FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"@FLDI", (*it)[1], (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}
+						}else{
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+							}else{
+								vector<string> itmp1 {"@FLDI", (*it)[1], "f0", to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+							}
 						}
 						it = instructions.erase(it);
 					}else{
@@ -143,31 +191,56 @@ int main(int argc, char* argv[]){
 			continue;
 		}
 		switch(ISA::name2isa((*it)[0])){
+			// XXXI rx rx 0
+			case ADDI:
+			case SHRI:
+			case SHLI:
+				if((*it)[3][0]!=':' && ISA::name2reg((*it)[1]) == ISA::name2reg((*it)[2]) && getlabelvalue((*it)[3]) == 0){
+					it = instructions.erase(it);
+					break;
+				}
+			// XXXX x0 rx
+			case LD:
+			case ST:
+			case FTOI:
+			case ADD:
+			case SUB:
+			case SHR:
+			case SHL:
+			case LDIH:
+			case FLDI:
+			case VLDI:
+			case VFLDI:
+				if (ISA::name2reg((*it)[1]) == 0){
+					it = instructions.erase(it);
+					break;
+				}
 			default:
 				it++;
 				break;
 		}
 	}
 
-	//Detect Dinamic Label
+	//Detect Dynamic Label
 	int line = 0;
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0] == ':'){
 			labels[(*it)[0]] = line;
-			// cout << (*it)[0] << ' ' << line << endl;
 			it = instructions.erase(it);
 		}else{
-			// cout << (*it)[0] << ' ' << line << endl;
 			switch(ISA::name2isa((*it)[0])){
 				case VLDI:
 				case VFLDI:
 					line+=2;
+					break;
 				default:
 					line+=1;
+					break;
 			}
 			it++;
 		}
 	}
+	
 
 	//Make Assembly
 	list<uint32_t> results;
@@ -175,6 +248,9 @@ int main(int argc, char* argv[]){
 	for(auto el : instructions){
 		FORMAT fm;
 		fm.data = 0;
+		if(el[0][0]=='@'){
+			fm.J.fg = 1;
+		}
 		switch(ISA::name2isa(el[0])){
 			// no regs and imm
 			case RET:
@@ -183,35 +259,44 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 1 imm
+				// 1 imm
 			case J:
 			case JEQ:
 			case JLE:
 			case JLT:
 			case JSUB:
-				fm.J.op = ISA::name2isa(el[0]);
-				fm.J.cx = getlabelvalue(el[1], line);
+				{
+					fm.J.op = ISA::name2isa(el[0]);
+					unsigned int v = getlabelvalue(el[1], line);
+					if(v>0xFFFFFF&&v<0xFF000000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.J.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
 
-			// 1 reg, 1 imm
+				// 1 reg, 1 imm
 			case LDIH:
-			case FLDIL:
-			case FLDIH:
-				fm.L.op = ISA::name2isa(el[0]);
-				fm.L.ra = ISA::name2reg(el[1]);
-				fm.L.cx = getlabelvalue(el[2], line);
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					unsigned int v = getlabelvalue(el[2], line);
+					if(v>0x7FFF&&v<0xFFFF8000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
 
-			// 2 regs
+				// 2 regs
 			case ITOF:
 			case FTOI:
 			case FSQRT:
 			case FABS:
-			case FCMP:
 				fm.A.op = ISA::name2isa(el[0]);
 				fm.A.ra = ISA::name2reg(el[1]);
 				fm.A.rb = ISA::name2reg(el[2]);
@@ -219,7 +304,15 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			// 2 regs, 1 imm
+			case FCMP:
+				fm.A.op = ISA::name2isa(el[0]);
+				fm.A.rb = ISA::name2reg(el[1]);
+				fm.A.rc = ISA::name2reg(el[2]);
+				results.push_back(fm.data);
+				line++;
+				break;
+
+				// 2 regs, 1 imm
 			case LD:
 			case ST:
 			case FLD:
@@ -227,15 +320,36 @@ int main(int argc, char* argv[]){
 			case ADDI:
 			case SHLI:
 			case SHRI:
-				fm.L.op = ISA::name2isa(el[0]);
-				fm.L.ra = ISA::name2reg(el[1]);
-				fm.L.rb = ISA::name2reg(el[2]);
-				fm.L.cx = getlabelvalue(el[3], line);
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+					if(v>0x7FFF&&v<0xFFFF8000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
+				results.push_back(fm.data);
+				line++;
+				break;
+			
+			case FLDI:
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+					if(v>0xFFFF){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
 
-			// 3 regs
+				// 3 regs
 			case ADD:
 			case SUB:
 			case SHL:
@@ -252,7 +366,7 @@ int main(int argc, char* argv[]){
 				line++;
 				break;
 
-			//Virtual Instructions
+				//Virtual Instructions
 			case VLDI:
 				fm.L.op = ISA::name2isa("ADDI");
 				fm.L.ra = ISA::name2reg(el[1]);
@@ -269,14 +383,16 @@ int main(int argc, char* argv[]){
 				break;
 
 			case VFLDI:
-				fm.L.op = ISA::name2isa("FLDIH");
+				fm.L.op = ISA::name2isa("FLDI");
 				fm.L.ra = ISA::name2reg(el[1]);
+				fm.L.rb = ISA::name2reg("f0");
 				fm.L.cx = getlabelvalue(el[2], line) & 0xffff;
 				results.push_back(fm.data);
 				line++;
 				fm.data = 0;
-				fm.L.op = ISA::name2isa("FLDIL");
+				fm.L.op = ISA::name2isa("FLDI");
 				fm.L.ra = ISA::name2reg(el[1]);
+				fm.L.rb = ISA::name2reg(el[1]);
 				fm.L.cx = getlabelvalue(el[2], line) >> 16;
 				results.push_back(fm.data);
 				line++;
@@ -292,10 +408,16 @@ int main(int argc, char* argv[]){
 				break;
 
 			case VCMPI:
-				fm.L.op = ISA::name2isa("ADDI");
-				fm.L.ra = ISA::name2reg("r30");
-				fm.L.rb = ISA::name2reg(el[1]);
-				fm.L.cx = getlabelvalue(el[2], line)*-1;
+				{
+					fm.L.op = ISA::name2isa("ADDI");
+					fm.L.ra = ISA::name2reg("r30");
+					fm.L.rb = ISA::name2reg(el[1]);
+					unsigned int v = getlabelvalue(el[2], line)*-1;
+					if(v>0x7FFF&&v<0xFFFF8000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
 				results.push_back(fm.data);
 				line++;
 				break;
