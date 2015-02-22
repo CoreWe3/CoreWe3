@@ -7,6 +7,9 @@
 ##Simulate
 ./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
 
+##Simulate(native)
+./simulator_n -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
+
 #View Binary File
 ./hex.sh [Binary File]
 
