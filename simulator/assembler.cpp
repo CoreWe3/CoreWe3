@@ -320,6 +320,20 @@ int main(int argc, char* argv[]){
 			case ADDI:
 			case SHLI:
 			case SHRI:
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+					if(v>0x7FFF&&v<0xFFFF8000){
+						cerr << "overflow immidiate : around " << line << endl;
+					}
+					fm.L.cx = v;
+				}
+				results.push_back(fm.data);
+				line++;
+				break;
+			
 			case FLDI:
 				{
 					fm.L.op = ISA::name2isa(el[0]);
