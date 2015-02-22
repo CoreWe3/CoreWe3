@@ -9,22 +9,22 @@
 enum IS : unsigned int{
 	LD = 0x0, ST = 0x1, FLD= 0x2, FST = 0x3, ITOF = 0x4, FTOI= 0x5,
 	ADD = 0x6,  SUB = 0x7, ADDI = 0x8,  SHL = 0x9, SHR = 0xA, SHLI = 0xB, SHRI = 0xC, LDIH= 0xD,
-	FADD = 0xE, FSUB = 0xF, FMUL = 0x10, FDIV = 0x11, FSQRT = 0x12, FABS = 0x13, FCMP = 0x14, FLDIL = 0x15, FLDIH = 0x16,
-	J = 0x17, JEQ = 0x18, JLE = 0x19, JLT = 0x1A, JSUB = 0x1B, RET = 0x1C,
+	FADD = 0xE, FSUB = 0xF, FMUL = 0x10, FDIV = 0x11, FSQRT = 0x12, FABS = 0x13, FCMP = 0x14, FLDI = 0x15,
+	J = 0x16, JEQ = 0x17, JLE = 0x18, JLT = 0x19, JSUB = 0x1A, RET = 0x1B,
 	VLDI = 0x20, VFLDI = 0x21, VCMP = 0x22, VCMPI = 0x23
 };
 
 const std::map<std::string, unsigned int> INAMES {
 	{"LD", LD}, {"ST", ST}, {"FLD", FLD}, {"FST", FST}, {"ITOF", ITOF}, {"FTOI", FTOI},
 		{"ADD", ADD}, {"SUB", SUB}, {"ADDI", ADDI} , {"SHL", SHL}, {"SHR", SHR}, {"SHLI", SHLI}, {"SHRI", SHRI}, {"LDIH", LDIH},
-		{"FADD", FADD}, {"FSUB", FSUB}, {"FMUL", FMUL}, {"FDIV", FDIV}, {"FSQRT", FSQRT}, {"FABS",FABS}, {"FCMP", FCMP}, {"FLDIL", FLDIL}, {"FLDIH", FLDIH},
+		{"FADD", FADD}, {"FSUB", FSUB}, {"FMUL", FMUL}, {"FDIV", FDIV}, {"FSQRT", FSQRT}, {"FABS",FABS}, {"FCMP", FCMP}, {"FLDI", FLDI},
 		{"J", J}, {"JEQ", JEQ}, {"JLE", JLE}, {"JLT", JLT}, {"JSUB", JSUB}, {"RET", RET},
-		{"LDI", VLDI}, {"FLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI},
+		{"LDI", VLDI}, {"VFLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI},
 	{"@LD", LD}, {"@ST", ST}, {"@FLD", FLD}, {"@FST", FST}, {"@ITOF", ITOF}, {"@FTOI", FTOI},
 		{"@ADD", ADD}, {"@SUB", SUB}, {"@ADDI", ADDI} , {"@SHL", SHL}, {"@SHR", SHR}, {"@SHLI", SHLI}, {"@SHRI", SHRI}, {"@LDIH", LDIH},
-		{"@FADD", FADD}, {"@FSUB", FSUB}, {"@FMUL", FMUL}, {"@FDIV", FDIV}, {"@FSQRT", FSQRT}, {"@FABS",FABS}, {"@FCMP", FCMP}, {"@FLDIL", FLDIL}, {"@FLDIH", FLDIH},
+		{"@FADD", FADD}, {"@FSUB", FSUB}, {"@FMUL", FMUL}, {"@FDIV", FDIV}, {"@FSQRT", FSQRT}, {"@FABS",FABS}, {"@FCMP", FCMP}, {"@FLDI", FLDI},
 		{"@J", J}, {"@JEQ", JEQ}, {"@JLE", JLE}, {"@JLT", JLT}, {"@JSUB", JSUB}, {"@RET", RET},
-		{"@LDI", VLDI}, {"@FLDI", VFLDI}, {"@CMP", VCMP}, {"@CMPI", VCMPI}
+		{"@LDI", VLDI}, {"@VFLDI", VFLDI}, {"@CMP", VCMP}, {"@CMPI", VCMPI}
 };
 
 const std::vector<std::string> GREGNAMES {

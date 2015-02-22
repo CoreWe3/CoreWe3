@@ -99,16 +99,6 @@ int main(int argc, char* argv[]){
 				str += int2hexstring(fm.L.cx);
 				break;
 
-				// 1 freg, 1 imm
-			case FLDIL:
-			case FLDIH:
-				str += ISA::isa2name(fm.L.op);
-				str += "\t";
-				str += ISA::freg2name(fm.L.ra);
-				str += "\t";
-				str += int2hexstring(fm.L.cx);
-				break;
-
 				// 1 freg, 1 greg
 			case ITOF:
 				str += ISA::isa2name(fm.L.op);
@@ -168,6 +158,17 @@ int main(int argc, char* argv[]){
 				str += ISA::freg2name(fm.L.ra);
 				str += "\t";
 				str += ISA::greg2name(fm.L.rb);
+				str += "\t";
+				str += int2hexstring(fm.L.cx);
+				break;
+
+				// 2 freg, 1 imm
+			case FLDI:
+				str += ISA::isa2name(fm.L.op);
+				str += "\t";
+				str += ISA::freg2name(fm.L.ra);
+				str += "\t";
+				str += ISA::freg2name(fm.L.rb);
 				str += "\t";
 				str += int2hexstring(fm.L.cx);
 				break;
