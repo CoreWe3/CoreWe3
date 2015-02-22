@@ -186,7 +186,7 @@ int main(int argc, char* argv[]){
 			continue;
 		}
 		switch(ISA::name2isa((*it)[0])){
-			// ADDI rx rx 0
+			// XXXI rx rx 0
 			case ADDI:
 			case SHRI:
 			case SHLI:
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]){
 					it = instructions.erase(it);
 					break;
 				}
-			// HOGE r0 rx
+			// XXXX x0 rx
 			case LD:
 			case ST:
 			case FTOI:
@@ -203,7 +203,9 @@ int main(int argc, char* argv[]){
 			case SHR:
 			case SHL:
 			case LDIH:
+			case FLDI:
 			case VLDI:
+			case VFLDI:
 				if (ISA::name2reg((*it)[1]) == 0){
 					it = instructions.erase(it);
 					break;

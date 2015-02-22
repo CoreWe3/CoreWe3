@@ -18,13 +18,11 @@ const std::map<std::string, unsigned int> INAMES {
 	{"LD", LD}, {"ST", ST}, {"FLD", FLD}, {"FST", FST}, {"ITOF", ITOF}, {"FTOI", FTOI},
 		{"ADD", ADD}, {"SUB", SUB}, {"ADDI", ADDI} , {"SHL", SHL}, {"SHR", SHR}, {"SHLI", SHLI}, {"SHRI", SHRI}, {"LDIH", LDIH},
 		{"FADD", FADD}, {"FSUB", FSUB}, {"FMUL", FMUL}, {"FDIV", FDIV}, {"FSQRT", FSQRT}, {"FABS",FABS}, {"FCMP", FCMP}, {"FLDI", FLDI},
-		{"J", J}, {"JEQ", JEQ}, {"JLE", JLE}, {"JLT", JLT}, {"JSUB", JSUB}, {"RET", RET},
-		{"LDI", VLDI}, {"VFLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI},
-	{"@LD", LD}, {"@ST", ST}, {"@FLD", FLD}, {"@FST", FST}, {"@ITOF", ITOF}, {"@FTOI", FTOI},
-		{"@ADD", ADD}, {"@SUB", SUB}, {"@ADDI", ADDI} , {"@SHL", SHL}, {"@SHR", SHR}, {"@SHLI", SHLI}, {"@SHRI", SHRI}, {"@LDIH", LDIH},
-		{"@FADD", FADD}, {"@FSUB", FSUB}, {"@FMUL", FMUL}, {"@FDIV", FDIV}, {"@FSQRT", FSQRT}, {"@FABS",FABS}, {"@FCMP", FCMP}, {"@FLDI", FLDI},
-		{"@J", J}, {"@JEQ", JEQ}, {"@JLE", JLE}, {"@JLT", JLT}, {"@JSUB", JSUB}, {"@RET", RET},
-		{"@LDI", VLDI}, {"@VFLDI", VFLDI}, {"@CMP", VCMP}, {"@CMPI", VCMPI}
+		{"J", J}, {"JEQ", JEQ}, {"JLE", JLE}, {"JLT", JLT}, {"JSUB", JSUB}, {"RET", RET}
+};
+
+const std::map<std::string, unsigned int> VINAMES {
+		{"LDI", VLDI}, {"VFLDI", VFLDI}, {"CMP", VCMP}, {"CMPI", VCMPI}
 };
 
 const std::vector<std::string> GREGNAMES {

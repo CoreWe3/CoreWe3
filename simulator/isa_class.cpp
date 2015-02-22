@@ -23,15 +23,20 @@ ISA::ISA(){
 
 unsigned int ISA::name2isa(std::string str){
 	std::transform(str.begin(),str.end(),str.begin(),toupper);
-	if(INAMES.count(str)==0){
+	if (str[0] == '@') str = str.substr(1);
+	if(INAMES.count(str)==0&&VINAMES.count(str)==0){
 		std::cerr << "No such kind of instruction : " << str << std::endl;
 		exit(1);
 	}
-	return INAMES.at(str);
+	return (INAMES.count(str)!=0)? INAMES.at(str) : VINAMES.at(str);
 }
 
 unsigned int ISA::name2reg(std::string str){
 	std::transform(str.begin(),str.end(),str.begin(),tolower);
+	if(name2reg_map.count(str)==0){
+		std::cerr << "No such kind of register : " << str << std::endl;
+		exit(1);
+	}
 	return name2reg_map.at(str);
 }
 
