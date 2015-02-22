@@ -27,14 +27,13 @@ package Util is
   constant F_SQRT: std_logic_vector(5 downto 0) := "010010";
   constant F_ABS : std_logic_vector(5 downto 0) := "010011";
   constant FCMP  : std_logic_vector(5 downto 0) := "010100";
-  constant FLDIL : std_logic_vector(5 downto 0) := "010101";
-  constant FLDIH : std_logic_vector(5 downto 0) := "010110";
-  constant J     : std_logic_vector(5 downto 0) := "010111";
-  constant JEQ   : std_logic_vector(5 downto 0) := "011000";
-  constant JLE   : std_logic_vector(5 downto 0) := "011001";
-  constant JLT   : std_logic_vector(5 downto 0) := "011010";
-  constant JSUB  : std_logic_vector(5 downto 0) := "011011";
-  constant RET   : std_logic_vector(5 downto 0) := "011100";
+  constant FLDI  : std_logic_vector(5 downto 0) := "010101";
+  constant J     : std_logic_vector(5 downto 0) := "010110";
+  constant JEQ   : std_logic_vector(5 downto 0) := "010111";
+  constant JLE   : std_logic_vector(5 downto 0) := "011000";
+  constant JLT   : std_logic_vector(5 downto 0) := "011001";
+  constant JSUB  : std_logic_vector(5 downto 0) := "011010";
+  constant RET   : std_logic_vector(5 downto 0) := "011011";
 
   constant EOF   : std_logic_vector(5 downto 0) := "111111";
 
