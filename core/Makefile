@@ -3,7 +3,7 @@ TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/fib_rec
+CODE = file/loopback
 
 all: configure code
 
@@ -11,14 +11,11 @@ all: configure code
 
 configure: bit code
 	../file/fpga.sh -h -i $(CODE) $(TARGET)
-	# scp $(TARGET) troublesome:~/
-	# ssh troublesome '~/Xilinx/14.4/ISE_DS/ISE/bin/lin64/impact -batch config.cmd'
 
 bit: $(TARGET)
 
 code:
 	cd file && $(MAKE) $(notdir $(CODE))
-	scp $(CODE) troublesome:~/
 
 $(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ) $(BOOTLOADER)
 	./ise_cmd.sh

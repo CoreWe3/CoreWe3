@@ -8,11 +8,11 @@ entity MemoryMappedIO is
   generic(
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
   port (
-    clk   : in    std_logic;
-    RS_RX : in    std_logic;
-    RS_TX : out   std_logic;
-    mem_i : in    mem_in_t;
-    mem_o : out   mem_out_t);
+    clk     : in  std_logic;
+    RS_RX   : in  std_logic;
+    RS_TX   : out std_logic;
+    request : in  memory_request_t;
+    reply   : out memory_reply_t);
 end MemoryMappedIO;
 
 architecture MemoryMappedIO_arch of MemoryMappedIO is
@@ -52,7 +52,7 @@ architecture MemoryMappedIO_arch of MemoryMappedIO is
   end component;
 
   signal stall : std_logic := '0';
-  signal buf : mem_t := default_mem;
+  signal buf : memory_request_t := default_memory_request;
 
   signal rcomplete : std_logic;
   signal rdo : std_logic_vector(7 downto 0);
@@ -105,26 +105,26 @@ begin
     empty => tempty,
     full => tfull);
 
-  mem_o.d <= unsigned(x"000000" & rdo);
-  mem_o.stall <= stall or rdeq;
+  reply.d <= unsigned(x"000000" & rdo);
+  reply.stall <= stall or rdeq;
 
   main : process(clk)
-    variable vmem : mem_t;
+    variable vreq : memory_request_t;
     variable vstall : std_logic;
   begin
     if rising_edge(clk) then
       if stall = '0' then
-        vmem := mem_i.m;
+        vreq := request;
       else
-        vmem := buf;
+        vreq := buf;
       end if;
       vstall := '0';
 
-      if vmem.go = '1' and vmem.a = x"FFFFF" then
-        if vmem.we = '1' then -- transmit
+      if vreq.go = '1' and vreq.a = x"FFFFF" then
+        if vreq.we = '1' then -- transmit
           rdeq <= '0';
           if tfull = '0' then
-            tdi <= std_logic_vector(vmem.d(7 downto 0));
+            tdi <= std_logic_vector(vreq.d(7 downto 0));
             tenq <= '1';
           else
             tenq <= '0';
@@ -145,7 +145,7 @@ begin
       end if;
 
       if vstall = '1' then
-        buf <= vmem;
+        buf <= vreq;
       end if;
       stall <= vstall;
 

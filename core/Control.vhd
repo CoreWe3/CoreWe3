@@ -7,9 +7,9 @@ use work.Util.all;
 
 entity Control is
   port(
-    clk   : in std_logic;
-    mem_o : in mem_out_t;
-    mem_i : out mem_in_t);
+    clk     : in  std_logic;
+    bus_in  : in  bus_in_t;
+    bus_out : out bus_out_t);
 end Control;
 
 architecture Control_arch of Control is
@@ -44,8 +44,8 @@ architecture Control_arch of Control is
   signal fmul_o : std_logic_vector(31 downto 0);
 
 begin
-  mem_i.pc <= r.pc;
-  mem_i.m <= r.ma.mem;
+  bus_out.pc <= r.pc;
+  bus_out.m <= r.ma.m;
 
   alu_unit : alu port map (
     di => r.e.alu,
@@ -80,19 +80,19 @@ begin
     if rising_edge(clk) then
 
       if r.state = "00" then
-        inst := mem_o.i;
+        inst := bus_in.i;
       else
         inst := r.inst_buf;
       end if;
 
       memory_access(r.e, alu_o, v_ma);
       memory_wait(r.ma, v_mw);
-      write_back(r.mw, mem_o.d, unsigned(fadd_o), unsigned(fmul_o), v_wd);
+      write_back(r.mw, bus_in.m.d, unsigned(fadd_o), unsigned(fmul_o), v_wd);
 
       execute(r.d, v_ma.wd, v_mw.wd, v_wd, v_e, data_hazard);
       decode(inst, r.pc, r.gpreg, r.fpreg, v_e.wd, v_ma.wd, v_mw.wd, v_wd, v_d);
 
-      mem_stall := mem_o.stall;
+      mem_stall := bus_in.m.stall;
       control_hazard := r.e.branching;
 
       if mem_stall = '0' then
@@ -103,7 +103,7 @@ begin
           else -- data_hazard = '1'
             r.state <= "01";
             if r.state = "00" then
-              r.inst_buf <= mem_o.i;
+              r.inst_buf <= bus_in.i;
             end if;
           end if;
         else -- control_hazard = '1'
@@ -141,9 +141,9 @@ begin
       else -- mem_stall = '1'
         r.state <= "11";
         if r.state = "00" then
-          r.inst_buf <= mem_o.i;
+          r.inst_buf <= bus_in.i;
         end if;
-        r.ma.mem <= default_mem;
+        r.ma.m <= default_memory_request;
       end if;
 
     end if;
