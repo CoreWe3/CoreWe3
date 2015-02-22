@@ -219,7 +219,7 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 # Clock constraints                                                        #
 ############################################################################
 NET "MCLK1" TNM_NET = MCLK1;
-TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 7.25 ns HIGH 50%;
+TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;
 
 ###############################################################################
 # Define multicycle paths - these paths may take longer because additional

@@ -43,7 +43,7 @@ architecture CoreTestBench_arch of CoreTestBench is
   component InputSimulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      INPUT_FILE : string := "fib_loop");
+      INPUT_FILE : string := "loopback");
     port (
       clk  : in  std_logic;
       RS_RX   : out std_logic);
@@ -58,16 +58,19 @@ architecture CoreTestBench_arch of CoreTestBench is
       RS_TX : std_logic);
   end component;
 
-  signal clk   : std_logic := '0';
+  signal extclk   : std_logic;
+  signal clk : std_logic_vector(1 downto 0);
   signal RS_TX : std_logic;
   signal RS_RX : std_logic;
   signal ZD    : std_logic_vector(31 downto 0);
   signal ZA    : std_logic_vector(19 downto 0);
   signal XWA   : std_logic;
+
+  signal tb_d : std_logic_vector(31 downto 0);
 begin
 
   core_unit : Core port map (
-    MCLK1  => clk  ,
+    MCLK1  => extclk  ,
     RS_TX  => RS_TX,
     RS_RX  => RS_RX,
     ZD     => ZD   ,
@@ -79,31 +82,31 @@ begin
     XGA    => open ,
     XWA    => XWA  ,
     XZCKE  => open ,
-    ZCLKMA => open ,
+    ZCLKMA => clk ,
     ADVA   => open ,
     XFT    => open ,
     XLBO   => open ,
     ZZA    => open );
 
   sram_unit : SRAM port map (
-    clk => clk,
+    clk => clk(0),
     ZD  => ZD ,
     ZA  => ZA ,
     XWA => XWA);
 
   input_unit : InputSimulator port map (
-    clk => clk,
+    clk => clk(0),
     RS_RX => RS_RX);
 
   output_unit : OutputSimulator port map (
-    clk => clk,
+    clk => clk(0),
     RS_TX => RS_TX);
 
   process
   begin
-    clk <= '0';
+    extclk <= '1';
     wait for 1 ns;
-    clk <= '1';
+    extclk <= '0';
     wait for 1 ns;
   end process;
 

@@ -4,19 +4,19 @@ use ieee.numeric_std.all;
 use ieee.std_logic_textio.all;
 use std.textio.all;
 
-entity BlockRAM is
-  generic (file_name : string := "init.txt");
+library work;
+use work.Util.all;
+
+entity CodeSegmentRAM is
+  generic (
+    file_name : string := "code");
   port (
     clk : in std_logic;
-    di : in std_logic_vector(31 downto 0);
-    do1 : out std_logic_vector(31 downto 0);
-    do2 : out std_logic_vector(31 downto 0);
-    ad1 : in unsigned(11 downto 0);
-    ad2 : in unsigned(11 downto 0);
-    we : in std_logic);
-end BlockRAM;
+    mem_i : in mem_in_t;
+    mem_o : out mem_out_t);
+end CodeSegmentRAM;
 
-architecture BlockRAM_arch of BlockRAM is
+architecture CodeSegmentRAM_arch of CodeSegmentRAM is
 
   type ram_t is array (0 to (2**12)-1) of bit_vector(31 downto 0);
 
@@ -40,12 +40,17 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if we = '1' then
-        RAM(to_integer(ad1)) <= to_bitvector(di);
+      if mem_i.m.go = '1' and mem_i.m.a(19 downto 12) = x"FF" then
+        if mem_i.m.we = '1' then
+          RAM(to_integer(mem_i.m.a(11 downto 0))) <=
+            to_bitvector(std_logic_vector(mem_i.m.d));
+        end if;
       end if;
-      do1 <= to_stdLogicVector(RAM(to_integer(ad1)));
-      do2 <= to_stdLogicVector(RAM(to_integer(ad2)));
+      mem_o.d <= unsigned(to_stdLogicVector(RAM(to_integer(mem_i.m.a(11 downto 0)))));
+      mem_o.i <= to_stdLogicVector(RAM(to_integer(mem_i.pc)));
     end if;
   end process;
 
-end BlockRAM_arch;
+  mem_o.stall <= '0';
+
+end CodeSegmentRAM_arch;

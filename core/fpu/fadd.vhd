@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 entity fadd is
   port (
     clk : in  std_logic;
+    stall : in std_logic;
     a   : in  std_logic_vector(31 downto 0);
     b   : in  std_logic_vector(31 downto 0);
     o : out std_logic_vector(31 downto 0));
@@ -54,7 +55,7 @@ begin
     variable frac : unsigned(22 downto 0);
     variable exp : unsigned(7 downto 0);
   begin
-    if rising_edge(clk) then
+    if rising_edge(clk) and stall = '0' then
       -- stage1
       calc <= a(31) xor b(31);
       if unsigned(a(30 downto 0)) > unsigned(b(30 downto 0)) then
