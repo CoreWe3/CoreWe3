@@ -51,8 +51,13 @@ architecture MemoryMappedIO_arch of MemoryMappedIO is
       tx   : out STD_LOGIC);
   end component;
 
-  signal stall : std_logic := '0';
-  signal buf : memory_request_t := default_memory_request;
+  type mmio_t is record
+    state : unsigned(2 downto 0) := '0';
+    buf : memory_request_t;
+    data: std_logic_vector(31 downto 0);
+  end record;
+
+  signal r : mmio_t := ("000", default_memory_request, (others => '-'));
 
   signal rcomplete : std_logic;
   signal rdo : std_logic_vector(7 downto 0);

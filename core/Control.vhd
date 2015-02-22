@@ -185,10 +185,17 @@ architecture Control_arch of Control is
         d.dest := unsigned(i(25 downto 21));
         d.d1 := ra; -- ISA should rb
         d.imm := resize(unsigned(i(15 downto 0)), 32);
-      when F_ADD | F_MUL =>
+      when F_ADD | F_SUB | F_MUL =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := fb;
         d.d2 := fc;
+      when F_ABS =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := fb;
+      when FLDI =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := fb;
+        d.imm := resize(unsigned(i(15 downto 0)), 32);
       when J =>
         d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
       when JEQ | JLE | JLT =>
@@ -220,6 +227,7 @@ architecture Control_arch of Control is
     e.pc := d.pc;
     e.op := d.op;
     e.wd.a := d.dest;
+    hazard := '0';
     case d.op is
       when LD =>
         e.alu := (d1.d, d.imm, "00");
@@ -256,12 +264,26 @@ architecture Control_arch of Control is
         hazard := d1.h;
       when F_ADD | F_MUL =>
         e.fpu := (d1.d, d2.d);
+        e.wd.f := '1';
         hazard := d1.h or d2.h;
+      when F_SUB =>
+        e.fpu := ((not d1.d(31)) & d1.d(30 downto 0), d2.d);
+        e.wd.f := '1';
+        hazard := d1.h or d2.h;
+      when F_ABS =>
+        e.wd.d := '0' & d1.d(30 downto 0);
+        e.wd.f := '1';
+        e.wd.r := '1';
+        hazard := d1.h;
+      when FLDI =>
+        e.wd.d := d.imm(15 downto 0) & d.d1(31 downto 16);
+        e.wd.f := '1';
+        e.wd.r := '1';
+        hazard := d1.h;
       when J =>
         e.alu := (resize(d.pc, 32), d.imm, "00");
         e.branching := '1';
         e.wd.r := '1';
-        hazard := '0';
       when JEQ =>
         e.alu := (resize(d.pc, 32), d.imm, "00");
         if d1.d = 0 then
@@ -294,7 +316,6 @@ architecture Control_arch of Control is
         e.branching := '1';
         e.wd.d := resize(d.pc, 32);
         e.wd.r := '1';
-        hazard := '0';
       when RET =>
         e.alu := (d1.d, x"00000001", "00");
         e.branching := '1';
@@ -320,11 +341,6 @@ architecture Control_arch of Control is
       when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
         ma.wd.d := alu;
         ma.wd.r := '1';
-      when LDIH =>
-      when F_ADD | F_MUL =>
-      when J | JEQ | JLE | JLT =>
-      when JSUB =>
-      when RET =>
       when others =>
     end case;
   end memory_access;
@@ -349,8 +365,10 @@ architecture Control_arch of Control is
       when LD =>
         w.d := mem;
         w.r := '1';
-      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI | LDIH | JSUB =>
       when F_ADD =>
+        w.d := fadd_o;
+        w.r := '1';
+      when F_SUB =>
         w.d := fadd_o;
         w.r := '1';
       when F_MUL =>
