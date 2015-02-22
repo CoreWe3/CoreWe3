@@ -207,17 +207,6 @@ int main(int argc, char* argv[]){
 				pc+=1;
 				break;
 
-				// 1 freg, 1 imm
-			case FLDIL:
-				freg[fm.L.ra].u = (fm.L.cx & 0xffff) + (freg[fm.L.ra].u & 0xffff0000);
-				pc+=1;
-				break;
-
-			case FLDIH:
-				freg[fm.L.ra].u = (fm.L.cx << 16);
-				pc+=1;
-				break;
-
 				// 1 freg, 1 greg
 			case ITOF:
 				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
@@ -340,6 +329,12 @@ int main(int argc, char* argv[]){
 						ram[address] = greg[fm.L.ra].r;
 					}
 				}
+				pc+=1;
+				break;
+
+				// 2 freg, 1 imm
+			case FLDI:
+				freg[fm.L.ra].u = (fm.L.cx << 16) + (freg[fm.L.rb].u >> 16);
 				pc+=1;
 				break;
 

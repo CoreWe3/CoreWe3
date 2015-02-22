@@ -240,8 +240,6 @@ int main(int argc, char* argv[]){
 
 				// 1 reg, 1 imm
 			case LDIH:
-			case FLDIL:
-			case FLDIH:
 				{
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
@@ -283,6 +281,7 @@ int main(int argc, char* argv[]){
 			case ADDI:
 			case SHLI:
 			case SHRI:
+			case FLDI:
 				{
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
@@ -331,14 +330,16 @@ int main(int argc, char* argv[]){
 				break;
 
 			case VFLDI:
-				fm.L.op = ISA::name2isa("FLDIH");
+				fm.L.op = ISA::name2isa("FLDI");
 				fm.L.ra = ISA::name2reg(el[1]);
+				fm.L.rb = ISA::name2reg("f0");
 				fm.L.cx = getlabelvalue(el[2], line) & 0xffff;
 				results.push_back(fm.data);
 				line++;
 				fm.data = 0;
-				fm.L.op = ISA::name2isa("FLDIL");
+				fm.L.op = ISA::name2isa("FLDI");
 				fm.L.ra = ISA::name2reg(el[1]);
+				fm.L.rb = ISA::name2reg(el[1]);
 				fm.L.cx = getlabelvalue(el[2], line) >> 16;
 				results.push_back(fm.data);
 				line++;
