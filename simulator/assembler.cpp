@@ -24,7 +24,12 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 		}
 		return (unsigned int)(labels[str] - (int)line);
 	}else{
-		return (unsigned int)stoul(str, nullptr, 0);
+		try{
+			return (unsigned int)stoul(str, nullptr, 0);
+		}catch(...){
+			cerr << "Invalid Argument :" << str << endl;
+			exit(1);
+		}
 	}
 }
 
