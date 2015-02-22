@@ -140,8 +140,16 @@ int main(int argc, char* argv[]){
 
 	while(pc < instructions.size()){
 		if(pc == breakpoint){
-			cerr << "Break Point." << endl;
-			goto END_MAIN;
+			//Print Reg
+			cerr << "== counter : " << counter << endl;
+			for(int i=0;i<greg.size();i++){
+				cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
+			}
+			cerr << endl;
+			for(int i=0;i<freg.size();i++){
+				cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
+			}
+			cerr << endl;
 		}
 		if(counter == limit){
 			cerr << "Stop by Instruction Limit." << endl;
@@ -324,9 +332,9 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
-						output->write((char*)&(greg[fm.L.ra].r), sizeof(uint32_t));
+						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
-						ram[address] = greg[fm.L.ra].r;
+						ram[address] = freg[fm.L.ra].r;
 					}
 				}
 				pc+=1;
@@ -385,6 +393,7 @@ int main(int argc, char* argv[]){
 				exit(1);
 		}
 		greg[0].r = 0;
+		freg[0].f = 0;
 		counter++;
 	}
 
@@ -426,7 +435,7 @@ END_MAIN:
 	}
 	cerr << endl;
 	for(int i=0;i<freg.size();i++){
-		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << greg[i].f << ")" <<  " ";
+		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
 	}
 	cerr << endl;
 	for(auto el : profile){
