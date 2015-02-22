@@ -1,523 +1,446 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+using namespace std;
+
 #include <getopt.h>
-#include <limits.h>
-#include <math.h>
+#include "isa_class.h"
 #include "isa.h"
+#include "fpu.h"
 
-void ld(unsigned int ra, unsigned int rb, unsigned int cx);
-void st(unsigned int ra, unsigned int rb, unsigned int cx);
-void lda(unsigned int ra,unsigned int cx);
-void sta(unsigned int ra, unsigned int cx);
-void ldih(unsigned int ra, unsigned int cx);
-void ldil(unsigned int ra, unsigned int cx);
-void add(unsigned int ra, unsigned int rb, unsigned int rc);
-void sub(unsigned int ra, unsigned int rb, unsigned int rc);
-void fneg(unsigned int ra, unsigned int rb);
-void addi(unsigned int ra, unsigned int rb, unsigned int cx);
-void _and(unsigned int ra, unsigned int rb, unsigned int rc);
-void _or(unsigned int ra, unsigned int rb, unsigned int rc);
-void _xor(unsigned int ra, unsigned int rb, unsigned int rc);
-void shl(unsigned int ra, unsigned int rb, unsigned int rc);
-void shr(unsigned int ra, unsigned int rb, unsigned int rc);
-void shli(unsigned int ra, unsigned int rb, unsigned int cx);
-void shri(unsigned int ra, unsigned int rb, unsigned int cx);
-void beq(unsigned int ra, unsigned int rb, unsigned int cx);
-void ble(unsigned int ra, unsigned int rb, unsigned int cx);
-void blt(unsigned int ra, unsigned int rb, unsigned int cx);
-void bfle(unsigned int ra, unsigned int rb, unsigned int cxZ);
-void jsub(unsigned int cx);
-/* void fx86(unsigned int cx); */
-void ret();
-void push(unsigned int ra);
-void pop(unsigned int ra);
-void fadd(unsigned int ra, unsigned int rb, unsigned int rc);
-void fmul(unsigned int ra, unsigned int rb, unsigned int rc);
-
-const char* op2name(unsigned int op);
-const char* reg2name(unsigned int reg);
-
-FILE* iofpr = NULL;
-FILE* iofpw = NULL;
-FILE* ramout = NULL;
-
-//Debugger
-unsigned long long d_insnum = 0;
-unsigned int counter[ISANUM] = {0};
-
-void debuginfo(){
-
-	printf("pc:%d, sp:%x\n", pc, sp);
-
-	for(int i = 0; i < REGNUM; i++){
-		printf("%s:%d (0x%x), ", reg2name(i), reg[i].d, reg[i].u);
-	}
-	printf("\n");
-	for(int i = 0; i < ISANUM; i++){
-		printf("%s:%u, ", names[i], counter[i]);
-	}
-	printf("\nNumber of Instruction : %lld\n",d_insnum);
-	
-	//Dump RAM
-	if(ramout!=NULL){
-		for(unsigned int i = 0; i < RAMSIZE; i++){
-			if(fwrite(&ram[i],sizeof(unsigned int),1,ramout) <= 0){
-				printf("File Write Error\n");
-				debuginfo();
-				exit(1);
-			}
-		}
-		fclose(ramout);
-	}
+string int2hexstring(unsigned int i){
+	stringstream stream;
+	stream << hex << i;
+	return stream.str();
 }
 
-void initram(char* filename){
-	FILE *fp = fopen(filename, "rb");
-	int tmp;
-	for(int i = 0; i < RAMSIZE; i++){
-		if(fread(&tmp,sizeof(int),1,fp) > 0){
-			ram[i] = tmp;
-		}
-	}
-	fclose(fp);
-}
+int main(int argc, char* argv[]){
 
-
-int main(int argc, char* argv[])
-{
-	FILE *fpr;
-	unsigned long long limit = ULLONG_MAX;
-	unsigned long long breakpoint = ULLONG_MAX;
+	//Option Handler
 	char result;
-	
-	for(int i=0; i< REGNUM; i++){
-		reg[i].u = 0;
-	}
-
-
-	while((result=getopt(argc,argv,"i:o:l:b:r:s:"))!=-1){
+	long long int breakpoint = -1;
+	long long int limit = -1;
+	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
+	bool branchprofile_flag = false;
+	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
-			case 'i':
-				iofpr = fopen(optarg,"rb");
-				if (iofpr == NULL){
-					printf("Can't open %s\n",optarg);
-					return 1;
-				}
+			case 'f': // Input Binary File
+				filename = optarg;
 				break;
-			case 'o':
-				iofpw = fopen(optarg,"wb");
-				if (iofpw == NULL){
-					printf("Can't open %s\n",optarg);
-					return 1;
-				}
+			case 'o': // IO-Output
+				io_outputfilename = optarg;
 				break;
-			case 'r':
-				ramout = fopen(optarg,"wb");
-				if (ramout == NULL){
-					printf("Can't open %s\n",optarg);
-					return 1;
-				}
+			case 'i': // IO-Input
+				io_inputfilename = optarg;
 				break;
-			case 's':
-				initram(optarg);
+			case 'r': // RAM input
+				ramfilename = optarg;
 				break;
-			case 'l':
-				limit = atoi(optarg);
+			case 'd': // RAM dump
+				outputramfilename = optarg;
 				break;
-			case 'b':
-				breakpoint = atoi(optarg);
+			case 'l': // Instruction Limit
+				limit = stoul(optarg, nullptr, 0);
+				break;
+			case 'b': // Break Point
+				breakpoint = stoul(optarg, nullptr, 0);
+				break;
+			case 'p': // Make Profile
+				branchprofile_flag = true;
 				break;
 			case ':':
-				fprintf(stdout,"%c needs value\n",result);
+				cerr << result << " needs value" << endl;
 				return 1;
 			case '?':
-				fprintf(stdout,"unknown\n");
+				cerr << "unknown option" << endl;
 				return 1;
 		}
 	}
 
-	if(optind < argc){
-		fpr = fopen(argv[optind++],"rb");
-		if (fpr == NULL){
-			printf("Can't open %s\n",optarg);
+	//Read Binary File
+	ifstream fin;
+	if(filename != nullptr){
+		fin.open(filename, ios::in|ios::binary);
+		if(fin.fail()){
+			cerr << "Can't open file" << endl;
 			return 1;
 		}
 	}else{
-		return 1;
+		cerr << "No input file." << endl;
+	}
+	vector<uint32_t> instructions;
+	uint32_t tmp;
+	while(fin.read(reinterpret_cast<char*>(&tmp),sizeof(tmp))){
+		instructions.push_back(tmp);
 	}
 
-	if(fpr == NULL){
-		printf("No Assembly File\n");
-		return 0;
+	//Initilaize Branch Profile
+	vector<int> branchprofile(instructions.size());
+
+	//Initilaize RAM
+	vector<uint32_t> ram(RAMSIZE);
+	if(ramfilename != nullptr){
+		fin.open(filename, ios::in|ios::binary);
+		if(fin.fail()){
+			cerr << "Can't open file" << endl;
+			return 1;
+		}
+		int c = 0;
+		while(fin.read(reinterpret_cast<char*>(&tmp),sizeof(tmp)) && c < RAMSIZE){
+			ram[c] = tmp;
+			c++;
+		}
+	}else{
+		cerr << "RAM is initilaized with zero." << endl;
 	}
 
-
-	//READ INSTRUCTIONS
-	unsigned int tmp;
-	unsigned int num = 0;
-	while(fread(&tmp,sizeof(unsigned int),1,fpr) > 0){
-		rom[num] = tmp;
-		num++;
+	//Initilaize IO
+	istream *input;
+	ifstream fileinput;
+	if(io_inputfilename != nullptr){
+		fileinput.open(io_inputfilename, ios::binary);
+		if(fileinput.fail()){
+			cerr << "Can't open file : " << io_inputfilename << endl;
+			return 1;
+		}
+		input = &fileinput;
+	}else{
+		cerr << "IO input from stdin." << endl;
+		input = &cin;
 	}
-	fclose(fpr);
 
-	//MAIN ROUTINE
-	INS ins;
-
-
-	bool flag = true;
-
-	while(flag){
-		if(pc >= num){
-			printf("The program successfully done.\n");
-			break;
+	ostream *output;
+	ofstream fileoutput;
+	if(io_outputfilename != nullptr){
+		fileoutput.open(io_outputfilename, ios::binary);
+		if(fileoutput.fail()){
+			cerr << "Can't open file : " << io_outputfilename << endl;
+			return 1;
 		}
-		if(d_insnum >= limit){
-			printf("The program reached limit instruction process : %lld\n", limit);
-			break;
+		output = &fileoutput;
+	}else{
+		cerr << "IO output to stdout." << endl;
+		output = &cout;
+	}
+
+	//Initilaize REG and PC
+	vector<REG> greg(GREGNAMES.size());
+	vector<REG> freg(FREGNAMES.size());
+	unsigned int pc=0;
+
+
+	//Main
+	unsigned long counter = 0;
+	map<string,unsigned long> profile;
+	for(auto el : INAMES){
+		profile[el.first] = 0;
+	}
+
+	while(pc < instructions.size()){
+		if(pc == breakpoint){
+			//Print Reg
+			cerr << "== counter : " << counter << endl;
+			for(int i=0;i<greg.size();i++){
+				cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
+			}
+			cerr << endl;
+			for(int i=0;i<freg.size();i++){
+				cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
+			}
+			cerr << endl;
 		}
-		if(breakpoint == pc){
-			printf("The program reached break point. : %d\n", pc);
-			break;
+		if(counter == limit){
+			cerr << "Stop by Instruction Limit." << endl;
+			goto END_MAIN;
 		}
-		
-		ins.data = rom[pc];
-		pcflag = 1;
-		counter[ins.A.op]++;
-		switch(ins.A.op){
-			case LD:
-				ld(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case ST:
-				st(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case LDA:
-				lda(ins.X.ra,ins.X.cx);
-				break;
-			case STA:
-				sta(ins.X.ra,ins.X.cx);
-				break;
-			case LDIH:
-				ldih(ins.X.ra, ins.X.cx);
-				break;
-			case LDIL:
-				ldil(ins.X.ra, ins.X.cx);
-				break;
-			case ADD:
-				add(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case SUB:
-				sub(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case FNEG:
-				fneg(ins.A.ra,ins.A.rb);
-				break;
-			case ADDI:
-				addi(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case AND:
-				_and(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case OR:
-				_or(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case XOR:
-				_xor(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case SHL:
-				shl(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case SHR:
-				shr(ins.A.ra,ins.A.rb,ins.A.rc);
-				break;
-			case SHLI:
-				shli(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case SHRI:
-				shri(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case BEQ:
-				if(ins.L.cx == 0){
-					printf("Detect Halt\n");
-					goto HALT;
-					flag = false;
-				}
-				beq(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case BLE:
-				ble(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case BLT:
-				blt(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case BFLE:
-				bfle(ins.L.ra,ins.L.rb,ins.L.cx);
-				break;
-			case JSUB:
-				jsub(ins.J.cx);
-				break;
+
+		FORMAT fm;
+		fm.data = instructions[pc];
+		profile[ISA::isa2name(fm.J.op)]++;
+		switch(fm.J.op){
+			// no regs and imm
 			case RET:
-				ret();
+				pc = greg[31].u;
 				break;
-			case PUSH:
-				push(ins.A.ra);
+
+				// 1 imm
+			case J:
+				if(fm.J.cx==0){
+					cerr << "Detect Halt." << endl;
+					goto END_MAIN;
+				}
+				pc += fm.J.cx;
 				break;
-			case POP:
-				pop(ins.A.ra);
+
+			case JEQ:
+				if(greg[30].d == 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
 				break;
-			/* case FX86: */
-			/* 	fx86(ins.J.cx); */
-			/* 	break; */
+
+			case JLE:
+				if(greg[30].d <= 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
+				break;
+
+			case JLT:
+				if(greg[30].d < 0){
+					branchprofile[pc]+=1;
+					pc += fm.J.cx;
+				}else{
+					branchprofile[pc]-=1;
+					pc += 1;
+				}
+				break;
+
+			case JSUB:
+				greg[31].u = pc + 1;
+				pc += fm.J.cx;
+				break;
+
+				// 1 greg, 1 imm
+			case LDIH:
+				greg[fm.L.ra].u = (fm.L.cx << 16) + (greg[fm.L.ra].u & 0xffff);
+				pc+=1;
+				break;
+
+				// 1 freg, 1 greg
+			case ITOF:
+				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
+				pc+=1;
+				break;
+
+				// 1 greg, 1 freg
+			case FTOI:
+				greg[fm.L.ra].r = FPU::ftoi(freg[fm.L.rb].r);
+				pc+=1;
+				break;
+
+				// 2 freg
+			case FSQRT:
+				freg[fm.A.ra].r = FPU::fsqrt(freg[fm.A.rb].r);
+				pc+=1;
+				break;
+
+			case FABS:
+				freg[fm.A.ra].r = FPU::fabs(freg[fm.A.rb].r);
+				pc+=1;
+				break;
+
+			case FCMP:
+				greg[30].d = FPU::fcmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				pc+=1;
+				break;
+
+				// 2 gregs, 1 imm
+			case LD:
+				{
+					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
+					if (address >= RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
+						{
+							cerr << "No input any longer" << endl;
+							goto END_MAIN;
+						}
+						else
+							input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
+					}
+					else greg[fm.L.ra].r = ram[address];
+				}
+				pc+=1;
+				break;
+
+			case ST:
+				{
+					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
+					if (address>=RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
+						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
+					}else{
+						ram[address] = greg[fm.L.ra].r;
+					}
+				}
+				pc+=1;
+				break;
+
+			case ADDI:
+				greg[fm.L.ra].u = greg[fm.L.rb].u + fm.L.cx;
+				pc+=1;
+				break;
+
+			case SHLI:
+				greg[fm.L.ra].u = greg[fm.L.rb].u << fm.L.cx;
+				pc+=1;
+				break;
+
+			case SHRI:
+				greg[fm.L.ra].u = greg[fm.L.rb].u >> fm.L.cx;
+				pc+=1;
+				break;
+
+				// 1 freg, 1greg, 1 imm
+			case FLD:
+				{
+					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
+					if (address>=RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR)
+					{
+						if (input->eof())
+						{
+							cerr << "No input any longer" << endl;
+							goto END_MAIN;
+						}
+						else
+							input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
+					}
+					else freg[fm.L.ra].r = ram[address];
+				}
+				pc+=1;
+				break;
+
+			case FST:
+				{
+					unsigned int address = (greg[fm.L.rb].d + fm.L.cx) & IOADDR;
+					if (address>=RAMSIZE)
+					{
+						cerr << "Invalid Address : 0x" << hex << address << endl;
+						goto END_MAIN;
+					}
+					if (address == IOADDR){
+						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
+					}else{
+						ram[address] = freg[fm.L.ra].r;
+					}
+				}
+				pc+=1;
+				break;
+
+				// 2 freg, 1 imm
+			case FLDI:
+				freg[fm.L.ra].u = (fm.L.cx << 16) + (freg[fm.L.rb].u >> 16);
+				pc+=1;
+				break;
+
+				// 3 gregs
+			case ADD:
+				greg[fm.A.ra].u = greg[fm.A.rb].u + greg[fm.A.rc].u;
+				pc+=1;
+				break;
+
+			case SUB:
+				greg[fm.A.ra].u = greg[fm.A.rb].u - greg[fm.A.rc].u;
+				pc+=1;
+				break;
+
+			case SHL:
+				greg[fm.A.ra].u = greg[fm.A.rb].u << greg[fm.A.rc].u;
+				pc+=1;
+				break;
+
+			case SHR:
+				greg[fm.A.ra].u = greg[fm.A.rb].u >> greg[fm.A.rc].u;
+				pc+=1;
+				break;
+
+				// 3 fregs
 			case FADD:
-				fadd(ins.A.ra,ins.A.rb,ins.A.rc);
+				freg[fm.A.ra].r = FPU::fadd(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				pc+=1;
 				break;
+
+			case FSUB:
+				freg[fm.A.ra].r = FPU::fsub(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				pc+=1;
+				break;
+
 			case FMUL:
-				fmul(ins.A.ra,ins.A.rb,ins.A.rc);
+				freg[fm.A.ra].r = FPU::fmul(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				pc+=1;
 				break;
+
+			case FDIV:
+				freg[fm.A.ra].r = FPU::fdiv(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				pc+=1;
+				break;
+
 			default:
-				printf("no such instruction \"%d\" : PC = %d\n",ins.A.op,pc);
-				flag = false;
+				cerr << "Error!" << endl;
+				exit(1);
 		}
-		reg[0].u = 0;
-		pc+=pcflag;
-		d_insnum++;
+		greg[0].r = 0;
+		freg[0].f = 0;
+		counter++;
 	}
- HALT:
 
-	if(iofpr!=NULL) fclose(iofpr);
-	if(iofpw!=NULL) fclose(iofpw);
-	
-	debuginfo();
+END_MAIN:
 
 
+	//Dump RAM
+	ofstream fout;
+	if(outputramfilename != nullptr){
+		fout.open(outputramfilename, ios::binary);
+		if(fout.fail()){
+			cerr << "Can't open file : " << outputramfilename << endl;
+			return 1;
+		}
+		for(auto x : ram){
+			fout.write((char *)&x,sizeof(x));
+		}
+	}
+
+	ofstream fout2;
+	if(branchprofile_flag){
+		fout2.open("branch.profile", ios::binary);
+		if(fout2.fail()){
+			cerr << "Can't open file : " << "branch.profile" << endl;
+			return 1;
+		}
+		for(auto x : branchprofile){
+			fout2.write((char *)&x,sizeof(x));
+		}
+	}
+
+
+	cerr << "Program Counter = " << pc << endl;
+	cerr << "Instructions = " << counter << endl;
+
+	//Print Reg
+	for(int i=0;i<greg.size();i++){
+		cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
+	}
+	cerr << endl;
+	for(int i=0;i<freg.size();i++){
+		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
+	}
+	cerr << endl;
+	for(auto el : profile){
+		cerr << el.first << ":" << el.second << " ";
+	}
+	cerr << endl;
 	return 0;
 }
-
-const char* op2name(unsigned int op){
-	return names[op];
-}
-const char* reg2name(unsigned int reg){
-	return rnames[reg];
-}
-
-void ld(unsigned int ra, unsigned int rb, unsigned int cx){
-	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
-	if(tmp != IOADDR ){
-		reg[ra].u = ram[tmp];
-	}else{
-		if(iofpr == NULL){
-			printf("WARN: NO INPUT FILE\n");
-			reg[ra].u = 0;
-			return;
-		}
-		unsigned char iotmp;
-		if(fread(&iotmp,sizeof(unsigned char),1,iofpr) > 0){
-			reg[ra].u = iotmp;
-		}else{
-			printf("File Read Error\n");
-			debuginfo();
-			exit(1);
-		}
-	}
-}
-void st(unsigned int ra, unsigned int rb, unsigned int cx){
-	unsigned int tmp = (reg[rb].d + cx) & 0xFFFFF;
-	if(tmp != IOADDR ){
-		ram[tmp] = reg[ra].u;
-	}else{
-		unsigned char iotmp = reg[ra].u & 0xFF;
-		if(iofpw!=NULL && fwrite(&iotmp,sizeof(unsigned char),1,iofpw) <= 0){
-			printf("File Write Error\n");
-			debuginfo();
-			exit(1);
-		}
-	}
-}
-void lda(unsigned int ra, unsigned int cx){
-	unsigned int tmp = cx & 0xFFFFF;
-	if(tmp != IOADDR ){
-		reg[ra].u = ram[tmp];
-	}else{
-		if(iofpr == NULL){
-			printf("WARN: NO INPUT FILE\n");
-			reg[ra].u = 0;
-			return;
-		}
-		unsigned char iotmp;
-		if(fread(&iotmp,sizeof(unsigned char),1,iofpr) > 0){
-			reg[ra].u = iotmp;
-		}else{
-			printf("File Read Error\n");
-			debuginfo();
-			exit(1);
-		}
-	}
-}
-void sta(unsigned int ra, unsigned int cx){
-	unsigned int tmp = cx & 0xFFFFF;
-	if(tmp != IOADDR ){
-		ram[tmp] = reg[ra].u;
-	}else{
-		unsigned char iotmp = reg[ra].u & 0xFF;
-		if(iofpw!=NULL && fwrite(&iotmp,sizeof(unsigned char),1,iofpw) <= 0){
-			printf("File Write Error\n");
-			debuginfo();
-			exit(1);
-		}
-	}
-}
-void ldih(unsigned int ra, unsigned int cx){
-	reg[ra].u = (cx << 16) + (reg[ra].u & 0xFFFF);
-}
-void ldil(unsigned int ra, unsigned int cx){
-	reg[ra].u = cx ;
-}
-void add(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].d = reg[rb].d + reg[rc].d;
-}
-void sub(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].d = reg[rb].d - reg[rc].d;
-}
-void fneg(unsigned int ra, unsigned int rb){
-	reg[ra].f = -reg[rb].f;
-}
-void addi(unsigned int ra, unsigned int rb, unsigned int cx){
-	reg[ra].d = reg[rb].d + cx;
-}
-void _and(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].u = reg[rb].u & reg[rc].u;
-}
-void _or(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].u = reg[rb].u | reg[rc].u;
-}
-void _xor(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].u = reg[rb].u ^ reg[rc].u;
-}
-void shl(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 32 ){
-		reg[ra].u = reg[rb].u << reg[rc].u;
-	}else{
-		reg[ra].u = 0;
-	}
-}
-void shr(unsigned int ra, unsigned int rb, unsigned int rc){
-	if ( reg[rc].u < 32 ){
-		reg[ra].u = reg[rb].u >> reg[rc].u;
-	}else{
-		reg[ra].u = 0;
-	}
-}
-void shli(unsigned int ra, unsigned int rb, unsigned int cx){
-	if ( cx < 32 ){
-		reg[ra].u = reg[rb].u << cx;
-	}else{
-		reg[ra].u = 0;
-	}
-}
-void shri(unsigned int ra, unsigned int rb, unsigned int cx){
-	if ( cx < 32 ){
-		reg[ra].u = reg[rb].u >> cx;
-	}else{
-		reg[ra].u = 0;
-	}
-}
-void beq(unsigned int ra, unsigned int rb, unsigned int cx){
-	if(reg[ra].d == reg[rb].d){ 
-		pc = pc + cx;
-		pcflag = 0;
-	}
-}
-void ble(unsigned int ra, unsigned int rb, unsigned int cx){
-	if(reg[ra].d <= reg[rb].d){
-		pc = pc + cx;
-		pcflag = 0;
-	}
-}
-void blt(unsigned int ra, unsigned int rb, unsigned int cx){
-	if(reg[ra].d < reg[rb].d){
-		pc = pc + cx;
-		pcflag = 0;
-	}
-}
-void bfle(unsigned int ra, unsigned int rb, unsigned int cx){
-	if(reg[ra].f <= reg[rb].f){
-		pc = pc + cx;
-		pcflag = 0;
-	}
-}
-void jsub(unsigned int cx){
-	sp--;
-	ram[sp] = pc + 1;
-	pc = pc + cx;
-	pcflag = 0;
-}
-void ret(){
-	pc = ram[sp];
-	pcflag = 0;
-	sp++;
-}
-void push(unsigned int ra){
-	sp--;
-	ram[sp] = reg[ra].u;
-	if(sp<STACKLIMIT){
-		printf("Stack Pointer is out of range\n");
-		exit(1);
-	}
-}
-void pop(unsigned int ra){
-	reg[ra].u = ram[sp];
-	sp++;
-	if(sp>=RAMSIZE){
-		printf("Stack Pointer is out of range\n");
-		exit(1);
-	}
-}
-/* void fx86(unsigned int cx){ */
-/* 	switch (cx){ */
-/* 	/\*0から順にfadd,fsub,fmul,fdiv,finv,fsqrt,sin,cos,atan,itof,ftoi,floor*\/ */
-/* 		case 0: */
-/* 			reg[3].f=(reg[3].f)+(reg[4].f); */
-/* 			break; */
-/* 		case 1: */
-/* 			reg[3].f=(reg[3].f)-(reg[4].f); */
-/* 			break; */
-/* 		case 2: */
-/* 			reg[3].f=(reg[3].f)*(reg[4].f); */
-/* 			break; */
-/* 		case 3: */
-/* 			reg[3].f=(reg[3].f)/(reg[4].f); */
-/* 			break; */
-/* 		case 4: */
-/* 			reg[3].f=(1)/(reg[3].f); */
-/* 			break; */
-/* 		case 5: */
-/* 			reg[3].f=sqrt(reg[3].f); */
-/* 			break; */
-/* 		case 6: */
-/* 			reg[3].f=sin(reg[3].f); */
-/* 			break; */
-/* 		case 7: */
-/* 			reg[3].f=cos(reg[3].f); */
-/* 			break; */
-/* 		case 8: */
-/* 			reg[3].f=atan(reg[3].f); */
-/* 			break; */
-/* 		case 9: */
-/*       		        reg[3].f=static_cast<float>(static_cast<int>(reg[3].u)); */
-/* 			break; */
-/* 		case 10: */
-/* 			reg[3].u= static_cast<int>(reg[3].f); */
-/* 			break; */
-/* 		case 11: */
-/* 			reg[3].f= floor(reg[3].f); */
-/* 			break; */
-/* 	} */
-/* } */
-void fadd(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].f = reg[rb].f + reg[rc].f;
-}
-void fmul(unsigned int ra, unsigned int rb, unsigned int rc){
-	reg[ra].f = reg[rb].f * reg[rc].f;
-}
-

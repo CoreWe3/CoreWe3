@@ -1,22 +1,28 @@
-:main
-	LDI	r1	10
-	JSUB	:fib
-	STA	r1	0xfffff
-	BEQ	r0	r0	0
-:fib				#fib n
-	BEQ	r1	r0	:base	#if n == 0
-	LDI	r2	1		#r2 = 1
-	BEQ	r1	r2	:base	#if n == 1
-	SUB	r1	r1	r2	#else r1 = n-1
-	SUB	r3	r1	r2	#r3 = n-2
-	PUSH	r3
-	JSUB	:fib			#fib n-1
-	POP	r2
-	PUSH	r1
-	ADDI	r1	r2	0
-	JSUB	:fib			#fib n-2
-	POP	r2
-	ADD	r1	r1	r2
-	RET
+	ldi	r1	0xeefff
+	ldi	r3	10
+	jsub	:fib
+	st	r3	r0	-1
+	j	0
+:fib
+	addi	r1	r1	-4
+	st	r31	r1	0
+	cmpi	r3	0
+	jeq	:base
+	cmpi	r3	1
+	jeq	:base
+	addi	r3	r3	-1
+	st	r3	r1	1
+	jsub	:fib
+	st	r3	r1	2
+	ld	r3	r1	1
+	addi	r3	r3	-1
+	jsub	:fib
+	ld	r4	r1	2
+	add	r3	r3	r4
+	ld	r31	r1	0
+	addi	r1	r1	4
+	ret
 :base
-	RET
+	ld	r31	r1	0
+	addi	r1	r1	4
+	ret
