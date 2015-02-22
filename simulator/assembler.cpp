@@ -104,7 +104,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	//Optimize LDI
+	//Optimize LDI and VFLDI
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0]==':'){
 			it++;
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
-						if (v > 0xfff){
+						if (v > 0x7fff){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
 								vector<string> itmp2 {"LDIH", (*it)[1], to_string(v >> 16)};
@@ -133,6 +133,37 @@ int main(int argc, char* argv[]){
 								instructions.insert(it,itmp1);
 							}else{
 								vector<string> itmp1 {"@ADDI", (*it)[1], "r0", (*it)[2]};
+								instructions.insert(it,itmp1);
+							}
+						}
+						it = instructions.erase(it);
+					}else{
+						it++;
+					}
+				}
+				break;
+			case VFLDI:
+				{
+					if((*it)[2][0]!=':'){
+						unsigned int v = getlabelvalue((*it)[2]);
+						if ((v & 0xffff)!=0){
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"FLDI", (*it)[1], (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}else{
+								vector<string> itmp1 {"@FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
+								vector<string> itmp2 {"@FLDI", (*it)[1], (*it)[1], to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+								instructions.insert(it,itmp2);
+							}
+						}else{
+							if((*it)[0][0]!='@'){
+								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v >> 16)};
+								instructions.insert(it,itmp1);
+							}else{
+								vector<string> itmp1 {"@FLDI", (*it)[1], "f0", to_string(v >> 16)};
 								instructions.insert(it,itmp1);
 							}
 						}
@@ -202,6 +233,7 @@ int main(int argc, char* argv[]){
 			it++;
 		}
 	}
+	
 
 	//Make Assembly
 	list<uint32_t> results;
@@ -244,7 +276,7 @@ int main(int argc, char* argv[]){
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
-					if(v>0xFFF&&v<0xFFFFF000){
+					if(v>0x7FFF&&v<0xFFFF8000){
 						cerr << "overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
@@ -287,7 +319,7 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg(el[1]);
 					fm.L.rb = ISA::name2reg(el[2]);
 					unsigned int v = getlabelvalue(el[3], line);
-					if(v>0xFFF&&v<0xFFFFF000){
+					if(v>0xFFFF){
 						cerr << "overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
@@ -360,7 +392,7 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg("r30");
 					fm.L.rb = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line)*-1;
-					if(v>0xFFF&&v<0xFFFFF000){
+					if(v>0x7FFF&&v<0xFFFF8000){
 						cerr << "overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
