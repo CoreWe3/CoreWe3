@@ -98,7 +98,7 @@ begin
       end if;
 
       if stall = '0' then
-        if vreq.go = '1' and vreq.we = '0' then
+        if vreq.go = '1' then
           if vreq.a = x"FFFFF" then
             r.state <= "01"; -- read io
           elsif vreq.a(19 downto 12) = x"FF" and

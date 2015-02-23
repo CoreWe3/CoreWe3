@@ -3,19 +3,16 @@ TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/fib_loop
+CODE = file/ffib_rec
 
-all: configure code
+all: configure
 
-.PHONY: configure bit all clean code
+.PHONY: configure bit all clean
 
-configure: bit code
-	../file/fpga.sh -i $(CODE) $(TARGET)
+configure: $(CODE) $(TARGET)
+	../file/fpga.sh -h -i $(CODE) $(TARGET)
 
 bit: $(TARGET)
-
-code:
-	cd file && $(MAKE) $(notdir $(CODE))
 
 $(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ) $(BOOTLOADER)
 	./ise_cmd.sh
@@ -24,6 +21,12 @@ $(PRJ): $(SOURCE)
 	echo $(SOURCE) | \
 	awk 'BEGIN {RS = " "} ;\
 	{print "vhdl work " $$0}' > $@
+
+%:%.s
+	cd file && $(MAKE) $(notdir $@)
+%.b:%.s
+	cd file && $(MAKE) $(notdir $@)
+%.o:%.s
 
 clean:
 	rm -rf _ngo/ _xmsgs/ *.xise *.bgn *.drc *.lso *.ncd *.bld *.ngc \

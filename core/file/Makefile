@@ -2,7 +2,7 @@ ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
 SIM = $(ROOT)/simulator/bin/simulator
 
-all: fib_rec.b
+all:
 
 .PHONY: simulator all clean
 
@@ -18,7 +18,7 @@ simulator:
 
 %: %.o simulator input
 	$(SIM) -f $< -o output -i input
-	hexdump output
+	./hex.sh output
 	cat $< eof > $@
 
 %: %.s

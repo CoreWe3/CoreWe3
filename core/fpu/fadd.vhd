@@ -84,28 +84,32 @@ begin
       exp_dif_1 <= exp_dif_0;
 
       -- stage2
-      if calc = '0' then
+      if calc = '0' then -- the same sign (addition)
         frac_1 <= big_frac + sml_frac;
-      else
+      else -- different sign (subtraction)
         frac_1 <= big_frac - sml_frac;
       end if;
       sign_1 <= sign_0;
       exp_1 <= exp_0;
 
       -- stage3
-      if lead_zero > 26 then
+      if lead_zero >= 25 or exp_1+1 < lead_zero then -- underflow
         exp := (others => '0');
-      elsif exp_1 /= 255 then
+      elsif exp_1 /= 255 then -- normal
         exp := exp_1 - lead_zero + 1;
-      else
+      else -- overflow
         exp := exp_1;
       end if;
+
       frac_2 := shift_left(frac_1, to_integer(lead_zero));
       if frac_2(4 downto 3) = "00" or frac_2(4 downto 3) = "10" or
         frac_2(4 downto 0) = "01000" then
         frac := frac_2(26 downto 4);
+      elsif frac_2(26 downto 4) = "111" & x"fffff" then --rounding and carry
+        frac := (others => '0');
+        exp := exp+1;
       else
-        frac := frac_2(26 downto 4) + 1;
+        frac := frac_2(26 downto 4) + 1; -- rounding
       end if;
       o <= std_logic_vector(sign_1 & exp & frac);
     end if;
