@@ -1,10 +1,10 @@
 	ldi	r3	0xff014	; start address
 	ldi	r8	0xffffffff	; eof
 :loop
-	ld	r4	r0	-1
-	ld	r5	r0	-1
-	ld	r6	r0	-1
-	ld	r7	r0	-1
+	ld	r4	r0	0xffff
+	ld	r5	r0	0xffff
+	ld	r6	r0	0xffff
+	ld	r7	r0	0xffff
 	shli	r5	r5	8
 	shli	r6	r6	16
 	shli	r7	r7	24

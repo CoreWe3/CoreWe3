@@ -2,7 +2,7 @@
 
 ## 実装（現在）
 
-パイプラインは6段
+パイプラインは7段
 
 | stages                                              |
 |-----------------------------------------------------|
@@ -11,6 +11,7 @@
 | execute integer and floating point arithmetic       |
 | memory access and execute floating point arithmetic |
 | memory wait and execute floating point arithmetic   |
+| floating point arithmetic                           |
 | write register                                      |
 
 * ストール
@@ -25,6 +26,8 @@
 なっている。pcの実際に指すアドレスはpc+0xff000となる。
 現在、0xff000~0xff013はブートローダが使用し、0xff014以降に実行コードが書き込まれたあと
 そこにジャンプする。
+キャッシュはダイレクトマップ方式で256ワード分キャッシュされている。
+キャッシュミスは読み込み時に2clkのオーバーヘッドがある。
 
 * IO
 
@@ -34,7 +37,7 @@ FLD FSTを用いると、4バイト分入出力する。
 * 実装済み命令
 
 LD ST FLD FST ADD SUB ADDI SHR SHL SHLI SHRI LDIH
-FADD FSUB FMUL FLDI J JEQ JLE JLT JSUB RET
+FADD FSUB FMUL FABS FCMP FLDI J JEQ JLE JLT JSUB RET
 
 ## TODO
 
@@ -43,7 +46,5 @@ FADD FSUB FMUL FLDI J JEQ JLE JLT JSUB RET
 * FPUストール
 
 * 動的分岐予測
-
-* フォワーディングをexecuteステージで？
 
 * パイプライン深化
