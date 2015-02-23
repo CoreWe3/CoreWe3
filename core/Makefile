@@ -34,3 +34,4 @@ clean:
 	*.srp *.twr *.twx *.unroutes *.xpi *.xwbt *.map *.mrp \
 	*.ngm *.csv *.xml *.html *.log xlnx_auto_0_xdb/ dump.xst/ \
 	*_map* *_pad* work/ "file graph"
+	cd file && $(MAKE) clean
