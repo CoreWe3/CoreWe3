@@ -26,7 +26,7 @@ package Util is
   constant F_INV : std_logic_vector(5 downto 0) := "010001";
   constant F_SQRT: std_logic_vector(5 downto 0) := "010010";
   constant F_ABS : std_logic_vector(5 downto 0) := "010011";
-  constant FCMP  : std_logic_vector(5 downto 0) := "010100";
+  constant F_CMP : std_logic_vector(5 downto 0) := "010100";
   constant FLDI  : std_logic_vector(5 downto 0) := "010101";
   constant J     : std_logic_vector(5 downto 0) := "010110";
   constant JEQ   : std_logic_vector(5 downto 0) := "010111";
@@ -181,29 +181,39 @@ package Util is
     op => ADD,
     wd => default_write_data);
 
+  type fpu_wait_t is record
+    op : std_logic_vector(5 downto 0);
+    wd : write_data_t;
+  end record fpu_wait_t;
+
+  constant default_fw : fpu_wait_t := (
+    op => ADD,
+    wd => default_write_data);
+
   type cpu_t is record
-    state : std_logic_vector(1 downto 0);
-    branched : std_logic;
-    pc : unsigned(11 downto 0);
-    inst_buf : std_logic_vector(31 downto 0);
+    state : std_logic_vector(2 downto 0);
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    ibuf : std_logic_vector(31 downto 0);
+    pcbuf : unsigned(ADDR_WIDTH-1 downto 0);
     d : decode_t;
     e : execute_t;
     ma : memory_access_t;
     mw : memory_wait_t;
-    gpreg : regfile_t;
-    fpreg : regfile_t;
+    fw : fpu_wait_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
-    state => "00",
-    branched => '0',
+    state => "000",
     pc => (others => '0'),
-    inst_buf => (others => '-'),
+    ibuf => (others => '-'),
+    pcbuf => (others => '-'),
     d => default_d,
     e => default_e,
     ma => default_ma,
     mw => default_mw,
-    gpreg => init_regfile,
-    fpreg => init_regfile);
+    fw => default_fw);
 
 end package Util;
+
+package body Util is
+end package body;
