@@ -201,7 +201,6 @@ int main(int argc, char* argv[]){
 				}
 			// XXXX x0 rx
 			case LD:
-			case ST:
 			case FTOI:
 			case ADD:
 			case SUB:

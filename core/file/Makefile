@@ -25,7 +25,7 @@ compiler:
 %: %.o simulator
 	touch input
 	$(SIM) -f $< -o output -i input
-	./hex.sh output
+	hd output
 	cat $< eof > $@
 
 %.s:%.ml compiler

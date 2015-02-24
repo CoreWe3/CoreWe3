@@ -19,7 +19,7 @@ architecture MemoryMappedIO_arch of MemoryMappedIO is
 
   component FIFO is
     generic (
-      WIDTH : integer := 8);
+      WIDTH : integer := 2);
     port (
       clk : in std_logic;
       di : in std_logic_vector(7 downto 0);
@@ -111,12 +111,8 @@ begin
     empty => tempty,
     full => tfull);
 
-  reply.d <= unsigned(x"000000" & rdo) when r.state = x"12" else
-             unsigned(rdo & r.data) when r.state = x"38" else
-             (others => '-');
+  reply.d <= unsigned(r.data);
   reply.stall <= '0' when r.state = x"00" else
-                 '0' when r.state = x"12" else
-                 '0' when r.state = x"38" else
                  '1';
 
   main : process(clk)
@@ -128,14 +124,14 @@ begin
       v.rdeq := '0';
       v.tenq := '0';
       v.tdi := (others => '-');
-      if r.state = x"00" or r.state = x"12" or r.state = x"38" then
+      if r.state = x"00" then
         vreq := request;
       else
         vreq := r.buf;
       end if;
 
       case r.state is
-        when x"00" | x"12" | x"38" => -- ready
+        when x"00" => -- ready
           v.state := x"00";
           v.data := (others => '-');
           if vreq.go = '1' and vreq.a = x"FFFFF" then
@@ -144,6 +140,7 @@ begin
                 if tfull = '0' then
                   v.tdi := std_logic_vector(vreq.d(7 downto 0));
                   v.tenq := '1';
+                  v.state := x"02";
                 else
                   v.state := x"01";
                 end if;
@@ -178,8 +175,10 @@ begin
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(7 downto 0));
             v.tenq := '1';
-            v.state := x"00";
+            v.state := x"02";
           end if;
+        when x"02" => --finish transmit byte
+          v.state := x"00";
         when x"10" => --wait receive byte
           if rempty = '0' then
             v.rdeq := '1';
@@ -187,76 +186,81 @@ begin
           end if;
         when x"11" => -- complete receive byte
           v.state := x"12";
+        when x"12" => -- finish transmit byte
+          v.data := x"000000" & rdo;
+          v.state := x"00";
         when X"20" => --wait transmit word1
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(7 downto 0));
             v.tenq := '1';
             v.state := x"21";
           end if;
-        when x"21" => --wait transmit word2;
+        when x"21" => --finish transmit word1
+          v.state := x"22";
+        when x"22" => --wait transmit word2;
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(15 downto 8));
             v.tenq := '1';
-            v.state := x"22";
+            v.state := x"23";
           end if;
-        when x"22" => --wait transmit word3;
+        when x"23" =>
+          v.state := x"24";
+        when x"24" => --wait transmit word3;
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(23 downto 16));
             v.tenq := '1';
-            v.state := x"23";
+            v.state := x"25";
           end if;
-        when x"23" => --wait transmit word4;
+        when x"25" =>
+          v.state := x"26";
+        when x"26" => --wait transmit word4;
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(31 downto 24));
             v.tenq := '1';
-            v.state := x"00";
+            v.state := x"27";
           end if;
+        when x"27" => -- finish transmit word
+          v.state := x"00";
         when x"30" => --wait receive word1;
           if rempty = '0' then
             v.rdeq := '1';
             v.state := x"31";
           end if;
         when x"31" => --read receive fifo word1;
+          v.state := x"32";
+        when x"32" =>
           v.data(7 downto 0) := rdo;
+          v.state := x"33";
+        when x"33" => --wait receive word2;
           if rempty = '0' then
             v.rdeq := '1';
-            v.state := x"33";
-          else
-            v.state := x"32";
-          end if;
-        when x"32" => --wait receive word2;
-          if rempty = '0' then
-            v.rdeq := '1';
-            v.state := x"33";
-          end if;
-        when x"33" => --read receive fifo word2;
-          v.data(15 downto 8) := rdo;
-          if rempty = '0' then
-            v.rdeq := '1';
-            v.state := x"35";
-          else
             v.state := x"34";
           end if;
-        when x"34" => --wait receive word3;
-          if rempty = '0' then
-            v.rdeq := '1';
-            v.state := x"35";
-          end if;
-        when x"35" => --read receive fifo word1;
-          v.data(23 downto 16) := rdo;
-          if rempty = '0' then
-            v.rdeq := '1';
-            v.state := x"33";
-          else
-            v.state := x"32";
-          end if;
+        when x"34" =>
+          v.state := x"35";
+        when x"35" => --read receive fifo word2;
+          v.data(15 downto 8) := rdo;
+          v.state := x"36";
         when x"36" => --wait receive word3;
           if rempty = '0' then
             v.rdeq := '1';
             v.state := x"37";
           end if;
-        when x"37" => -- complete receive word
+        when x"37" =>
           v.state := x"38";
+        when x"38" => --read receive fifo word1;
+          v.data(23 downto 16) := rdo;
+          v.state := x"39";
+        when x"39" => --wait receive word3;
+          if rempty = '0' then
+            v.rdeq := '1';
+            v.state := x"3a";
+          end if;
+        when x"3a" => -- complete receive word
+          v.state := x"3b";
+        when x"3b" => -- finish receive word
+          v.data(31 downto 24) := rdo;
+          v.state := x"00";
         when others =>
       end case;
 
