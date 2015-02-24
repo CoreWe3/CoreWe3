@@ -240,7 +240,7 @@ int main(int argc, char* argv[]){
 			it++;
 		}
 	}
-	
+
 
 	//Make Assembly
 	list<uint32_t> results;
@@ -295,6 +295,7 @@ int main(int argc, char* argv[]){
 				// 2 regs
 			case ITOF:
 			case FTOI:
+			case FINV:
 			case FSQRT:
 			case FABS:
 				fm.A.op = ISA::name2isa(el[0]);
@@ -333,7 +334,7 @@ int main(int argc, char* argv[]){
 				results.push_back(fm.data);
 				line++;
 				break;
-			
+
 			case FLDI:
 				{
 					fm.L.op = ISA::name2isa(el[0]);
@@ -357,7 +358,6 @@ int main(int argc, char* argv[]){
 			case FADD:
 			case FSUB:
 			case FMUL:
-			case FDIV:
 				fm.A.op = ISA::name2isa(el[0]);
 				fm.A.ra = ISA::name2reg(el[1]);
 				fm.A.rb = ISA::name2reg(el[2]);

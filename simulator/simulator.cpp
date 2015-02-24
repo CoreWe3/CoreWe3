@@ -228,6 +228,11 @@ int main(int argc, char* argv[]){
 				break;
 
 				// 2 freg
+			case FINV:
+				freg[fm.A.ra].r = FPU::finv(freg[fm.A.rb].r);
+				pc+=1;
+				break;
+
 			case FSQRT:
 				freg[fm.A.ra].r = FPU::fsqrt(freg[fm.A.rb].r);
 				pc+=1;
@@ -380,11 +385,6 @@ int main(int argc, char* argv[]){
 
 			case FMUL:
 				freg[fm.A.ra].r = FPU::fmul(freg[fm.A.rb].r, freg[fm.A.rc].r);
-				pc+=1;
-				break;
-
-			case FDIV:
-				freg[fm.A.ra].r = FPU::fdiv(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
