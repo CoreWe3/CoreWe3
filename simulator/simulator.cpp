@@ -259,13 +259,12 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-						else
-							input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 					}
 					else greg[fm.L.ra].r = ram[address];
 				}
@@ -315,13 +314,12 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-						else
-							input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}
 					else freg[fm.L.ra].r = ram[address];
 				}
