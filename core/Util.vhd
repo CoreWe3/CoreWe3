@@ -181,12 +181,12 @@ package Util is
     op => ADD,
     wd => default_write_data);
 
-  type fpu_wait_t is record
+  type memory_read_t is record
     op : std_logic_vector(5 downto 0);
     wd : write_data_t;
-  end record fpu_wait_t;
+  end record memory_read_t;
 
-  constant default_fw : fpu_wait_t := (
+  constant default_mr : memory_read_t := (
     op => ADD,
     wd => default_write_data);
 
@@ -199,7 +199,7 @@ package Util is
     e : execute_t;
     ma : memory_access_t;
     mw : memory_wait_t;
-    fw : fpu_wait_t;
+    mr : memory_read_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
@@ -211,7 +211,7 @@ package Util is
     e => default_e,
     ma => default_ma,
     mw => default_mw,
-    fw => default_fw);
+    mr => default_mr);
 
 end package Util;
 
