@@ -28,13 +28,6 @@ uint32_t FPU::fmul(uint32_t x, uint32_t y){
 	return zfu.r;
 }
 
-uint32_t FPU::fdiv(uint32_t x, uint32_t y){
-	FU xfu, yfu, zfu;
-	xfu.r = x; yfu.r = y;
-	zfu.f = xfu.f / yfu.f;
-	return zfu.r;
-}
-
 int FPU::fcmp(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
@@ -42,6 +35,13 @@ int FPU::fcmp(uint32_t x, uint32_t y){
 	if (zfu.f < 0) return -1;
 	else if (zfu.f > 0) return 1;
 	else return 0;
+}
+
+uint32_t FPU::finv(uint32_t x){
+	FU xfu, yfu;
+	xfu.r = x;
+	yfu.f = 1.0 / xfu.f;
+	return yfu.r;
 }
 
 uint32_t FPU::fsqrt(uint32_t x){
@@ -71,4 +71,3 @@ uint32_t FPU::itof(uint32_t x){
 	yfu.f = xfu.d;
 	return yfu.r;
 }
-

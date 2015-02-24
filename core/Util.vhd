@@ -10,8 +10,8 @@ package Util is
   constant ST    : std_logic_vector(5 downto 0) := "000001";
   constant FLD   : std_logic_vector(5 downto 0) := "000010";
   constant FST   : std_logic_vector(5 downto 0) := "000011";
-  constant ITOF  : std_logic_vector(5 downto 0) := "000100";
-  constant FTOI  : std_logic_vector(5 downto 0) := "000101";
+  constant I_TOF : std_logic_vector(5 downto 0) := "000100";
+  constant F_TOI : std_logic_vector(5 downto 0) := "000101";
   constant ADD   : std_logic_vector(5 downto 0) := "000110";
   constant SUB   : std_logic_vector(5 downto 0) := "000111";
   constant ADDI  : std_logic_vector(5 downto 0) := "001000";
