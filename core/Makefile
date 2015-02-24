@@ -1,4 +1,4 @@
-SOURCE = $(wildcard *.vhd) $(wildcard fpu/*.vhd)
+SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
 TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
@@ -7,7 +7,7 @@ CODE = file/ffib_rec
 
 all: configure
 
-.PHONY: configure bit all clean
+.PHONY: configure bit all clean test
 
 configure: $(CODE) $(TARGET)
 	../file/fpga.sh -h -i $(CODE) $(TARGET)

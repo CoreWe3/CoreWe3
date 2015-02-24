@@ -38,6 +38,14 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
+  component finv is
+    port (
+      clk : in std_logic;
+      stall : in std_logic;
+      i : in std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
   component fcmp is
     port (
       a : in std_logic_vector(31 downto 0);
@@ -51,7 +59,7 @@ architecture Control_arch of Control is
      e_d : in write_data_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
-     fw_d : in write_data_t;
+     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out read_data_t) is
   begin
@@ -74,9 +82,9 @@ architecture Control_arch of Control is
         d.d := mw_d.d;
         d.h := '0';
       end if;
-    elsif a /= 0 and a = fw_d.a and fw_d.f = '0' then
-      if fw_d.r = '1' then
-        d.d := fw_d.d;
+    elsif a /= 0 and a = mr_d.a and mr_d.f = '0' then
+      if mr_d.r = '1' then
+        d.d := mr_d.d;
         d.h := '0';
       end if;
     elsif a /= 0 and a = w_d.a and w_d.f = '0' then
@@ -96,7 +104,7 @@ architecture Control_arch of Control is
      e_d : in write_data_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
-     fw_d : in write_data_t;
+     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out read_data_t) is
   begin
@@ -119,9 +127,9 @@ architecture Control_arch of Control is
         d.d := mw_d.d;
         d.h := '0';
       end if;
-    elsif a /= 0 and a = fw_d.a and fw_d.f = '1' then
-      if fw_d.r = '1' then
-        d.d := fw_d.d;
+    elsif a /= 0 and a = mr_d.a and mr_d.f = '1' then
+      if mr_d.r = '1' then
+        d.d := mr_d.d;
         d.h := '0';
       end if;
     elsif a /= 0 and a = w_d.a and w_d.f = '1' then
@@ -139,7 +147,7 @@ architecture Control_arch of Control is
     (di  : in read_data_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
-     fw_d : in write_data_t;
+     mr_d : in write_data_t;
      w_d : in write_data_t;
      do  : out read_data_t) is
   begin
@@ -151,8 +159,8 @@ architecture Control_arch of Control is
       elsif mw_d.r = '1' and mw_d.a = di.a and mw_d.f = di.f then
         do.d := mw_d.d;
         do.h := '0';
-      elsif fw_d.r = '1' and fw_d.a = di.a and fw_d.f = di.f then
-        do.d := fw_d.d;
+      elsif mr_d.r = '1' and mr_d.a = di.a and mr_d.f = di.f then
+        do.d := mr_d.d;
         do.h := '0';
       elsif w_d.r = '1' and w_d.a = di.a and w_d.f = di.f then
         do.d := w_d.d;
@@ -169,22 +177,22 @@ architecture Control_arch of Control is
      e_d : in write_data_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
-     fw_d : in write_data_t;
+     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out decode_t) is
     variable ra, rb, rc, cr, lr, fa, fb, fc: read_data_t;
   begin
 
     ---forwarding
-    forward_gpreg_at_dec(gpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, fw_d, w_d, ra);
-    forward_gpreg_at_dec(gpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, fw_d, w_d, rb);
-    forward_gpreg_at_dec(gpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, fw_d, w_d, rc);
-    forward_gpreg_at_dec(gpreg, "11110", e_d, ma_d, mw_d, fw_d, w_d, cr);
-    forward_gpreg_at_dec(gpreg, "11111", e_d, ma_d, mw_d, fw_d, w_d, lr);
+    forward_gpreg_at_dec(gpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, mr_d, w_d, ra);
+    forward_gpreg_at_dec(gpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, mr_d, w_d, rb);
+    forward_gpreg_at_dec(gpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, mr_d, w_d, rc);
+    forward_gpreg_at_dec(gpreg, "11110", e_d, ma_d, mw_d, mr_d, w_d, cr);
+    forward_gpreg_at_dec(gpreg, "11111", e_d, ma_d, mw_d, mr_d, w_d, lr);
 
-    forward_fpreg_at_dec(fpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, fw_d, w_d, fa);
-    forward_fpreg_at_dec(fpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, fw_d, w_d, fb);
-    forward_fpreg_at_dec(fpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, fw_d, w_d, fc);
+    forward_fpreg_at_dec(fpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, mr_d, w_d, fa);
+    forward_fpreg_at_dec(fpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, mr_d, w_d, fb);
+    forward_fpreg_at_dec(fpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, mr_d, w_d, fc);
 
     d := default_d;
     d.pc := pc-1;
@@ -206,6 +214,12 @@ architecture Control_arch of Control is
         d.d1 := rb;
         d.d2 := fa;
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
+      when ITOF =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := rb;
+      when FTOI =>
+        d.dest := unsigned(i(25 downto 21));
+        d.d1 := fb;
       when ADD | SUB | SH_L | SH_R =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := rb;
@@ -222,7 +236,7 @@ architecture Control_arch of Control is
         d.dest := unsigned(i(25 downto 21));
         d.d1 := fb;
         d.d2 := fc;
-      when F_ABS =>
+      when F_ABS | F_INV | F_SQRT =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := fb;
       when F_CMP =>
@@ -251,15 +265,15 @@ architecture Control_arch of Control is
     (d : in decode_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
-     fw_d : in write_data_t;
+     mr_d : in write_data_t;
      w_d : in write_data_t;
      e : out execute_t;
      hazard : out std_logic) is
     variable d1, d2 : read_data_t;
   begin
 
-    forward_at_exec(d.d1, ma_d, mw_d, fw_d, w_d, d1);
-    forward_at_exec(d.d2, ma_d, mw_d, fw_d, w_d, d2);
+    forward_at_exec(d.d1, ma_d, mw_d, mr_d, w_d, d1);
+    forward_at_exec(d.d2, ma_d, mw_d, mr_d, w_d, d2);
 
     e := default_e;
     e.pc := d.pc;
@@ -279,6 +293,13 @@ architecture Control_arch of Control is
         e.data := d2.d;
         e.wd.r := '1';
         hazard := d1.h or d2.h;
+      when ITOF =>
+        e.fpu := (d1.d, (others => '-'));
+        e.wd.f := '1';
+        hazard := d1.h;
+      when FTOI =>
+        e.fpu := (d1.d, (others => '-'));
+        hazard := d1.h;
       when ADD =>
         e.alu := (d1.d, d2.d, "00");
         hazard := d1.h or d2.h;
@@ -312,6 +333,10 @@ architecture Control_arch of Control is
         e.fpu := (d1.d, (not d2.d(31)) & d2.d(30 downto 0));
         e.wd.f := '1';
         hazard := d1.h or d2.h;
+      when F_INV | F_SQRT =>
+        e.fpu := (d1.d, (others => '-'));
+        e.wd.f := '1';
+        hazard := d1.h;
       when F_ABS =>
         e.wd.d := '0' & d1.d(30 downto 0);
         e.wd.f := '1';
@@ -406,30 +431,31 @@ architecture Control_arch of Control is
     mw.wd := ma.wd;
   end memory_wait;
 
-  procedure fpu_wait
+  procedure memory_read
     (mw : in memory_wait_t;
      mem_o : in unsigned(31 downto 0);
-     fw : out fpu_wait_t) is
+     mr : out memory_read_t) is
   begin
-    fw := default_fw;
-    fw.op := mw.op;
-    fw.wd := mw.wd;
+    mr := default_mr;
+    mr.op := mw.op;
+    mr.wd := mw.wd;
     case mw.op is
       when LD | FLD =>
-        fw.wd.d := mem_o;
-        fw.wd.r := '1';
+        mr.wd.d := mem_o;
+        mr.wd.r := '1';
       when others =>
     end case;
-  end fpu_wait;
+  end memory_read;
 
   procedure write_back
-    (fw : in fpu_wait_t;
+    (mr : in memory_read_t;
      fadd_o : in unsigned(31 downto 0);
      fmul_o : in unsigned(31 downto 0);
+     finv_o : in unsigned(31 downto 0);
      w : out write_data_t) is
   begin
-    w := fw.wd;
-    case fw.op is
+    w := mr.wd;
+    case mr.op is
       when F_ADD =>
         w.d := fadd_o;
         w.r := '1';
@@ -438,6 +464,9 @@ architecture Control_arch of Control is
         w.r := '1';
       when F_MUL =>
         w.d := fmul_o;
+        w.r := '1';
+      when F_INV =>
+        w.d := finv_o;
         w.r := '1';
       when others =>
     end case;
@@ -449,6 +478,7 @@ architecture Control_arch of Control is
   signal alu_o : unsigned(31 downto 0);
   signal fadd_o : std_logic_vector(31 downto 0);
   signal fmul_o : std_logic_vector(31 downto 0);
+  signal finv_o : std_logic_vector(31 downto 0);
   signal fcmp_o : std_logic_vector(31 downto 0);
 
 begin
@@ -472,6 +502,12 @@ begin
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
     o => fmul_o);
+
+  finv_unit : finv port map (
+    clk => clk,
+    stall => bus_in.m.stall,
+    i => std_logic_vector(r.e.fpu.d1),
+    o => finv_o);
 
   fcmp_unit : fcmp port map (
     a => std_logic_vector(r.e.fpu.d1),
@@ -499,11 +535,11 @@ begin
 
       memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
       memory_wait(r.ma, v.mw);
-      fpu_wait(r.mw, bus_in.m.d, v.fw);
-      write_back(r.fw, unsigned(fadd_o), unsigned(fmul_o), v_wd);
+      memory_read(r.mw, bus_in.m.d, v.mr);
+      write_back(r.mr, unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
 
-      execute(r.d, v.ma.wd, v.mw.wd, v.fw.wd, v_wd, v.e, data_hazard);
-      decode(v.ibuf, v.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.fw.wd, v_wd, v.d);
+      execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
+      decode(v.ibuf, v.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.d);
 
       mem_stall := bus_in.m.stall;
       control_hazard := r.e.branching;
