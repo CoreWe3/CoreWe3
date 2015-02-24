@@ -3,11 +3,11 @@ TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/ffib_rec
+CODE = file/test
 
 all: configure
 
-.PHONY: configure bit all clean test
+.PHONY: configure bit all clean
 
 configure: $(CODE) $(TARGET)
 	../file/fpga.sh -h -i $(CODE) $(TARGET)
@@ -30,7 +30,7 @@ $(PRJ): $(SOURCE)
 
 clean:
 	rm -rf _ngo/ _xmsgs/ *.xise *.bgn *.drc *.lso *.ncd *.bld *.ngc \
-	*.xrpt *.ngd *.ngr *.pad *.par *.pcf *.prj *.ptwx \
+	*.xrpt *.ngd *.ngr *.pad *.par *.pcf *.ptwx \
 	*.srp *.twr *.twx *.unroutes *.xpi *.xwbt *.map *.mrp \
 	*.ngm *.csv *.xml *.html *.log xlnx_auto_0_xdb/ dump.xst/ \
 	*_map* *_pad* work/ "file graph"

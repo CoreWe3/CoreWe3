@@ -20,6 +20,14 @@ architecture Control_arch of Control is
       do : out unsigned(31 downto 0));
   end component;
 
+  component ftoi is
+    port (
+      clk : in std_logic;
+      stall : in std_logic;
+      i : in std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
   component fadd is
     port (
       clk : in std_logic;
@@ -214,10 +222,10 @@ architecture Control_arch of Control is
         d.d1 := rb;
         d.d2 := fa;
         d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
-      when ITOF =>
+      when I_TOF =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := rb;
-      when FTOI =>
+      when F_TOI =>
         d.dest := unsigned(i(25 downto 21));
         d.d1 := fb;
       when ADD | SUB | SH_L | SH_R =>
@@ -293,12 +301,14 @@ architecture Control_arch of Control is
         e.data := d2.d;
         e.wd.r := '1';
         hazard := d1.h or d2.h;
-      when ITOF =>
+      when I_TOF =>
         e.fpu := (d1.d, (others => '-'));
+        e.wd.d := d1.d;
         e.wd.f := '1';
         hazard := d1.h;
-      when FTOI =>
+      when F_TOI =>
         e.fpu := (d1.d, (others => '-'));
+        e.wd.d := d1.d;
         hazard := d1.h;
       when ADD =>
         e.alu := (d1.d, d2.d, "00");
@@ -449,6 +459,8 @@ architecture Control_arch of Control is
 
   procedure write_back
     (mr : in memory_read_t;
+     ftoi_o : in unsigned(31 downto 0);
+     itof_o : in unsigned(31 downto 0);
      fadd_o : in unsigned(31 downto 0);
      fmul_o : in unsigned(31 downto 0);
      finv_o : in unsigned(31 downto 0);
@@ -456,6 +468,12 @@ architecture Control_arch of Control is
   begin
     w := mr.wd;
     case mr.op is
+      when F_TOI =>
+        w.d := ftoi_o;
+        w.r := '1';
+      when I_TOF =>
+        w.d := itof_o;
+        w.r := '1';
       when F_ADD =>
         w.d := fadd_o;
         w.r := '1';
@@ -476,6 +494,8 @@ architecture Control_arch of Control is
   signal gpreg : regfile_t := init_regfile;
   signal fpreg : regfile_t := init_regfile;
   signal alu_o : unsigned(31 downto 0);
+  signal ftoi_o : std_logic_vector(31 downto 0);
+  signal itof_o : std_logic_vector(31 downto 0);
   signal fadd_o : std_logic_vector(31 downto 0);
   signal fmul_o : std_logic_vector(31 downto 0);
   signal finv_o : std_logic_vector(31 downto 0);
@@ -488,6 +508,12 @@ begin
   alu_unit : alu port map (
     di => r.e.alu,
     do => alu_o);
+
+  ftoi_unit : ftoi port map (
+    clk => clk,
+    stall => bus_in.m.stall,
+    i => std_logic_vector(r.e.fpu.d1),
+    o => ftoi_o);
 
   fadd_unit : fadd port map (
     clk => clk,
@@ -536,7 +562,8 @@ begin
       memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
       memory_wait(r.ma, v.mw);
       memory_read(r.mw, bus_in.m.d, v.mr);
-      write_back(r.mr, unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
+      write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o),
+                 unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
 
       execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
       decode(v.ibuf, v.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.d);
