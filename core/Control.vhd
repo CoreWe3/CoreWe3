@@ -591,7 +591,7 @@ begin
             end if;
           end if;
         else -- control_hazard = '1'
-          v.pc := alu_o(11 downto 0);
+          v.pc := alu_o(ADDR_WIDTH-1 downto 0);
           v.f.pc := (others => '-');
           v.f.i := (others => '-');
         end if;
