@@ -8,7 +8,7 @@ def convert01(instruction):
     return str01
 
 
-for i in range(2**12):
+for i in range(2**13):
     instruction = sys.stdin.read(4)
     if len(instruction) == 4:
         print convert01(instruction)

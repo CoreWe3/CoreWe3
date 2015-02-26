@@ -3,14 +3,14 @@ TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/pic
+CODE = file/fib_rec
 
 all: configure
 
 .PHONY: configure bit all clean
 
 configure: $(CODE) $(TARGET)
-	../file/fpga.sh -h -i $(CODE) -l pic.ppm $(TARGET)
+	../file/fpga.sh -h -i $(CODE) $(TARGET)
 
 bit: $(TARGET)
 
