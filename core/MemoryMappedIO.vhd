@@ -19,7 +19,7 @@ architecture MemoryMappedIO_arch of MemoryMappedIO is
 
   component FIFO is
     generic (
-      WIDTH : integer := 2);
+      WIDTH : integer := 10);
     port (
       clk : in std_logic;
       di : in std_logic_vector(7 downto 0);

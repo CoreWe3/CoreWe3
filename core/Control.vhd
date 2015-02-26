@@ -203,7 +203,7 @@ architecture Control_arch of Control is
     forward_fpreg_at_dec(fpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, mr_d, w_d, fc);
 
     d := default_d;
-    d.pc := pc-1;
+    d.pc := pc;
     d.op := i(31 downto 26);
     case i(31 downto 26) is
       when LD =>
@@ -542,61 +542,71 @@ begin
 
   control_unit : process(clk)
     variable v : cpu_t;
+    variable instruction : std_logic_vector(31 downto 0);
     variable v_wd : write_data_t;
     variable data_hazard : std_logic;
     variable control_hazard : std_logic;
     variable mem_stall : std_logic;
   begin
-
     if rising_edge(clk) then
       v := r;
-
-      if r.state = "000" then
-        v.ibuf := bus_in.i;
-        v.pc := r.pc;
-      else
-        v.ibuf := r.ibuf;
-        v.pc := r.pcbuf;
-      end if;
-
-      memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
-      memory_wait(r.ma, v.mw);
-      memory_read(r.mw, bus_in.m.d, v.mr);
-      write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o),
-                 unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
-
-      execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
-      decode(v.ibuf, v.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.d);
-
       mem_stall := bus_in.m.stall;
-      control_hazard := r.e.branching;
 
+      v.state(2) := mem_stall;
       if mem_stall = '0' then
+        if r.state = "000" then
+          instruction := bus_in.i;
+        else
+          instruction := r.f.i;
+        end if;
+
+        memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
+        memory_wait(r.ma, v.mw);
+        memory_read(r.mw, bus_in.m.d, v.mr);
+        write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o),
+                   unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
+
+        execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
+        decode(instruction, r.f.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.mr.wd,
+               v_wd, v.d);
+
+        control_hazard := r.e.branching;
+
+        v.state(1) := control_hazard;
+        if control_hazard = '0' then
+          v.state(0) := data_hazard;
+        else
+          v.state(0) := '0';
+        end if;
+
+        -- fetch
         if control_hazard = '0' then
           if data_hazard = '0' then
-            v.state := "000";
             v.pc := r.pc+1;
+            v.f.pc := r.pc;
+            v.f.i := (others => '-');
           else -- data_hazard = '1'
-            v.state := "001";
-            if r.state = "000" then
-              v.ibuf := bus_in.i;
-              v.pcbuf := r.pc;
+            if r.state(0) = '0' then
+              v.f.i := bus_in.i;
             end if;
           end if;
         else -- control_hazard = '1'
-          v.state := "010";
           v.pc := alu_o(11 downto 0);
+          v.f.pc := (others => '-');
+          v.f.i := (others => '-');
         end if;
+
         --decode
-        if control_hazard = '0' and r.state /= "010" then
+        if control_hazard = '0' and r.state(1) = '0' then
           if data_hazard = '1' then
             v.d := r.d;
           end if;
         else
           v.d := default_d;
         end if;
+
         --execute
-        if control_hazard = '0' and r.state /= "010" then
+        if control_hazard = '0' and r.state(1) = '0' then
           if data_hazard = '1' then
             v.e := default_e;
           end if;
@@ -604,6 +614,7 @@ begin
           v.e := default_e;
         end if;
         --memory
+
         -- write
         if v_wd.f = '0' then
           gpreg(to_integer(v_wd.a)) <= v_wd.d;
@@ -612,11 +623,9 @@ begin
         end if;
 
       else -- mem_stall = '1'
-        v := r;
-        v.state := "011";
-        if r.state = "000" or r.state = "010" then
-          v.ibuf := bus_in.i;
-          v.pcbuf := r.pc;
+
+        if r.state = "000" then
+          v.f.i := bus_in.i;
         end if;
         v.ma.m := default_memory_request;
       end if;

@@ -125,6 +125,15 @@ package Util is
      f => '0',
      r => '0');
 
+  type fetch_t is record
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    i : std_logic_vector(31 downto 0);
+  end record fetch_t;
+
+  constant default_f : fetch_t := (
+    pc => (others => '-'),
+    i => (others => '-'));
+
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
     op    : std_logic_vector(5 downto 0);
@@ -193,8 +202,7 @@ package Util is
   type cpu_t is record
     state : std_logic_vector(2 downto 0);
     pc : unsigned(ADDR_WIDTH-1 downto 0);
-    ibuf : std_logic_vector(31 downto 0);
-    pcbuf : unsigned(ADDR_WIDTH-1 downto 0);
+    f : fetch_t;
     d : decode_t;
     e : execute_t;
     ma : memory_access_t;
@@ -205,8 +213,7 @@ package Util is
   constant init_r : cpu_t := (
     state => "000",
     pc => (others => '0'),
-    ibuf => (others => '-'),
-    pcbuf => (others => '-'),
+    f => default_f,
     d => default_d,
     e => default_e,
     ma => default_ma,
