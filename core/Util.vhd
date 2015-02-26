@@ -3,8 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package Util is
-  constant ADDR_WIDTH : integer := 12;
+  constant ADDR_WIDTH : integer := 13;
   constant CACHE_WIDTH : integer := 8;
+  constant BOOTLOADER: string := "file/bootloader.b";
+  constant ones : unsigned(31 downto 0) := (others => '1');
 
   constant LD    : std_logic_vector(5 downto 0) := "000000";
   constant ST    : std_logic_vector(5 downto 0) := "000001";
@@ -63,7 +65,7 @@ package Util is
   end record;
 
   type bus_out_t is record
-    pc : unsigned(11 downto 0);
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
     m : memory_request_t;
   end record;
 

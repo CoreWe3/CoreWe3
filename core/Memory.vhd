@@ -32,8 +32,6 @@ architecture Memory_arch of Memory is
   end component;
 
   component CodeSegmentRAM is
-    generic (
-      file_name : string := "file/bootloader.b");
     port (
       clk     : in  std_logic;
       bus_out : in  bus_out_t;
@@ -41,8 +39,6 @@ architecture Memory_arch of Memory is
   end component;
 
   component MemoryCache is
-    generic (
-      CACHE_WIDTH : integer := 8);
     port (
       clk     : in    std_logic;
       ZD      : inout std_logic_vector(31 downto 0);
@@ -101,8 +97,7 @@ begin
         if vreq.go = '1' then
           if vreq.a = x"FFFFF" then
             r.state <= "01"; -- read io
-          elsif vreq.a(19 downto 12) = x"FF" and
-            vreq.a(11 downto 0) /= x"FFF" then
+          elsif vreq.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
             r.state <= "10"; -- read code(BRAM)
           else
             r.state <= "11"; -- read cache(SRAM)

@@ -18,7 +18,7 @@
 
 メモリアクセスでストールする場合、パイプライン全体が停止する。
 データハザードが検出された場合、executeまでに値がわかるものについてはフォワーディングし、
-そうでなければ、値が確定するまでバブルが入る。また、分岐した直後、3段分のバブルが入る。
+そうでなければ、値が確定するまでバブルが入る。また、分岐した直後、3clkの間バブルが入る。
 
 * メモリー
 
@@ -36,13 +36,21 @@ FLD FSTを用いると、4バイト分リトルエンディアンで入出力す
 
 * 実装済み命令
 
-LD ST FLD FST ADD SUB ADDI SHR SHL SHLI SHRI LDIH
+LD ST FLD FST (FTOI) ADD SUB ADDI SHR SHL SHLI SHRI LDIH
 FADD FSUB FMUL FABS FINV FCMP FLDI J JEQ JLE JLT JSUB RET
+
+* 未実装命令
+
+ITOF FSQRT
 
 ## TODO
 
+* 分岐ロス減少（decodeで分岐を確定）
+
+* フォワーディング整理
+
 * FPU組み込み
 
-* 動的分岐予測
+* 動的分岐予測 or 並列化
 
 * パイプライン深化
