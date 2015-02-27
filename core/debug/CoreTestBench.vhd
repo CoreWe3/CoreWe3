@@ -9,6 +9,7 @@ architecture CoreTestBench_arch of CoreTestBench is
 
   component Core is
     generic (
+      SIMULATE : boolean := true;
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       MCLK1  : in    std_logic;
