@@ -54,7 +54,7 @@ architecture Memory_arch of Memory is
     buf : memory_request_t;
   end record;
 
-  signal r : memory_t;
+  signal r,s : memory_t;
   signal stall : std_logic;
   signal request : memory_request_t;
   signal io_reply, cache_reply : memory_reply_t;
@@ -83,52 +83,73 @@ begin
     request => request,
     reply => cache_reply);
 
-  process(clk)
+  process(r, bus_out, io_reply, cache_reply, code_bus_in)
+    variable v :memory_t;
     variable vreq : memory_request_t;
   begin
-    if rising_edge(clk) then
-      if r.stall = '0' then
-        vreq := bus_out.m;
-      else
-        vreq := r.buf;
-      end if;
-
-      if stall = '0' then
-        if vreq.go = '1' then
-          if vreq.a = x"FFFFF" then
-            r.state <= "01"; -- read io
-          elsif vreq.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
-            r.state <= "10"; -- read code(BRAM)
-          else
-            r.state <= "11"; -- read cache(SRAM)
-          end if;
-        else
-          r.state <= "00";
-        end if;
-
-      end if;
-
-      if stall = '1' and r.stall = '0' then
-        r.buf <= bus_out.m;
-      end if;
-
-      r.stall <= stall;
-
+    v := r;
+    if r.stall = '0' then
+      vreq := bus_out.m;
+    else
+      vreq := r.buf;
     end if;
+
+    case r.state is
+      when "01" =>
+        v.stall := io_reply.stall;
+      when "11" =>
+        v.stall := cache_reply.stall;
+      when others =>
+        v.stall := '0';
+    end case;
+
+    if v.stall = '0' then
+      if vreq.go = '1' then
+        if vreq.a = x"FFFFF" then
+          v.state := "01"; -- read io
+        elsif vreq.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
+          v.state := "10"; -- read code(BRAM)
+        else
+          v.state := "11"; -- read cache(SRAM)
+        end if;
+      else
+        v.state := "00";
+      end if;
+    end if;
+
+    if v.stall = '1' and r.stall = '0' then -- start stalling
+      v.buf := bus_out.m;
+    end if;
+
+    if v.stall = '0' and r.stall = '1' then -- finish stalling
+      vreq := r.buf;
+    else
+      vreq := bus_out.m;
+    end if;
+
+    request <= vreq;
+    bus_in.i <= code_bus_in.i;
+    code_bus_out <= (bus_out.pc, vreq);
+
+    case r.state is
+      when "01" =>
+        bus_in.m <= io_reply;
+      when "10" =>
+        bus_in.m <= code_bus_in.m;
+      when "11" =>
+        bus_in.m <= cache_reply;
+      when others =>
+        bus_in.m <= ((others => '-'), '0');
+    end case;
+
+    s <= v;
   end process;
 
-  stall <= io_reply.stall when r.state = "01" else
-           cache_reply.stall when r.state = "11" else
-           '0';
-  request <= r.buf when stall = '0' and r.stall = '1' else
-             bus_out.m;
-  code_bus_out.m <= request;
-  code_bus_out.pc <= bus_out.pc;
-  bus_in.i <= code_bus_in.i;
-  bus_in.m.d <= io_reply.d when r.state = "01" else
-                code_bus_in.m.d when r.state = "10" else
-                cache_reply.d when r.state = "11" else
-                (others => '-');
-  bus_in.m.stall <= stall;
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      r <= s;
+    end if;
+  end process;
 
 end Memory_arch;
