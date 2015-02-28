@@ -1,15 +1,15 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
 
 entity Core is
   generic (
-    SIMULATE : boolean := true;
-    wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    -- wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
+    SIMULATE : boolean := false;
+    -- wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
+    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
+    -- wtime : std_logic_vector(15 downto 0) := x"047A"); -- 133MHz
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -86,10 +86,10 @@ begin  -- arch_core
         CLK90 => open,
         CLK180 => open,
         CLK270 => open,
-        CLK2X => open,
+        CLK2X => open, -- gsysclk, -- 133MHz
         CLK2X180 => open,
         CLKDV => open,
-        CLKFX => gsysclk,
+        CLKFX => gsysclk, -- 100MHz
         CLKFX180 => open,
         LOCKED => open);
   end generate;

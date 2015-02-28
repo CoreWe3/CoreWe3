@@ -29,6 +29,7 @@ architecture MemoryCache_arch of MemoryCache is
     stall : unsigned(1 downto 0);
     data : unsigned(31 downto 0);
     we : std_logic;
+    ZD_buf : unsigned(31 downto 0);
   end record;
 
   signal cache : cache_t;
@@ -91,7 +92,10 @@ begin
           reply.d <= (others => '-');
           stall := '1';
         when "10" =>
-          reply.d <= unsigned(ZD);
+          reply.d <= (others => '-');
+          stall := '1';
+        when "11" =>
+          reply.d <= r.ZD_buf;
         when others =>
           reply.d <= (others => '-');
       end case;
@@ -107,7 +111,7 @@ begin
       reply.stall <= stall;
       r.data <= data;
       r.we <= we;
-
+      r.ZD_buf <= unsigned(ZD);
     end if;
   end process;
 

@@ -3,7 +3,7 @@ TARGET = core.bit
 PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/pic
+CODE = file/test
 
 all: configure
 

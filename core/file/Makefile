@@ -5,7 +5,7 @@ MINCAML = $(ROOT)/mincaml_compiler/min-caml
 MLFILES = $(wildcard *.ml)
 ASFILES = $(wildcard *.s)
 
-all: $(ASFILES:.s=.b) $(ASFILES:.s=)
+all: test
 
 .PHONY: simulator all clean
 
@@ -34,7 +34,6 @@ compiler:
 %: %.s
 %: %.o
 %.o: %.s
-
 
 clean:
 	rm -rf $(ASFILES:.s=.o) $(ASFILES:.s=.b) $(ASFILES:.s=) input output
