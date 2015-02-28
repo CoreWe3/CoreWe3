@@ -135,7 +135,7 @@ package Util is
 
   constant default_f : fetch_t := (
     pc => (others => '-'),
-    i => (others => '-'));
+    i => ADD & "00" & x"000000");
 
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
@@ -214,7 +214,7 @@ package Util is
   end record cpu_t;
 
   constant init_r : cpu_t := (
-    state => "000",
+    state => "010",
     pc => (others => '0'),
     f => default_f,
     d => default_d,
