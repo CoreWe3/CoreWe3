@@ -114,6 +114,7 @@ package Util is
      f => '0',
      h => '0');
 
+
   type write_data_t is record
     a : unsigned(4 downto 0);  -- address(register)
     d : unsigned(31 downto 0); -- data
