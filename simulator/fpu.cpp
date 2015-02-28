@@ -61,7 +61,7 @@ uint32_t FPU::fabs(uint32_t x){
 uint32_t FPU::ftoi(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
-	yfu.d = xfu.f;
+	yfu.d = std::round(xfu.f);
 	return yfu.r;
 }
 
