@@ -6,9 +6,9 @@ use UNISIM.VComponents.all;
 
 entity Core is
   generic (
-    SIMULATE : boolean := false;
-    -- wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
+    DEBUG : boolean := true;
+    wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
+    -- wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
     -- wtime : std_logic_vector(15 downto 0) := x"047A"); -- 133MHz
   port (
     MCLK1  : in    std_logic;
@@ -57,15 +57,15 @@ begin  -- arch_core
     i => MCLK1,
     o => iclk);
 
-  ----- Normal clock(66.66MHz) (SIMULATE)
-  Normal : if SIMULATE generate
+  ----- Normal clock(66.66MHz)
+  Normal : if DEBUG generate
     bg0 : BUFG port map (
       i => iclk,
       o => sysclk);
   end generate;
 
   ----- Modified clock
-  SpeedUp : if not SIMULATE generate
+  SpeedUp : if not DEBUG generate
     bg0 : BUFG port map (
       i => gsysclk,
       o => sysclk);
