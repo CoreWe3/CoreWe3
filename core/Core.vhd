@@ -1,13 +1,15 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
 
 entity Core is
   generic (
-    wtime : std_logic_vector(15 downto 0) := x"023D");
+    SIMULATE : boolean := false;
+    -- wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
+    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
+    -- wtime : std_logic_vector(15 downto 0) := x"047A"); -- 133MHz
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
@@ -42,9 +44,9 @@ architecture arch_core of Core is
   end component;
 
   signal iclk : std_logic;
-  --signal fbclk : std_logic;
-  --signal bfbclk : std_logic;
-  --signal gsysclk : std_logic;
+  signal fbclk : std_logic;
+  signal bfbclk : std_logic;
+  signal gsysclk : std_logic;
   signal sysclk : std_logic;
   --signal gmemclk : std_logic;
   --signal memclk : std_logic;
@@ -55,32 +57,42 @@ begin  -- arch_core
     i => MCLK1,
     o => iclk);
 
-  bg0 : BUFG port map (
-    i => iclk,
-    o => sysclk);
+  ----- Normal clock(66.66MHz) (SIMULATE)
+  Normal : if SIMULATE generate
+    bg0 : BUFG port map (
+      i => iclk,
+      o => sysclk);
+  end generate;
 
-  --bg0 : BUFG port map (
-  --  i => gsysclk,
-  --  o => sysclk);
+  ----- Modified clock
+  SpeedUp : if not SIMULATE generate
+    bg0 : BUFG port map (
+      i => gsysclk,
+      o => sysclk);
 
-  --bg1 : BUFG port map (
-  --  i => fbclk,
-  --  o => bfbclk);
+    bg1 : BUFG port map (
+      i => fbclk,
+      o => bfbclk);
 
-  --dcm : DCM_BASE port map (
-  --  CLKIN => iclk,
-  --  CLKFB => bfbclk,
-  --  RST => '0',
-  --  CLK0 => fbclk,
-  --  CLK90 => open,
-  --  CLK180 => open,
-  --  CLK270 => open,
-  --  CLK2X => gsysclk,
-  --  CLK2X180 => open,
-  --  CLKDV => open,
-  --  CLKFX => open,
-  --  CLKFX180 => open,
-  --  LOCKED => open);
+    dcm : DCM_BASE
+      generic map (
+        CLKFX_MULTIPLY => 3,
+        CLKFX_DIVIDE => 2)
+      port map (
+        CLKIN => iclk,
+        CLKFB => bfbclk,
+        RST => '0',
+        CLK0 => fbclk,
+        CLK90 => open,
+        CLK180 => open,
+        CLK270 => open,
+        CLK2X => open, -- gsysclk, -- 133MHz
+        CLK2X180 => open,
+        CLKDV => open,
+        CLKFX => gsysclk, -- 100MHz
+        CLKFX180 => open,
+        LOCKED => open);
+  end generate;
 
   --pll : PLL_BASE
   --  generic map (

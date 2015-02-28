@@ -28,6 +28,14 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
+  component itof is
+    port (
+      clk : in std_logic;
+      stall : in std_logic;
+      i : in std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
   component fadd is
     port (
       clk : in std_logic;
@@ -61,97 +69,43 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
-  procedure forward_gpreg_at_dec
+  procedure get_gpreg
     (gpreg : in regfile_t;
      a : in unsigned(4 downto 0);
-     e_d : in write_data_t;
-     ma_d : in write_data_t;
-     mw_d : in write_data_t;
-     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out read_data_t) is
   begin
     d := default_read_data;
     d.a := a;
     d.f := '0';
-    d.h := '1';
-    if a /= 0 and a = e_d.a and e_d.f = '0' then
-      if e_d.r = '1' then
-        d.d := e_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = ma_d.a and ma_d.f = '0' then
-      if ma_d.r = '1' then
-        d.d := ma_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = mw_d.a and mw_d.f = '0' then
-      if mw_d.r = '1' then
-        d.d := mw_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = mr_d.a and mr_d.f = '0' then
-      if mr_d.r = '1' then
-        d.d := mr_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = w_d.a and w_d.f = '0' then
+    if a /= 0 and a = w_d.a and w_d.f = '0' then
       if w_d.r = '1' then
         d.d := w_d.d;
-        d.h := '0';
       end if;
     else
       d.d := gpreg(to_integer(a));
-      d.h := '0';
     end if;
-  end forward_gpreg_at_dec;
+  end get_gpreg;
 
-  procedure forward_fpreg_at_dec
+  procedure get_fpreg
     (fpreg : in regfile_t;
      a : in unsigned(4 downto 0);
-     e_d : in write_data_t;
-     ma_d : in write_data_t;
-     mw_d : in write_data_t;
-     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out read_data_t) is
   begin
     d := default_read_data;
     d.a := a;
     d.f := '1';
-    d.h := '1';
-    if a /= 0 and a = e_d.a and e_d.f = '1' then
-      if e_d.r = '1' then
-        d.d := e_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = ma_d.a and ma_d.f = '1' then
-      if ma_d.r = '1' then
-        d.d := ma_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = mw_d.a and mw_d.f = '1' then
-      if mw_d.r = '1' then
-        d.d := mw_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = mr_d.a and mr_d.f = '1' then
-      if mr_d.r = '1' then
-        d.d := mr_d.d;
-        d.h := '0';
-      end if;
-    elsif a /= 0 and a = w_d.a and w_d.f = '1' then
+    if a /= 0 and a = w_d.a and w_d.f = '1' then
       if w_d.r = '1' then
         d.d := w_d.d;
-        d.h := '0';
       end if;
     else
       d.d := fpreg(to_integer(a));
-      d.h := '0';
     end if;
-  end forward_fpreg_at_dec;
+  end get_fpreg;
 
-  procedure forward_at_exec
+  procedure forward_reg
     (di  : in read_data_t;
      ma_d : in write_data_t;
      mw_d : in write_data_t;
@@ -160,47 +114,56 @@ architecture Control_arch of Control is
      do  : out read_data_t) is
   begin
     do := di;
-    if di.h = '1' then
-      if ma_d.r = '1' and ma_d.a = di.a and ma_d.f = di.f then
-        do.d := ma_d.d;
-        do.h := '0';
-      elsif mw_d.r = '1' and mw_d.a = di.a and mw_d.f = di.f then
-        do.d := mw_d.d;
-        do.h := '0';
-      elsif mr_d.r = '1' and mr_d.a = di.a and mr_d.f = di.f then
-        do.d := mr_d.d;
-        do.h := '0';
-      elsif w_d.r = '1' and w_d.a = di.a and w_d.f = di.f then
-        do.d := w_d.d;
+    do.h := '1';
+    if di.a /= 0 then
+      if ma_d.a = di.a and ma_d.f = di.f then
+        if ma_d.r = '1' then
+          do.d := ma_d.d;
+          do.h := '0';
+        end if;
+      elsif mw_d.a = di.a and mw_d.f = di.f then
+        if mw_d.r = '1' then
+          do.d := mw_d.d;
+          do.h := '0';
+        end if;
+      elsif mr_d.a = di.a and mr_d.f = di.f then
+        if mr_d.r = '1' then
+          do.d := mr_d.d;
+          do.h := '0';
+        end if;
+      elsif w_d.a = di.a and w_d.f = di.f then
+        if w_d.r = '1' then
+          do.d := w_d.d;
+          do.h := '0';
+        end if;
+      else
         do.h := '0';
       end if;
+    else
+      do.h := '0';
     end if;
-  end forward_at_exec;
+  end forward_reg;
 
   procedure decode
     (i : in std_logic_vector(31 downto 0);
      pc : in unsigned(ADDR_WIDTH-1 downto 0);
      gpreg : in regfile_t;
      fpreg : in regfile_t;
-     e_d : in write_data_t;
-     ma_d : in write_data_t;
-     mw_d : in write_data_t;
-     mr_d : in write_data_t;
      w_d : in write_data_t;
      d : out decode_t) is
     variable ra, rb, rc, cr, lr, fa, fb, fc: read_data_t;
   begin
 
     ---forwarding
-    forward_gpreg_at_dec(gpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, mr_d, w_d, ra);
-    forward_gpreg_at_dec(gpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, mr_d, w_d, rb);
-    forward_gpreg_at_dec(gpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, mr_d, w_d, rc);
-    forward_gpreg_at_dec(gpreg, "11110", e_d, ma_d, mw_d, mr_d, w_d, cr);
-    forward_gpreg_at_dec(gpreg, "11111", e_d, ma_d, mw_d, mr_d, w_d, lr);
+    get_gpreg(gpreg, unsigned(i(25 downto 21)), w_d, ra);
+    get_gpreg(gpreg, unsigned(i(20 downto 16)), w_d, rb);
+    get_gpreg(gpreg, unsigned(i(15 downto 11)), w_d, rc);
+    get_gpreg(gpreg, "11110", w_d, cr);
+    get_gpreg(gpreg, "11111", w_d, lr);
 
-    forward_fpreg_at_dec(fpreg, unsigned(i(25 downto 21)), e_d, ma_d, mw_d, mr_d, w_d, fa);
-    forward_fpreg_at_dec(fpreg, unsigned(i(20 downto 16)), e_d, ma_d, mw_d, mr_d, w_d, fb);
-    forward_fpreg_at_dec(fpreg, unsigned(i(15 downto 11)), e_d, ma_d, mw_d, mr_d, w_d, fc);
+    get_fpreg(fpreg, unsigned(i(25 downto 21)), w_d, fa);
+    get_fpreg(fpreg, unsigned(i(20 downto 16)), w_d, fb);
+    get_fpreg(fpreg, unsigned(i(15 downto 11)), w_d, fc);
 
     d := default_d;
     d.pc := pc;
@@ -280,8 +243,8 @@ architecture Control_arch of Control is
     variable d1, d2 : read_data_t;
   begin
 
-    forward_at_exec(d.d1, ma_d, mw_d, mr_d, w_d, d1);
-    forward_at_exec(d.d2, ma_d, mw_d, mr_d, w_d, d2);
+    forward_reg(d.d1, ma_d, mw_d, mr_d, w_d, d1);
+    forward_reg(d.d2, ma_d, mw_d, mr_d, w_d, d2);
 
     e := default_e;
     e.pc := d.pc;
@@ -299,16 +262,13 @@ architecture Control_arch of Control is
       when ST | FST =>
         e.alu := (d1.d, d.imm, "00");
         e.data := d2.d;
-        e.wd.r := '1';
         hazard := d1.h or d2.h;
       when I_TOF =>
         e.fpu := (d1.d, (others => '-'));
-        e.wd.d := d1.d;
         e.wd.f := '1';
         hazard := d1.h;
       when F_TOI =>
         e.fpu := (d1.d, (others => '-'));
-        e.wd.d := d1.d;
         hazard := d1.h;
       when ADD =>
         e.alu := (d1.d, d2.d, "00");
@@ -332,8 +292,7 @@ architecture Control_arch of Control is
         e.alu := (d1.d, d.imm, "11");
         hazard := d1.h;
       when LDIH =>
-        e.wd.d := d.imm(15 downto 0) & d1.d(15 downto 0);
-        e.wd.r := '1';
+        e.alu := (d.imm(15 downto 0) & d1.d(15 downto 0), (others => '0'), "00");
         hazard := d1.h;
       when F_ADD | F_MUL =>
         e.fpu := (d1.d, d2.d);
@@ -348,17 +307,15 @@ architecture Control_arch of Control is
         e.wd.f := '1';
         hazard := d1.h;
       when F_ABS =>
-        e.wd.d := '0' & d1.d(30 downto 0);
+        e.data := '0' & d1.d(30 downto 0);
         e.wd.f := '1';
-        e.wd.r := '1';
         hazard := d1.h;
       when F_CMP =>
         e.fpu := (d1.d, d2.d);
         hazard := d1.h or d2.h;
       when FLDI =>
-        e.wd.d := d.imm(15 downto 0) & d1.d(31 downto 16);
+        e.data := d.imm(15 downto 0) & d1.d(31 downto 16);
         e.wd.f := '1';
-        e.wd.r := '1';
         hazard := d1.h;
       when J =>
         e.alu := (resize(d.pc, 32), d.imm, "00");
@@ -394,8 +351,7 @@ architecture Control_arch of Control is
       when JSUB =>
         e.alu := (resize(d.pc, 32), d.imm, "00");
         e.branching := '1';
-        e.wd.d := resize(d.pc, 32);
-        e.wd.r := '1';
+        e.data := resize(d.pc, 32);
       when RET =>
         e.alu := (d1.d, x"00000001", "00");
         e.branching := '1';
@@ -423,11 +379,21 @@ architecture Control_arch of Control is
         ma.m := (alu(19 downto 0), e.data, '1', '1', '0');
       when FST =>
         ma.m := (alu(19 downto 0), e.data, '1', '1', '1');
-      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
+      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI | LDIH =>
         ma.wd.d := alu;
         ma.wd.r := '1';
       when F_CMP =>
         ma.wd.d := fcmp_o;
+        ma.wd.r := '1';
+      when FLDI =>
+        ma.wd.d := e.data;
+        ma.wd.r := '1';
+      when J | JEQ | JLE | JLT =>
+        ma.wd.r := '1';
+      when JSUB =>
+        ma.wd.d := e.data;
+        ma.wd.r := '1';
+      when RET =>
         ma.wd.r := '1';
       when others =>
     end case;
@@ -515,6 +481,12 @@ begin
     i => std_logic_vector(r.e.fpu.d1),
     o => ftoi_o);
 
+  itof_unit : itof port map (
+    clk => clk,
+    stall => bus_in.m.stall,
+    i => std_logic_vector(r.e.fpu.d1),
+    o => itof_o);
+
   fadd_unit : fadd port map (
     clk => clk,
     stall => bus_in.m.stall,
@@ -567,8 +539,7 @@ begin
                    unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
 
         execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
-        decode(instruction, r.f.pc, gpreg, fpreg, v.e.wd, v.ma.wd, v.mw.wd, v.mr.wd,
-               v_wd, v.d);
+        decode(instruction, r.f.pc, gpreg, fpreg, v_wd, v.d);
 
         control_hazard := r.e.branching;
 
@@ -591,7 +562,7 @@ begin
             end if;
           end if;
         else -- control_hazard = '1'
-          v.pc := alu_o(11 downto 0);
+          v.pc := alu_o(ADDR_WIDTH-1 downto 0);
           v.f.pc := (others => '-');
           v.f.i := (others => '-');
         end if;

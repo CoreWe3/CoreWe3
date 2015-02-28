@@ -6,8 +6,6 @@ library work;
 use work.Util.all;
 
 entity MemoryCache is
-  generic (
-    CACHE_WIDTH : integer := 8);
   port (
     clk : in std_logic;
     ZD : inout std_logic_vector(31 downto 0);
@@ -31,6 +29,7 @@ architecture MemoryCache_arch of MemoryCache is
     stall : unsigned(1 downto 0);
     data : unsigned(31 downto 0);
     we : std_logic;
+    ZD_buf : unsigned(31 downto 0);
   end record;
 
   signal cache : cache_t;
@@ -65,7 +64,8 @@ begin
 
       case r.stall is
         when "00" =>
-          if vreq1.go = '1' and vreq1.a(19 downto 12) /= x"FF" then
+          if vreq1.go = '1' and
+            vreq1.a(19 downto ADDR_WIDTH) /= ones(19 downto ADDR_WIDTH) then
             if vreq1.we = '1' then
               cache(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0))) <= vreq1.d;
               tag(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0))) <=
@@ -84,7 +84,7 @@ begin
           end if;
 
           if vreq2.go = '1' and vreq2.we = '1' and
-            vreq2.a(19 downto 12) /= x"FF" then
+            vreq2.a(19 downto 12) /= ones(19 downto ADDR_WIDTH) then
             data := vreq2.d;
             we := '1';
           end if;
@@ -92,7 +92,10 @@ begin
           reply.d <= (others => '-');
           stall := '1';
         when "10" =>
-          reply.d <= unsigned(ZD);
+          reply.d <= (others => '-');
+          stall := '1';
+        when "11" =>
+          reply.d <= r.ZD_buf;
         when others =>
           reply.d <= (others => '-');
       end case;
@@ -108,7 +111,7 @@ begin
       reply.stall <= stall;
       r.data <= data;
       r.we <= we;
-
+      r.ZD_buf <= unsigned(ZD);
     end if;
   end process;
 
