@@ -121,6 +121,6 @@ uint32_t fadd(uint32_t a, uint32_t b){
   printf("exp_      %08x\n", exp_);
   printf("frac_2    %08x\n", frac_2);
   printf("frac_     %08x\n", frac_);
-  */
+*/
   return sign_1 | exp_ | frac(frac_ >> 4);
 }

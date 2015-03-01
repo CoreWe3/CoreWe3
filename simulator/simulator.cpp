@@ -217,34 +217,34 @@ int main(int argc, char* argv[]){
 
 				// 1 freg, 1 greg
 			case ITOF:
-				freg[fm.L.ra].r = FPU::itof(greg[fm.L.rb].r);
+				freg[fm.L.ra].r = FPU::_itof(greg[fm.L.rb].r);
 				pc+=1;
 				break;
 
 				// 1 greg, 1 freg
 			case FTOI:
-				greg[fm.L.ra].r = FPU::ftoi(freg[fm.L.rb].r);
+				greg[fm.L.ra].r = FPU::_ftoi(freg[fm.L.rb].r);
 				pc+=1;
 				break;
 
 				// 2 freg
 			case FINV:
-				freg[fm.A.ra].r = FPU::finv(freg[fm.A.rb].r);
+				freg[fm.A.ra].r = FPU::inv(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FSQRT:
-				freg[fm.A.ra].r = FPU::fsqrt(freg[fm.A.rb].r);
+				freg[fm.A.ra].r = FPU::sqrt(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FABS:
-				freg[fm.A.ra].r = FPU::fabs(freg[fm.A.rb].r);
+				freg[fm.A.ra].r = FPU::abs(freg[fm.A.rb].r);
 				pc+=1;
 				break;
 
 			case FCMP:
-				greg[30].d = FPU::fcmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				greg[30].d = FPU::cmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
@@ -372,17 +372,17 @@ int main(int argc, char* argv[]){
 
 				// 3 fregs
 			case FADD:
-				freg[fm.A.ra].r = FPU::fadd(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				freg[fm.A.ra].r = FPU::add(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
 			case FSUB:
-				freg[fm.A.ra].r = FPU::fsub(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				freg[fm.A.ra].r = FPU::sub(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 
 			case FMUL:
-				freg[fm.A.ra].r = FPU::fmul(freg[fm.A.rb].r, freg[fm.A.rc].r);
+				freg[fm.A.ra].r = FPU::mul(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 

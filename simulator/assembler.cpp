@@ -24,34 +24,25 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 		}
 		return (unsigned int)(labels[str] - (int)line);
 	}else{
+		union{
+			unsigned int u;
+			float f;
+		} x;
+
 		try{
-			return (unsigned int)stoul(str, nullptr, 0);
-		}catch(...){
+			if(str.compare(0,2,"0x") == 0)
+				x.u = (unsigned int)stoul(str,nullptr,0);
+			else{
+				istringstream strm(str);
+				strm >> x.f;
+			}
+		}
+		catch(...){
 			cerr << "Invalid Argument :" << str << endl;
 			exit(1);
 		}
+		return x.u;
 	}
-}
-
-unsigned int parse_float(string str){
-	union{
-		unsigned int u;
-		float f;
-	} x;
-
-	try{
-		if(str.compare(0,2,"0x") == 0)
-			x.u = (unsigned int)stoul(str,nullptr,0);
-		else{
-			istringstream strm(str);
-			strm >> x.f;
-		}
-	}
-	catch(...){
-		cerr << "Invalid Argument :" << str << endl;
-		exit(1);
-	}
-	return x.u;
 }
 
 void print_instruction(vector<string> ins, ostream &out = cout){
@@ -171,7 +162,7 @@ int main(int argc, char* argv[]){
 			case VFLDI:
 				{
 					if((*it)[2][0]!=':'){
-						unsigned int v = parse_float((*it)[2]); //getlabelvalue((*it)[2]);
+						unsigned int v = getlabelvalue((*it)[2]);
 						if ((v & 0xffff)!=0){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v & 0xffff)};

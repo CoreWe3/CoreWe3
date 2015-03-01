@@ -1,4 +1,5 @@
 #include <cmath>
+#include "fpu_c.h"
 #include "fpu.h"
 
 typedef union{
@@ -7,65 +8,51 @@ typedef union{
 	float f;
 }FU;
 
-uint32_t FPU::fadd(uint32_t x, uint32_t y){
-	FU xfu, yfu, zfu;
-	xfu.r = x; yfu.r = y;
-	zfu.f = xfu.f + yfu.f;
-	return zfu.r;
+uint32_t FPU::add(uint32_t x, uint32_t y){
+	return fadd(x,y);
 }
 
-uint32_t FPU::fsub(uint32_t x, uint32_t y){
+uint32_t FPU::sub(uint32_t x, uint32_t y){
 	FU xfu, yfu, zfu;
 	xfu.r = x; yfu.r = y;
 	zfu.f = xfu.f - yfu.f;
 	return zfu.r;
 }
 
-uint32_t FPU::fmul(uint32_t x, uint32_t y){
-	FU xfu, yfu, zfu;
-	xfu.r = x; yfu.r = y;
-	zfu.f = xfu.f * yfu.f;
-	return zfu.r;
+uint32_t FPU::mul(uint32_t x, uint32_t y){
+	return fmul(x,y);
 }
 
-int FPU::fcmp(uint32_t x, uint32_t y){
-	FU xfu, yfu, zfu;
-	xfu.r = x; yfu.r = y;
-	zfu.f = xfu.f - yfu.f;
-	if (zfu.f < 0) return -1;
-	else if (zfu.f > 0) return 1;
-	else return 0;
+int FPU::cmp(uint32_t x, uint32_t y){
+	return fcmp(x,y);
 }
 
-uint32_t FPU::finv(uint32_t x){
-	FU xfu, yfu;
-	xfu.r = x;
-	yfu.f = 1.0 / xfu.f;
-	return yfu.r;
+uint32_t FPU::inv(uint32_t x){
+	return finv(x);
 }
 
-uint32_t FPU::fsqrt(uint32_t x){
+uint32_t FPU::sqrt(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = std::sqrt(xfu.f);
 	return yfu.r;
 }
 
-uint32_t FPU::fabs(uint32_t x){
+uint32_t FPU::abs(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = std::abs(xfu.f);
 	return yfu.r;
 }
 
-uint32_t FPU::ftoi(uint32_t x){
+uint32_t FPU::_ftoi(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.d = std::round(xfu.f);
 	return yfu.r;
 }
 
-uint32_t FPU::itof(uint32_t x){
+uint32_t FPU::_itof(uint32_t x){
 	FU xfu, yfu;
 	xfu.r = x;
 	yfu.f = xfu.d;
