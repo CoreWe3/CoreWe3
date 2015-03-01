@@ -7,8 +7,9 @@ use UNISIM.VComponents.all;
 entity Core is
   generic (
     DEBUG : boolean := true;
-    wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    -- wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz
+    -- wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
+    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
+    -- wtime : std_logic_vector(15 downto 0) := x"03f5"); -- 116.66MHz M=7 D=4
     -- wtime : std_logic_vector(15 downto 0) := x"047A"); -- 133MHz
   port (
     MCLK1  : in    std_logic;
@@ -30,7 +31,7 @@ entity Core is
     ZZA    : out   std_logic);
 end Core;
 
-architecture arch_core of Core is
+architecture Core_arch of Core is
   component Main is
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime);
@@ -48,8 +49,6 @@ architecture arch_core of Core is
   signal bfbclk : std_logic;
   signal gsysclk : std_logic;
   signal sysclk : std_logic;
-  --signal gmemclk : std_logic;
-  --signal memclk : std_logic;
 
 begin  -- arch_core
 
@@ -76,8 +75,8 @@ begin  -- arch_core
 
     dcm : DCM_BASE
       generic map (
-        CLKFX_MULTIPLY => 3,
-        CLKFX_DIVIDE => 2)
+        CLKFX_MULTIPLY => 3, -- M
+        CLKFX_DIVIDE => 2)   -- D
       port map (
         CLKIN => iclk,
         CLKFB => bfbclk,
@@ -89,7 +88,7 @@ begin  -- arch_core
         CLK2X => open, -- gsysclk, -- 133MHz
         CLK2X180 => open,
         CLKDV => open,
-        CLKFX => gsysclk, -- 100MHz
+        CLKFX => gsysclk, -- 66.6 * M / D MHz
         CLKFX180 => open,
         LOCKED => open);
   end generate;
@@ -134,4 +133,4 @@ begin  -- arch_core
   XLBO <= '1';
   ZZA <= '0';
 
-end arch_core;
+end Core_arch;

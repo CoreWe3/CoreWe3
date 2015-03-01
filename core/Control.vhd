@@ -168,6 +168,8 @@ architecture Control_arch of Control is
     d := default_d;
     d.pc := pc;
     d.op := i(31 downto 26);
+    d.br := "00";
+    d.target := (others => '-');
     case i(31 downto 26) is
       when LD =>
         d.dest := unsigned(i(25 downto 21));
@@ -219,15 +221,21 @@ architecture Control_arch of Control is
         d.d1 := fb;
         d.imm := resize(unsigned(i(15 downto 0)), 32);
       when J =>
-        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        d.br := "11";
+        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when JEQ | JLE | JLT =>
         d.d1 := cr;
-        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        d.br(1) := i(25);
+        d.br(0) := '1';
+        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when JSUB =>
         d.dest := "11111";
         d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
+        d.br := "11";
+        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when RET =>
         d.d1 := lr;
+        d.br := "01";
       when others =>
     end case;
   end decode;
@@ -239,8 +247,11 @@ architecture Control_arch of Control is
      mr_d : in write_data_t;
      w_d : in write_data_t;
      e : out execute_t;
+     branch_hit : out std_logic;
+     taken_branch : out unsigned(ADDR_WIDTH-1 downto 0);
      hazard : out std_logic) is
     variable d1, d2 : read_data_t;
+    variable next_pc: unsigned(ADDR_WIDTH-1 downto 0);
   begin
 
     forward_reg(d.d1, ma_d, mw_d, mr_d, w_d, d1);
@@ -250,6 +261,9 @@ architecture Control_arch of Control is
     e.pc := d.pc;
     e.op := d.op;
     e.wd.a := d.dest;
+    next_pc := d.pc+1;
+    taken_branch := (others => '-');
+    branch_hit := '1';
     hazard := '0';
     case d.op is
       when LD =>
@@ -318,44 +332,51 @@ architecture Control_arch of Control is
         e.wd.f := '1';
         hazard := d1.h;
       when J =>
-        e.alu := (resize(d.pc, 32), d.imm, "00");
-        e.branching := '1';
         e.wd.r := '1';
       when JEQ =>
-        e.alu := (resize(d.pc, 32), d.imm, "00");
-        if d1.d = 0 then
-          e.branching := '1';
-        else
-          e.branching := '0';
+        if d1.d = 0 then -- taken
+          if d.br(1) = '0' then
+            branch_hit := '0';
+            taken_branch := d.target;
+          end if;
+        else -- not taken
+          if d.br(1) = '1' then
+            branch_hit := '0';
+            taken_branch := next_pc;
+          end if;
         end if;
-        e.wd.r := '1';
         hazard := d1.h;
       when JLE =>
-        e.alu := (resize(d.pc, 32), d.imm, "00");
-        if d1.d(31) = '1' or d1.d = 0 then
-          e.branching := '1';
-        else
-          e.branching := '0';
+        if d1.d(31) = '1' or d1.d = 0 then --taken
+          if d.br(1) = '0' then
+            branch_hit := '0';
+            taken_branch := d.target;
+          end if;
+        else -- not taken
+          if d.br(1) = '1' then
+            branch_hit := '0';
+            taken_branch := next_pc;
+          end if;
         end if;
-        e.wd.r := '1';
         hazard := d1.h;
       when JLT =>
-        e.alu := (resize(d.pc, 32), d.imm, "00");
-        if d1.d(31) = '1' then
-          e.branching := '1';
-        else
-          e.branching := '0';
+        if d1.d(31) = '1' then -- taken
+          if d.br(1) = '0' then
+            taken_branch := d.target;
+            branch_hit := '0';
+          end if;
+        else -- not taken
+          if d.br(1) = '1' then
+            branch_hit := '0';
+            taken_branch := next_pc;
+          end if;
         end if;
-        e.wd.r := '1';
         hazard := d1.h;
       when JSUB =>
-        e.alu := (resize(d.pc, 32), d.imm, "00");
-        e.branching := '1';
         e.data := resize(d.pc, 32);
       when RET =>
-        e.alu := (d1.d, x"00000001", "00");
-        e.branching := '1';
-        e.wd.r := '1';
+        branch_hit := '0';
+        taken_branch := d1.d(ADDR_WIDTH-1 downto 0)+1;
         hazard := d1.h;
       when others =>
     end case;
@@ -388,12 +409,10 @@ architecture Control_arch of Control is
       when FLDI =>
         ma.wd.d := e.data;
         ma.wd.r := '1';
-      when J | JEQ | JLE | JLT =>
+      when J | JEQ | JLE | JLT | RET =>
         ma.wd.r := '1';
       when JSUB =>
         ma.wd.d := e.data;
-        ma.wd.r := '1';
-      when RET =>
         ma.wd.r := '1';
       when others =>
     end case;
@@ -517,7 +536,8 @@ begin
     variable instruction : std_logic_vector(31 downto 0);
     variable v_wd : write_data_t;
     variable data_hazard : std_logic;
-    variable control_hazard : std_logic;
+    variable branch_hit : std_logic;
+    variable taken_branch : unsigned(ADDR_WIDTH-1 downto 0);
     variable mem_stall : std_logic;
   begin
     if rising_edge(clk) then
@@ -528,6 +548,8 @@ begin
       if mem_stall = '0' then
         if r.state = "000" then
           instruction := bus_in.i;
+        elsif r.state(1 downto 0) = "10" or r.state(1 downto 0) = "11" then
+          instruction := NOP;
         else
           instruction := r.f.i;
         end if;
@@ -538,53 +560,40 @@ begin
         write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o),
                    unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
 
-        execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e, data_hazard);
+        execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e,
+                branch_hit, taken_branch, data_hazard);
         decode(instruction, r.f.pc, gpreg, fpreg, v_wd, v.d);
 
-        control_hazard := r.e.branching;
+        v.pc := r.pc+1;
+        v.f.pc := r.pc;
+        v.f.i := (others => '-');
 
-        v.state(1) := control_hazard;
-        if control_hazard = '0' then
-          v.state(0) := data_hazard;
-        else
-          v.state(0) := '0';
-        end if;
-
-        -- fetch
-        if control_hazard = '0' then
-          if data_hazard = '0' then
-            v.pc := r.pc+1;
-            v.f.pc := r.pc;
-            v.f.i := (others => '-');
-          else -- data_hazard = '1'
-            if r.state(0) = '0' then
-              v.f.i := bus_in.i;
-            end if;
+        if data_hazard = '1' then -- data hazard
+          v.state(1 downto 0) := "01";
+          v.pc := r.pc;
+          v.f.pc := r.f.pc;
+          v.f.i := instruction;
+          v.d := r.d;
+          v.e := default_e;
+        elsif branch_hit = '1' and v.d.br = "11" then -- taken branch
+          v.state(1 downto 0) := "10";
+          v.pc := v.d.target;
+          v.f.pc := (others => '-');
+        elsif branch_hit = '1' and v.d.br = "01" then -- not taken branch
+          v.state(1 downto 0) := "00";
+        elsif branch_hit = '1' and v.d.br = "00" then  -- without any hazard
+          v.state(1 downto 0) := "00";
+        elsif branch_hit = '0' then -- branch prediction failed
+          v.state(1 downto 0) := "11";
+          if r.d.br(1) = '1' then -- predicted as taken
+            v.pc := r.d.pc+1;
+          else -- predicted as not taken
+            v.pc := taken_branch;
           end if;
-        else -- control_hazard = '1'
-          v.pc := alu_o(ADDR_WIDTH-1 downto 0);
           v.f.pc := (others => '-');
           v.f.i := (others => '-');
-        end if;
-
-        --decode
-        if control_hazard = '0' and r.state(1) = '0' then
-          if data_hazard = '1' then
-            v.d := r.d;
-          end if;
-        else
           v.d := default_d;
         end if;
-
-        --execute
-        if control_hazard = '0' and r.state(1) = '0' then
-          if data_hazard = '1' then
-            v.e := default_e;
-          end if;
-        else
-          v.e := default_e;
-        end if;
-        --memory
 
         -- write
         if v_wd.f = '0' then
