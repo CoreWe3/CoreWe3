@@ -24,12 +24,24 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 		}
 		return (unsigned int)(labels[str] - (int)line);
 	}else{
+		union{
+			unsigned int u;
+			float f;
+		} x;
+
 		try{
-			return (unsigned int)stoul(str, nullptr, 0);
-		}catch(...){
+			if(str.compare(0,2,"0x") == 0)
+				x.u = (unsigned int)stoul(str,nullptr,0);
+			else{
+				istringstream strm(str);
+				strm >> x.f;
+			}
+		}
+		catch(...){
 			cerr << "Invalid Argument :" << str << endl;
 			exit(1);
 		}
+		return x.u;
 	}
 }
 
@@ -201,7 +213,6 @@ int main(int argc, char* argv[]){
 				}
 			// XXXX x0 rx
 			case LD:
-			case ST:
 			case FTOI:
 			case ADD:
 			case SUB:
@@ -240,7 +251,7 @@ int main(int argc, char* argv[]){
 			it++;
 		}
 	}
-	
+
 
 	//Make Assembly
 	list<uint32_t> results;
@@ -295,6 +306,7 @@ int main(int argc, char* argv[]){
 				// 2 regs
 			case ITOF:
 			case FTOI:
+			case FINV:
 			case FSQRT:
 			case FABS:
 				fm.A.op = ISA::name2isa(el[0]);
@@ -333,7 +345,7 @@ int main(int argc, char* argv[]){
 				results.push_back(fm.data);
 				line++;
 				break;
-			
+
 			case FLDI:
 				{
 					fm.L.op = ISA::name2isa(el[0]);
@@ -357,7 +369,6 @@ int main(int argc, char* argv[]){
 			case FADD:
 			case FSUB:
 			case FMUL:
-			case FDIV:
 				fm.A.op = ISA::name2isa(el[0]);
 				fm.A.ra = ISA::name2reg(el[1]);
 				fm.A.rb = ISA::name2reg(el[2]);

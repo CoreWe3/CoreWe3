@@ -118,6 +118,7 @@ int main(int argc, char* argv[]){
 				break;
 
 				// 2 freg
+			case FINV:
 			case FSQRT:
 			case FABS:
 				str += ISA::isa2name(fm.A.op);
@@ -191,7 +192,6 @@ int main(int argc, char* argv[]){
 			case FADD:
 			case FSUB:
 			case FMUL:
-			case FDIV:
 				str += ISA::isa2name(fm.A.op);
 				str += "\t";
 				str += ISA::freg2name(fm.A.ra);
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]){
 		}
 		results.push_back(str);
 	}
-	
+
 	//Output Assembly File
 	ostream *dout = &cout;
 	ofstream fout;
@@ -225,4 +225,3 @@ int main(int argc, char* argv[]){
 
 	return 0;
 }
-

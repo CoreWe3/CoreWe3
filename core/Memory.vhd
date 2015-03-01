@@ -8,14 +8,14 @@ entity Memory is
   generic(
     wtime : std_logic_vector(15 downto 0) := x"1ADB");
   port (
-    clk   : in    std_logic;
-    RS_RX : in    std_logic;
-    RS_TX : out   std_logic;
-    ZD    : inout std_logic_vector(31 downto 0);
-    ZA    : out   std_logic_vector(19 downto 0);
-    XWA   : out   std_logic;
-    mem_i : in    mem_in_t;
-    mem_o : out   mem_out_t);
+    clk     : in    std_logic;
+    RS_RX   : in    std_logic;
+    RS_TX   : out   std_logic;
+    ZD      : inout std_logic_vector(31 downto 0);
+    ZA      : out   std_logic_vector(19 downto 0);
+    XWA     : out   std_logic;
+    bus_out : in    bus_out_t;
+    bus_in  : out   bus_in_t);
 end Memory;
 
 architecture Memory_arch of Memory is
@@ -24,44 +24,42 @@ architecture Memory_arch of Memory is
     generic(
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
-      clk   : in    std_logic;
-      RS_RX : in    std_logic;
-      RS_TX : out   std_logic;
-      mem_i : in    mem_in_t;
-      mem_o : out   mem_out_t);
+      clk     : in  std_logic;
+      RS_RX   : in  std_logic;
+      RS_TX   : out std_logic;
+      request : in  memory_request_t;
+      reply   : out memory_reply_t);
   end component;
 
   component CodeSegmentRAM is
-    generic (
-      file_name : string := "file/bootloader.b");
     port (
-      clk : in std_logic;
-      mem_i : in mem_in_t;
-      mem_o : out mem_out_t);
+      clk     : in  std_logic;
+      bus_out : in  bus_out_t;
+      bus_in  : out bus_in_t);
   end component;
 
   component MemoryCache is
-    generic (
-      CACHE_WIDTH : integer := 8);
     port (
-      clk : in std_logic;
-      ZD : inout std_logic_vector(31 downto 0);
-      ZA : out std_logic_vector(19 downto 0);
-      XWA : out std_logic;
-      mem_i : in mem_in_t;
-      mem_o : out mem_out_t);
+      clk     : in    std_logic;
+      ZD      : inout std_logic_vector(31 downto 0);
+      ZA      : out   std_logic_vector(19 downto 0);
+      XWA     : out   std_logic;
+      request : in    memory_request_t;
+      reply   : out   memory_reply_t);
   end component;
 
   type memory_t is record
     stall : std_logic;
     state : std_logic_vector(1 downto 0);
-    buf : mem_in_t;
+    buf : memory_request_t;
   end record;
 
-  signal r : memory_t;
+  signal r,s : memory_t;
   signal stall : std_logic;
-  signal mem_i_sel : mem_in_t;
-  signal io_mem_o, code_mem_o, cache_mem_o : mem_out_t;
+  signal request : memory_request_t;
+  signal io_reply, cache_reply : memory_reply_t;
+  signal code_bus_out : bus_out_t;
+  signal code_bus_in : bus_in_t;
 
 begin
 
@@ -69,68 +67,89 @@ begin
     clk => clk,
     RS_RX => RS_RX,
     RS_TX => RS_TX,
-    mem_i => mem_i_sel,
-    mem_o => io_mem_o);
+    request => request,
+    reply => io_reply);
 
   code_unit : CodeSegmentRAM port map (
     clk => clk,
-    mem_i => mem_i_sel,
-    mem_o => code_mem_o);
+    bus_out => code_bus_out,
+    bus_in => code_bus_in);
 
   cache_unit : MemoryCache port map (
     clk => clk,
     ZD => ZD,
     ZA => ZA,
     XWA => XWA,
-    mem_i => mem_i_sel,
-    mem_o => cache_mem_o);
+    request => request,
+    reply => cache_reply);
 
-  process(clk)
-    variable vmem_i : mem_in_t;
+  process(r, bus_out, io_reply, cache_reply, code_bus_in)
+    variable v :memory_t;
+    variable vreq : memory_request_t;
   begin
-    if rising_edge(clk) then
-      if r.stall = '0' then
-        vmem_i := mem_i;
-      else
-        vmem_i := r.buf;
-      end if;
-
-      if stall = '0' then
-        if vmem_i.m.go = '1' and vmem_i.m.we = '0' then
-          if vmem_i.m.a = x"FFFFF" then
-            r.state <= "01"; -- read io
-          elsif vmem_i.m.a(19 downto 12) = x"FF" and
-            vmem_i.m.a(11 downto 0) /= x"FFF" then
-            r.state <= "10"; -- read code(BRAM)
-          else
-            r.state <= "11"; -- read cache(SRAM)
-          end if;
-        else
-          r.state <= "00";
-        end if;
-
-      end if;
-
-      if stall = '1' and r.stall = '0' then
-        r.buf <= mem_i;
-      end if;
-
-      r.stall <= stall;
-
+    v := r;
+    if r.stall = '0' then
+      vreq := bus_out.m;
+    else
+      vreq := r.buf;
     end if;
+
+    case r.state is
+      when "01" =>
+        v.stall := io_reply.stall;
+      when "11" =>
+        v.stall := cache_reply.stall;
+      when others =>
+        v.stall := '0';
+    end case;
+
+    if v.stall = '0' then
+      if vreq.go = '1' then
+        if vreq.a = x"FFFFF" then
+          v.state := "01"; -- read io
+        elsif vreq.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
+          v.state := "10"; -- read code(BRAM)
+        else
+          v.state := "11"; -- read cache(SRAM)
+        end if;
+      else
+        v.state := "00";
+      end if;
+    end if;
+
+    if v.stall = '1' and r.stall = '0' then -- start stalling
+      v.buf := bus_out.m;
+    end if;
+
+    if v.stall = '0' and r.stall = '1' then -- finish stalling
+      vreq := r.buf;
+    else
+      vreq := bus_out.m;
+    end if;
+
+    request <= vreq;
+    bus_in.i <= code_bus_in.i;
+    code_bus_out <= (bus_out.pc, vreq);
+
+    case r.state is
+      when "01" =>
+        bus_in.m <= io_reply;
+      when "10" =>
+        bus_in.m <= code_bus_in.m;
+      when "11" =>
+        bus_in.m <= cache_reply;
+      when others =>
+        bus_in.m <= ((others => '-'), '0');
+    end case;
+
+    s <= v;
   end process;
 
-  stall <= io_mem_o.stall when r.state = "01" else
-           cache_mem_o.stall when r.state = "11" else
-           '0';
-  mem_i_sel.m <= r.buf.m when stall = '0' and r.stall = '1' else
-                 mem_i.m;
-  mem_i_sel.pc <= mem_i.pc;
-  mem_o.i <= code_mem_o.i;
-  mem_o.d <= io_mem_o.d when r.state = "01" else
-             code_mem_o.d when r.state = "10" else
-             cache_mem_o.d when r.state = "11" else
-             (others => '-');
-  mem_o.stall <= stall;
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      r <= s;
+    end if;
+  end process;
 
 end Memory_arch;
