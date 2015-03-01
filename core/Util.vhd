@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 package Util is
   constant ADDR_WIDTH : integer := 13;
   constant CACHE_WIDTH : integer := 8;
+  constant FIFO_WIDTH : integer := 10;
   constant BOOTLOADER: string := "file/bootloader.b";
   constant ones : unsigned(31 downto 0) := (others => '1');
 
@@ -38,6 +39,8 @@ package Util is
   constant RET   : std_logic_vector(5 downto 0) := "011011";
 
   constant EOF   : std_logic_vector(5 downto 0) := "111111";
+
+  constant NOP   : std_logic_vector(31 downto 0) := ADD & "00" & x"000000";
 
   type memory_reply_t is record
     d : unsigned(31 downto 0);
@@ -135,7 +138,7 @@ package Util is
 
   constant default_f : fetch_t := (
     pc => (others => '-'),
-    i => ADD & "00" & x"000000");
+    i => NOP);
 
   type decode_t is record
     pc    : unsigned(ADDR_WIDTH-1 downto 0);
@@ -144,6 +147,8 @@ package Util is
     d2    : read_data_t;
     dest  : unsigned(4 downto 0);
     imm   : unsigned(31 downto 0);
+    br    : std_logic_vector(1 downto 0); -- br(1) taken, br(0) branch
+    target: unsigned(ADDR_WIDTH-1 downto 0);
   end record decode_t;
 
   constant default_d : decode_t := (
@@ -152,13 +157,14 @@ package Util is
     d1 => default_read_data,
     d2 => default_read_data,
     dest => (others => '0'),
-    imm => (others => '-'));
+    imm => (others => '-'),
+    br => "00",
+    target => (others => '-'));
 
   type execute_t is record
     op     : std_logic_vector(5 downto 0);
     pc     : unsigned(ADDR_WIDTH-1 downto 0);
     data   : unsigned(31 downto 0);
-    branching : std_logic;
     alu    : alu_in_t;
     fpu    : fpu_in_t;
     wd : write_data_t;
@@ -168,7 +174,6 @@ package Util is
     op => ADD,
     pc => (others => '-'),
     data => (others => '-'),
-    branching => '0',
     alu => default_alu,
     fpu => default_fpu_in,
     wd => default_write_data);
