@@ -1,4 +1,4 @@
-	ldi	r1	0xeefff
+	ldi	r1	0xeeffc
 	ldi	r3	10
 	jsub	:fib
 	st	r3	r0	-1

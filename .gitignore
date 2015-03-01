@@ -40,6 +40,4 @@ min-caml
 # Vim Backup File
 *.swp
 
-/core/work/
-/core/iseconfig/
 /core/ise/

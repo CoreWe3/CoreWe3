@@ -2,6 +2,78 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+entity leading_zero_counter is
+  port (
+    data : in unsigned(27 downto 0);
+    n : out unsigned(4 downto 0));
+  attribute priority_extract : string;
+  attribute priority_extract of leading_zero_counter :
+    entity is "force";
+end leading_zero_counter;
+
+architecture LZC_arch of leading_zero_counter is
+begin
+  n <= "00000" when data(27) = '1' else
+       "00001" when data(26) = '1' else
+       "00010" when data(25) = '1' else
+       "00011" when data(24) = '1' else
+       "00100" when data(23) = '1' else
+       "00101" when data(22) = '1' else
+       "00110" when data(21) = '1' else
+       "00111" when data(20) = '1' else
+       "01000" when data(19) = '1' else
+       "01001" when data(18) = '1' else
+       "01010" when data(17) = '1' else
+       "01011" when data(16) = '1' else
+       "01100" when data(15) = '1' else
+       "01101" when data(14) = '1' else
+       "01110" when data(13) = '1' else
+       "01111" when data(12) = '1' else
+       "10000" when data(11) = '1' else
+       "10001" when data(10) = '1' else
+       "10010" when data( 9) = '1' else
+       "10011" when data( 8) = '1' else
+       "10100" when data( 7) = '1' else
+       "10101" when data( 6) = '1' else
+       "10110" when data( 5) = '1' else
+       "10111" when data( 4) = '1' else
+       "11000" when data( 3) = '1' else
+       "11001";
+end LZC_arch;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity shift_right_round is
+  port (
+    d : in  unsigned(24 downto 0);
+    exp_dif  : in unsigned(7 downto 0);
+    o : out unsigned(27 downto 0));
+end entity;
+
+architecture shift_right_round_arch of shift_right_round is
+begin
+
+  process(d, exp_dif)
+    variable shift_r : unsigned(27 downto 0);
+    variable shift_l : unsigned(27 downto 0);
+  begin
+    shift_r := shift_right(d & "000", to_integer(exp_dif));
+    shift_l := shift_left(d & "000", to_integer(28 - exp_dif));
+    if shift_l = 0 then
+      o <= shift_r(27 downto 1) & "0";
+    else
+      o <= shift_r(27 downto 1) & "1";
+    end if;
+  end process;
+
+end shift_right_round_arch;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
 entity fadd is
   port (
     clk : in  std_logic;
@@ -11,7 +83,7 @@ entity fadd is
     o : out std_logic_vector(31 downto 0));
 end fadd;
 
-architecture blackbox of fadd is
+architecture fadd_arch of fadd is
   signal calc : std_logic; -- '0' -> add, '1' -> sub
   signal exp_0 : unsigned(7 downto 0);
   signal big_frac : unsigned(27 downto 0);
@@ -84,31 +156,35 @@ begin
       exp_dif_1 <= exp_dif_0;
 
       -- stage2
-      if calc = '0' then
+      if calc = '0' then -- the same sign (addition)
         frac_1 <= big_frac + sml_frac;
-      else
+      else -- different sign (subtraction)
         frac_1 <= big_frac - sml_frac;
       end if;
       sign_1 <= sign_0;
       exp_1 <= exp_0;
 
       -- stage3
-      if lead_zero > 26 then
+      if lead_zero >= 25 or exp_1+1 < lead_zero then -- underflow
         exp := (others => '0');
-      elsif exp_1 /= 255 then
+      elsif exp_1 /= 255 then -- normal
         exp := exp_1 - lead_zero + 1;
-      else
+      else -- overflow
         exp := exp_1;
       end if;
+
       frac_2 := shift_left(frac_1, to_integer(lead_zero));
       if frac_2(4 downto 3) = "00" or frac_2(4 downto 3) = "10" or
         frac_2(4 downto 0) = "01000" then
         frac := frac_2(26 downto 4);
+      elsif frac_2(26 downto 4) = "111" & x"fffff" then --rounding and carry
+        frac := (others => '0');
+        exp := exp+1;
       else
-        frac := frac_2(26 downto 4) + 1;
+        frac := frac_2(26 downto 4) + 1; -- rounding
       end if;
       o <= std_logic_vector(sign_1 & exp & frac);
     end if;
   end process;
 
-end blackbox;
+end fadd_arch;

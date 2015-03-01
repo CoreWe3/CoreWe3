@@ -228,6 +228,11 @@ int main(int argc, char* argv[]){
 				break;
 
 				// 2 freg
+			case FINV:
+				freg[fm.A.ra].r = FPU::inv(freg[fm.A.rb].r);
+				pc+=1;
+				break;
+
 			case FSQRT:
 				freg[fm.A.ra].r = FPU::sqrt(freg[fm.A.rb].r);
 				pc+=1;
@@ -254,13 +259,12 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-						else
-							input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 					}
 					else greg[fm.L.ra].r = ram[address];
 				}
@@ -310,13 +314,12 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
-						else
-							input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}
 					else freg[fm.L.ra].r = ram[address];
 				}
@@ -380,11 +383,6 @@ int main(int argc, char* argv[]){
 
 			case FMUL:
 				freg[fm.A.ra].r = FPU::mul(freg[fm.A.rb].r, freg[fm.A.rc].r);
-				pc+=1;
-				break;
-
-			case FDIV:
-				freg[fm.A.ra].r = FPU::div(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
 				break;
 

@@ -39,6 +39,7 @@ uint32_t fadd(uint32_t a, uint32_t b){
   uint32_t frac_2;
   uint32_t exp_, frac_;
 
+  //stage1
   calc = sign(a) ^ sign(b);
   if((a & 0x7fffffff) > (b & 0x7fffffff)){
     sign_0 = sign(a);
@@ -65,7 +66,7 @@ uint32_t fadd(uint32_t a, uint32_t b){
     }
   }
 
-
+  // stage2
   if(calc == 0){
     frac_1 = big_frac + sml_frac;
   }
@@ -75,7 +76,7 @@ uint32_t fadd(uint32_t a, uint32_t b){
 
   lead_zero = 0;
   tmp = (1 << 27);
-  while(tmp > 0){
+  while(tmp > (1 << 2)){
     if((tmp & frac_1) > 0) break;
     tmp >>= 1;
     lead_zero++;
@@ -84,8 +85,8 @@ uint32_t fadd(uint32_t a, uint32_t b){
   exp_1 = exp_0;
 
 
-
-  if(lead_zero > 26){
+  // stage3
+  if(lead_zero >= 25 || exp_1 + 0x00800000 < (lead_zero << 23)){
     exp_ = 0;
   }
   else if(exp_1 != 0x7f800000){
@@ -101,11 +102,17 @@ uint32_t fadd(uint32_t a, uint32_t b){
     frac_ = frac_2;
   }
   else{
-    frac_ = frac_2 + 0x10;
+    if((frac_2 & 0x07fffff0) == 0x07fffff0){
+      frac_ = 0;
+      exp_ += 0x00800000;
+    }
+    else{
+      frac_ = frac_2 + 0x10;
+    }
   }
 
-
-/*  printf("exp_dif   %08x\n", exp_dif);
+  /*
+  printf("exp_dif   %08x\n", exp_dif);
   printf("exp_0     %08x\n", exp_0);
   printf("big_frac  %08x\n", big_frac);
   printf("sml_frac  %08x\n", sml_frac);
