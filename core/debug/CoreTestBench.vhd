@@ -9,7 +9,7 @@ architecture CoreTestBench_arch of CoreTestBench is
 
   component Core is
     generic (
-      SIMULATE : boolean := true;
+      DEBUG : boolean := true;
       wtime : std_logic_vector(15 downto 0) := wtime);
     port (
       MCLK1  : in    std_logic;
@@ -44,7 +44,7 @@ architecture CoreTestBench_arch of CoreTestBench is
   component InputSimulator
     generic (
       wtime : std_logic_vector(15 downto 0) := wtime;
-      INPUT_FILE : string := "../../file/test0");
+      INPUT_FILE : string := "../../file/test");
     port (
       clk  : in  std_logic;
       RS_RX   : out std_logic);
