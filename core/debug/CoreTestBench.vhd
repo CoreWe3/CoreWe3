@@ -38,7 +38,8 @@ architecture CoreTestBench_arch of CoreTestBench is
       clk : in std_logic;
       ZD : inout std_logic_vector(31 downto 0);
       ZA : in std_logic_vector(19 downto 0);
-      XWA : in std_logic);
+      XWA : in std_logic;
+      ADVA : in std_logic);
   end component;
 
   component InputSimulator
@@ -66,6 +67,7 @@ architecture CoreTestBench_arch of CoreTestBench is
   signal ZD    : std_logic_vector(31 downto 0);
   signal ZA    : std_logic_vector(19 downto 0);
   signal XWA   : std_logic;
+  signal ADVA : std_logic;
 
   signal tb_d : std_logic_vector(31 downto 0);
 begin
@@ -84,7 +86,7 @@ begin
     XWA    => XWA  ,
     XZCKE  => open ,
     ZCLKMA => clk ,
-    ADVA   => open ,
+    ADVA   => ADVA ,
     XFT    => open ,
     XLBO   => open ,
     ZZA    => open );
@@ -93,7 +95,8 @@ begin
     clk => clk(0),
     ZD  => ZD ,
     ZA  => ZA ,
-    XWA => XWA);
+    XWA => XWA,
+    ADVA => ADVA);
 
   input_unit : InputSimulator port map (
     clk => clk(0),
