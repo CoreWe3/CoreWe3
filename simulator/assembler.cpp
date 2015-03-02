@@ -30,7 +30,7 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 		} x;
 
 		try{
-			if(str.compare(0,2,"0x") == 0)
+			if(str.find(".") == string::npos)
 				x.u = (unsigned int)stoul(str,nullptr,0);
 			else{
 				istringstream strm(str);
