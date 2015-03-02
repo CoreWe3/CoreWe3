@@ -227,7 +227,7 @@ static void load_sld_file(const char* sld_file_name, BOOL conv_to_big_endian)
 int main()
 {
   /* load SLD data */
-  load_sld_file(NULL, TRUE);
+  load_sld_file(NULL, FALSE);
   
   unsigned i;
   for (i = 0; i < sld_n_words * 4; ++i)
