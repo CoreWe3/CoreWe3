@@ -62,6 +62,14 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
+  component fsqrt is
+    port (
+      clk : in std_logic;
+      stall : in std_logic;
+      i : in std_logic_vector(31 downto 0);
+      o : out std_logic_vector(31 downto 0));
+  end component;
+
   component fcmp is
     port (
       a : in std_logic_vector(31 downto 0);
@@ -449,6 +457,7 @@ architecture Control_arch of Control is
      fadd_o : in unsigned(31 downto 0);
      fmul_o : in unsigned(31 downto 0);
      finv_o : in unsigned(31 downto 0);
+     fsqrt_o : in unsigned(31 downto 0);
      w : out write_data_t) is
   begin
     w := mr.wd;
@@ -471,6 +480,9 @@ architecture Control_arch of Control is
       when F_INV =>
         w.d := finv_o;
         w.r := '1';
+      when F_SQRT =>
+        w.d := fsqrt_o;
+        w.r := '1';
       when others =>
     end case;
   end procedure;
@@ -484,6 +496,7 @@ architecture Control_arch of Control is
   signal fadd_o : std_logic_vector(31 downto 0);
   signal fmul_o : std_logic_vector(31 downto 0);
   signal finv_o : std_logic_vector(31 downto 0);
+  signal fsqrt_o : std_logic_vector(31 downto 0);
   signal fcmp_o : std_logic_vector(31 downto 0);
 
 begin
@@ -526,6 +539,12 @@ begin
     i => std_logic_vector(r.e.fpu.d1),
     o => finv_o);
 
+  fsqrt_unit : fsqrt port map (
+    clk => clk,
+    stall => bus_in.m.stall,
+    i => std_logic_vector(r.e.fpu.d1),
+    o => fsqrt_o);
+
   fcmp_unit : fcmp port map (
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
@@ -557,8 +576,8 @@ begin
         memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
         memory_wait(r.ma, v.mw);
         memory_read(r.mw, bus_in.m.d, v.mr);
-        write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o),
-                   unsigned(fadd_o), unsigned(fmul_o), unsigned(finv_o), v_wd);
+        write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o), unsigned(fadd_o),
+                   unsigned(fmul_o), unsigned(finv_o), unsigned(fsqrt_o), v_wd);
 
         execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e,
                 branch_hit, taken_branch, data_hazard);
