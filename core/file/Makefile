@@ -2,6 +2,7 @@ ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
 SIM = $(ROOT)/simulator/bin/simulator
 MINCAML = $(ROOT)/mincaml_compiler/min-caml
+BOOT = $(ROOT)/lib/asm/boot.s
 MLFILES = $(wildcard *.ml)
 ASFILES = $(wildcard *.s)
 
@@ -22,14 +23,18 @@ ASFILES = $(wildcard *.s)
 	hd $(@:=.slog)
 	cat $< eof > $@
 
-%.s:%.ml
+%.S:%.ml
 	#cd $(ROOT)/mincaml_compiler && ./to_cw3 && $(MAKE)
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
-	$(MINCAML) $(@:.s=)
+	$(MINCAML) $(@:.S=)
+	mv $(@:.S=.s) $@
+
+%.s: %.S
+	cat $(BOOT) $< > $@
 
 %: %.s
 
 clean:
-	rm -rf $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) \
+	rm -rf $(MLFILES:.ml=) $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) \
 	 $(ASFILES:.s=.o) $(ASFILES:.s=.b) $(ASFILES:.s=) $(ASFILES:.s=.slog) \
 	input output
