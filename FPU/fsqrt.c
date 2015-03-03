@@ -156,20 +156,22 @@ uint32_t fsqrt(uint32_t i){
   return ans;
 }
 
-uint32_t fsqrt0(uint32_t i){
+uint32_t fsqrt1(uint32_t i){
   uint32_t sign = 0;
-  uint32_t i_exp = downto(i,30,23);
   uint32_t is_odd = downto(i,23,23);
   uint32_t exp;
   uint32_t index;
   long long unsigned int yd;
-  uint32_t ydtemplow,y,ymant,d;
+  uint32_t ydtemplow;
   uint32_t mant;
   uint32_t ans;
+  uint32_t constant, grad, stub;
   if(tlb_flag == 0){
     init_tlb();
     tlb_flag = 1;
   }
+
+
   if(downto(i,30,0) == 0){
     return i;
   }
@@ -177,7 +179,7 @@ uint32_t fsqrt0(uint32_t i){
     return 0xffc00000;
   }
 
-  exp = (i_exp+127) >> 1;
+  exp = (downto(i,30,23)+127) >> 1;
 
   if(is_odd == 1){
     index = downto(i,22,15); // 8bit
@@ -186,19 +188,35 @@ uint32_t fsqrt0(uint32_t i){
   }
 
   yd = binarytoullint(tlb[index]);
-  ymant = yllui2uint(yd);
-  y = ymant;
+  constant = yllui2uint(yd);
   ydtemplow = lowllui2uint(yd);
-  d = (1 << 13) | downto(ydtemplow,12,0);
+  grad = (1 << 13) | downto(ydtemplow,12,0);
+
   if(is_odd == 1){
-    mant = y - ((d * ((1 << 15) - (downto(i,14,0)))) >> 15);
+    stub = ((grad * ((1 << 15) - (downto(i,14,0)))) >> 15);
+    mant = constant - stub;
   }else{
     if(downto(i,22,0) == (1 << 23) - 1){
       mant = downto(i,22,0);
     }else{
-      mant = y - ((d * ((1 << 14) - (downto(i,13,0)))) >> 14);
+      stub = ((grad * ((1 << 14) - (downto(i,13,0)))) >> 14);
+      mant = constant - stub;
     }
   }
+
+  /*
+  if(is_odd == 1){
+    stub = (grad * downto(i, 14, 0)) >> 15;
+    mant = constant + stub;
+  }else{
+    if(downto(i,22,0) == (1 << 23) - 1){
+      mant = downto(i,22,0);
+    }else{
+      stub = (grad * downto(i, 13, 0)) >> 14;
+      mant = constant + stub;
+    }
+  }
+  */
   ans = make_ans(sign,exp,downto(mant,22,0));
   return ans;
 }
@@ -211,21 +229,20 @@ int main(){
   } a, b, c;
 
 
-  for(a.u=0; a.u<0x7f800000; a.u++){
-    if(a.f < 1e-7 || 1e7 < a.f) continue;
+  for(a.u=0; a.u<0xffffffff; a.u++){
     b.u = fsqrt(a.u);
-    c.u = fsqrt0(a.u);
-    if(abs(b.i - c.i) > 0){
+    c.u = fsqrt1(a.u);
+    if(b.u != c.u){
       printf("%08x\t%08x\t%08x\n",a.u,b.u,c.u);
       break;
     }
   }
 
-
+  /*
   a.u = 0x3fffffff;
   b.u = fsqrt(a.u);
   c.f = sqrtf(a.f);
   printf("%08x\t%08x\t%08x\n",a.u,b.u,c.u);
-
+  */
   return 0;
 }
