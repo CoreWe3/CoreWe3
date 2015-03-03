@@ -164,7 +164,6 @@ uint32_t fsqrt1(uint32_t i){
   long long unsigned int yd;
   uint32_t ydtemplow;
   uint32_t mant;
-  uint32_t ans;
   uint32_t constant, grad, stub;
   if(tlb_flag == 0){
     init_tlb();
@@ -197,6 +196,7 @@ uint32_t fsqrt1(uint32_t i){
     mant = constant - stub;
   }else{
     if(downto(i,22,0) == (1 << 23) - 1){
+      stub = 0;
       mant = downto(i,22,0);
     }else{
       stub = ((grad * ((1 << 14) - (downto(i,13,0)))) >> 14);
@@ -205,44 +205,10 @@ uint32_t fsqrt1(uint32_t i){
   }
 
   /*
-  if(is_odd == 1){
-    stub = (grad * downto(i, 14, 0)) >> 15;
-    mant = constant + stub;
-  }else{
-    if(downto(i,22,0) == (1 << 23) - 1){
-      mant = downto(i,22,0);
-    }else{
-      stub = (grad * downto(i, 13, 0)) >> 14;
-      mant = constant + stub;
-    }
-  }
+  printf("index %x\n", index);
+  printf("const %x\n", constant);
+  printf("stub %x\n", stub);
   */
-  ans = make_ans(sign,exp,downto(mant,22,0));
-  return ans;
-}
 
-int main(){
-  union {
-    uint32_t u;
-    float f;
-    int32_t i;
-  } a, b, c;
-
-
-  for(a.u=0; a.u<0xffffffff; a.u++){
-    b.u = fsqrt(a.u);
-    c.u = fsqrt1(a.u);
-    if(b.u != c.u){
-      printf("%08x\t%08x\t%08x\n",a.u,b.u,c.u);
-      break;
-    }
-  }
-
-  /*
-  a.u = 0x3fffffff;
-  b.u = fsqrt(a.u);
-  c.f = sqrtf(a.f);
-  printf("%08x\t%08x\t%08x\n",a.u,b.u,c.u);
-  */
-  return 0;
+  return make_ans(sign,exp,downto(mant,22,0));
 }

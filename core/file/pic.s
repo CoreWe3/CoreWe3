@@ -46,7 +46,7 @@
 	j	0
 :pixel
 	fmul	f5	f3	f19	# x
-	finv	f7	f5	# 1/x
+	fsqrt	f7	f5	# root(x)
 	fmul	f7	f7	f20
 	fcmp	f4	f7
 	jlt	:white
