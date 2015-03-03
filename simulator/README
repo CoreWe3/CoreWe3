@@ -1,11 +1,14 @@
 #Assemble
-./assembler [Binary File] < [Input Assembly]
+./assembler -f [Binary File] (-i [Input Assembly])
 
 #Disassemble
-./disassembler [Binary File] > [Output File]
+./disassembler -f [Binary File] (-o [Output Assembly])
 
-#Simulate
-./simulator [Source Binary File] (-i [Input Binary File]) (-o [Output Binary File]) (-l [Insutruction Limit]) (-b [Break Point]) (-r [RAM Dump Data]) (-s [RAM Initial Data])
+##Simulate
+./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
+
+##Simulate(native)
+./simulator_n -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
 
 #View Binary File
 ./hex.sh [Binary File]

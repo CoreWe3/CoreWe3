@@ -1,46 +1,35 @@
 ROOT = $(shell git rev-parse --show-toplevel)
-ASM = $(ROOT)/simulator/bin/assembler
-SIMULATOR = $(ROOT)/simulator/bin/simulator
-SIM = ~/cpu_core/core_main_tb
-WORK = $(ROOT)/simulator/bin
-BUILDER = $(ROOT)/lib/cw3c.sh
-COMPILER = $(ROOT)/compiler/min-caml
-RAYTR = $(ROOT)/raytracer-ocaml
-ADDRWIDTH = 14
-MLSOURCE = newton.ml mandelbrot.ml graph.ml
-SSOURCE = fib.s fib_rec.s loopback.s stack_test.s memtest.s aaa.s
-TARGET = $(SSOURCE:.s=) $(MLSOURCE:.ml=) min-rt2
-DEBUG = $(TARGET:=.bin)
-
-all: $(TARGET) $(DEBUG)
-
-min-rt2: min-rt2.ml
-	$(BUILDER) min-rt2.ml --boot $(ROOT)/lib/asm/rt_boot.s && \
-	cp $(WORK)/$@ . && \
-	cat eof >> $@
-
-min-rt2.ml:
-	$(RAYTR)/preprocess.py $(RAYTR)/min-rt.ml > min-rt2.ml
-
-%.s: %.ml $(COMPILER)
-	$(BUILDER) $< && \
-	cp $(WORK)/_$@ $@
-
-%.bin: %
-	./textbin.py $(ADDRWIDTH) < $< > $@ && \
-	cp $@ $(SIM)
-
-%: %.s $(ASM)
-	$(ASM) $@ < $< && \
-	cat eof >> $@
-
-$(COMPILER):
-	cd $(ROOT)/mincaml_compiler && $(MAKE)
-
-$(ASM):
-	cd $(ROOT)/simulator && $(MAKE)
+AS = $(ROOT)/simulator/bin/assembler
+SIM = $(ROOT)/simulator/bin/simulator
+MINCAML = $(ROOT)/mincaml_compiler/min-caml
+MLFILES = $(wildcard *.ml)
+ASFILES = $(wildcard *.s)
 
 .PHONY: all clean
 
+%.o: %.s
+	cd $(ROOT)/simulator && $(MAKE)
+	$(AS) -f $@ -i $<
+
+%.b: %.o
+	python convert01.py < $< > $@
+	#./hex.sh < $<
+
+%: %.o
+	cd $(ROOT)/simulator && $(MAKE)
+	touch input
+	$(SIM) -f $< -o $(@:=.slog) -i input
+	hd $(@:=.slog)
+	cat $< eof > $@
+
+%.s:%.ml
+	#cd $(ROOT)/mincaml_compiler && ./to_cw3 && $(MAKE)
+	cd $(ROOT)/mincaml_compiler && $(MAKE)
+	$(MINCAML) $(@:.s=)
+
+%: %.s
+
 clean:
-	rm -rf $(DEBUG) $(TARGET) $(MLSOURCE:.ml=.s)
+	rm -rf $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) \
+	 $(ASFILES:.s=.o) $(ASFILES:.s=.b) $(ASFILES:.s=) $(ASFILES:.s=.slog) \
+	input output

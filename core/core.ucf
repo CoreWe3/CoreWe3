@@ -219,7 +219,7 @@ NET RS_RX		   IOSTANDARD = LVTTL;
 # Clock constraints                                                        #
 ############################################################################
 NET "MCLK1" TNM_NET = MCLK1;
-TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;
+TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.50 ns HIGH 50%;
 
 ###############################################################################
 # Define multicycle paths - these paths may take longer because additional
@@ -227,7 +227,7 @@ TIMESPEC TS_MCLK1 = PERIOD "MCLK1" 14.25 ns HIGH 50%;
 ###############################################################################
 
 #timing constraint
-OFFSET = IN 3.0 ns VALID 4.3 ns BEFORE "MCLK1" RISING;
+# OFFSET = IN 5.5 ns VALID 7.0 ns BEFORE  RISING;
 # NET 'ZD[*]' OFFSET = IN 3.0 ns VALID 4.3 ns BEFORE "MCLK1" RISING;
 # OFFSET = OUT 5.0 ns AFTER "MCLK1" RISING;
 NET RS_TX TIG;

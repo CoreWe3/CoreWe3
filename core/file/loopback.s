@@ -1,4 +1,6 @@
-:main
-LD	r1	r0	0xffff
-ST	r1	r0	0xffff
-BEQ	r0	r0	:main
+:loop
+	ld	r3	r0	-1
+	st	r3	r0	0xffff0
+	ld	r4	r0	0xffff0
+	st	r4	r0	-1
+	j	:loop
