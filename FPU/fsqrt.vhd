@@ -63,15 +63,14 @@ architecture blackbox of fsqrt is
   signal addr : unsigned(9 downto 0);
 
   signal ui : unsigned(31 downto 0);
-  signal flag : unsigned(1 downto 0);
-  signal zero_flag : unsigned(1 downto 0);
-  signal exp_flag : unsigned(0 downto 0);
+  signal flag1 : unsigned(1 downto 0);
   signal data : unsigned(35 downto 0);
 
-  signal flagtemp : unsigned(1 downto 0);
-  signal frac : unsigned(22 downto 0);
+  signal frag2 : unsigned(1 downto 0);
   signal uii: unsigned(31 downto 0);
   signal exp : unsigned(7 downto 0);
+  signal const : unsigned(22 downto 0);
+  signal stub : unsigned(13 downto 0);
 begin
 
   table : fsqrt_table port map(
@@ -81,97 +80,61 @@ begin
     data => data);
 
   addr <= unsigned("00" & i(22 downto 15)) when i(23) = '1' else
-          (256 + unsigned("0" & i(22 downto 14)));
+          (unsigned("0" & i(22 downto 14))+256);
 
   process(clk)
-    variable y : unsigned(23 downto 0);
-    variable d : unsigned(13 downto 0);
-    variable uiv : unsigned(31 downto 0);
-    variable expv : unsigned(7 downto 0);
-    variable o_mant : unsigned(28 downto 0);
-    variable e_mant : unsigned(27 downto 0);
-    variable mant : unsigned(23 downto 0);
-    variable otemp : unsigned(31 downto 0);
+    variable expv : unsigned(8 downto 0);
+    variable stub_tmp : unsigned(28 downto 0);
+    variable grad : unsigned(13 downto 0);
+    variable frac : unsigned(22 downto 0);
   begin
 
     if rising_edge(clk) and stall = '0' then
       -- stage 1
       ui <= unsigned(i);
       if i(30 downto 0) = (x"0000000" & "000") then  -- i = 0
-        flag <= "00";
+        flag1 <= "00";
       elsif i(31) = '1' then -- i < 0
-        flag <= "11";
+        flag1 <= "11";
       elsif i(23) = '1' then -- exponent is odd
-        flag <= "01";
+        flag1 <= "01";
       else
-        flag <= "10"; -- exponent is even
+        flag1 <= "10"; -- exponent is even
       end if;
-      -- if i(30 downto 23) >= 127 then
-      if (i(30) = '1' or i(30 downto 23) = "01111111") then -- exponent >= 127
-        exp_flag <= "1";
-      else                                               --exponent < 127
-        exp_flag <= "0";
-      end if;
-      if i(14 downto 0) = (x"000" & "000") then       -- gradient is 0
-        zero_flag <= "00";
-      elsif i(13 downto 0) = (x"000" & "00") then    -- gradient is
-        zero_flag <= "10";
-      elsif i(22 downto 0) = ("111" & x"fffff") then --
-        zero_flag <= "11";
-      else
-        zero_flag <= "01";
-      end if;
-
       -- stage 2
 
-      flagtemp <= flag;
-      y := "1" & (data(35 downto 13));
-      d := "1" & (data(12 downto 0));
-      uiv := ui;
-      expv := ui(30 downto 23);
-      if exp_flag = "1" then
-        expv := expv - 127;
-        expv := shift_right(expv,1);
-        expv := expv + 127;
-      else
-        expv := 128 - expv;
-        expv := shift_right(expv,1);
-        expv := 127 - expv;
-      end if;
-      if flag = "01" then
-        if zero_flag = "00" then
-          --if zero_flag = "01" then
-          mant := y - d;
-          frac <= mant(22 downto 0);
-        else
-          o_mant := y - shift_right(d * (32768 - uiv(14 downto 0)),15);
-          frac <= o_mant(22 downto 0);
-        end if;
-      else
-        if zero_flag = "00" or zero_flag = "10" then
-          -- if zero_flag = "10" then
-          mant := y - d;
-          frac <= mant(22 downto 0);
-        elsif zero_flag = "11" then
-          frac <= uiv(22 downto 0);
-        else
-          e_mant := y - shift_right(d * (16384 - uiv(13 downto 0)),14);
-          frac <= e_mant(22 downto 0);
-        end if;
-      end if;
-      exp <= expv;
+      flag2 <= flag1;
+      const <= data(35 downto 13);
+      grad := "1" & (data(12 downto 0));
+      expv := ('0' & i(30 downto 23)) + 127;
+      exp <= expv(8 downto 1);
       uii <= ui;
+
+      if flag1 = "01" then
+        stub_tmp := grad * (32768 - uiv(14 downto 0)); -- 14 * 15;
+        stub <= stub_tmp(28 downto 15);
+      else
+        stub_tmp := grad * (16384 - uiv(13 downto 0)); -- 14 * 14;
+        stub <= stub_tmp(27 downto 14);
+      end if;
 
       -- stage 3
 
-      if flagtemp = "00" then
-        otemp := uii;
-      elsif flagtemp = "11" then
-        otemp := x"ffc00000";
-      else
-        otemp := "0" & exp & frac;
+      if flag2 = "00" then -- zero
+        o <= (others => '0');
+      elsif flag2 = "11" then -- minus
+        o <= x"ffc00000";
+      elsif flag = "01" then -- odd
+        frac := const - stub;
+        o <= std_logic_vector('0' & exp & frac);
+      else -- even
+        if uii(22 downto 0) = "111" & x"fffff" then
+          frac := (others => '1');
+        else
+          frac := const - stub;
+        end if;
+        o <= std_logic_vector('0' & exp & frac);
       end if;
-      o <= std_logic_vector(otemp);
 
     end if;
   end process;
