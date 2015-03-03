@@ -66,11 +66,11 @@ architecture blackbox of fsqrt is
   signal flag1 : unsigned(1 downto 0);
   signal data : unsigned(35 downto 0);
 
-  signal frag2 : unsigned(1 downto 0);
+  signal flag2 : unsigned(1 downto 0);
   signal uii: unsigned(31 downto 0);
   signal exp : unsigned(7 downto 0);
   signal const : unsigned(22 downto 0);
-  signal stub : unsigned(13 downto 0);
+  signal stub : unsigned(14 downto 0);
 begin
 
   table : fsqrt_table port map(
@@ -84,7 +84,7 @@ begin
 
   process(clk)
     variable expv : unsigned(8 downto 0);
-    variable stub_tmp : unsigned(28 downto 0);
+    variable stub_tmp : unsigned(29 downto 0);
     variable grad : unsigned(13 downto 0);
     variable frac : unsigned(22 downto 0);
   begin
@@ -106,16 +106,18 @@ begin
       flag2 <= flag1;
       const <= data(35 downto 13);
       grad := "1" & (data(12 downto 0));
-      expv := ('0' & i(30 downto 23)) + 127;
+      expv := ('0' & ui(30 downto 23)) + 127;
       exp <= expv(8 downto 1);
       uii <= ui;
 
       if flag1 = "01" then
-        stub_tmp := grad * (32768 - uiv(14 downto 0)); -- 14 * 15;
-        stub <= stub_tmp(28 downto 15);
+        stub_tmp := grad * (32768 - ('0' & ui(14 downto 0)));
+        -- 14 * 16;
+        stub <= stub_tmp(29 downto 15);
       else
-        stub_tmp := grad * (16384 - uiv(13 downto 0)); -- 14 * 14;
-        stub <= stub_tmp(27 downto 14);
+        stub_tmp := grad * (16384 - ('0' & ui(13 downto 0)));
+        -- 14 * 15;
+        stub <= stub_tmp(28 downto 14);
       end if;
 
       -- stage 3
@@ -124,7 +126,7 @@ begin
         o <= (others => '0');
       elsif flag2 = "11" then -- minus
         o <= x"ffc00000";
-      elsif flag = "01" then -- odd
+      elsif flag2 = "01" then -- odd
         frac := const - stub;
         o <= std_logic_vector('0' & exp & frac);
       else -- even
