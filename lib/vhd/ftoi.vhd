@@ -50,10 +50,10 @@ begin
 		when "10011101" =>
 			ans :=  "01" & x(22 downto 0) & "0000000";
 			s := '0';
-		when "10010100" =>
+		when "10010101" =>
 			ans := "0000000001" & x(22 downto 1);
 			s :=x(0);
-		when "10010101" =>
+		when "10010100" =>
 			ans := "00000000001" & x(22 downto 2);
 			s :=x(1);
 		when "10010011" =>
@@ -113,12 +113,15 @@ begin
 		when "10000001" =>
 			ans := "000000000000000000000000000001" & x(22 downto 21);
 			s :=x(20);
-		when "01111111" =>
+		when "10000000" =>
 			ans := "0000000000000000000000000000001" & x(22);
 			s :=x(21);
-		when "01111110" =>
+		when "01111111" =>
 			ans := "00000000000000000000000000000001";
 			s :=x(22);
+		when "01111110" =>
+			ans := "00000000000000000000000000000001";
+			s := '0';
 		when others =>
 			ans := "00000000000000000000000000000000";
 			s := '0';
@@ -130,12 +133,14 @@ begin
 end process;
 
 ftoi2:process(clk)
-variable ans2 : std_logic_vector(31 downto 0);
+variable ans2 : std_logic_vector(31 downto 0):="00000000000000000000000000000000";
 begin
 	
 	if rising_edge(clk) then
 	if sx='1' then
 		ans2:= ansx+1;
+	else
+		ans2:=ansx;
 	end if;
 
 	if x(31) = '1' then
