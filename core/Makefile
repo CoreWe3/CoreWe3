@@ -1,6 +1,4 @@
 SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
-TARGET = core.bit
-PRJ = core.prj
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
 CODE = file/pic
@@ -9,19 +7,12 @@ all: configure
 
 .PHONY: configure bit all clean
 
-configure: $(CODE) $(TARGET)
-	../file/fpga.sh -h -i $(CODE) -l $(notdir $(CODE:=.flog)) $(TARGET)
-	#../file/fpga.sh $(TARGET)
+configure: $(CODE) core.bit
+	../file/fpga.sh -h -i $(CODE) -l $(notdir $(CODE:=.flog)) core.bit
+	#../file/fpga.sh core.bit
 
-bit: $(TARGET)
-
-$(TARGET): $(SOURCE) $(SCRIPTS) $(PRJ) $(BOOTLOADER)
+core.bit: $(SOURCE) $(SCRIPTS) $(BOOTLOADER)
 	./ise_cmd.sh
-
-$(PRJ): $(SOURCE)
-	echo $(SOURCE) | \
-	awk 'BEGIN {RS = " "} ;\
-	{print "vhdl work " $$0}' > $@
 
 %.s:%.ml
 	cd file && $(MAKE) $(notdir $@)
@@ -30,7 +21,6 @@ $(PRJ): $(SOURCE)
 %.b:%.s
 	cd file && $(MAKE) $(notdir $@)
 %.o:%.s
-
 
 clean:
 	rm -rf _ngo/ _xmsgs/ *.xise *.bgn *.drc *.lso *.ncd *.bld *.ngc \
