@@ -1,7 +1,7 @@
 SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/pic
+CODE = file/mandelbrot
 
 all: configure
 
@@ -23,9 +23,5 @@ core.bit: $(SOURCE) $(SCRIPTS) $(BOOTLOADER)
 %.o:%.s
 
 clean:
-	rm -rf _ngo/ _xmsgs/ *.xise *.bgn *.drc *.lso *.ncd *.bld *.ngc \
-	*.xrpt *.ngd *.ngr *.pad *.par *.pcf *.ptwx \
-	*.srp *.twr *.twx *.unroutes *.xpi *.xwbt *.map *.mrp \
-	*.ngm *.csv *.xml *.html *.log xlnx_auto_0_xdb/ dump.xst/ \
-	*_map* *_pad* work/ "file graph" *.flog
+	rm -rf *.flog core.bit
 	cd file && $(MAKE) clean
