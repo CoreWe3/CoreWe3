@@ -6,22 +6,23 @@ BOOT = $(ROOT)/lib/asm/boot.s
 MLFILES = $(wildcard *.ml)
 ASFILES = $(wildcard *.s)
 
+all:
+
 .PHONY: all clean
 
-%.o: %.s
+%: %.s
 	cd $(ROOT)/simulator && $(MAKE)
 	$(AS) -f $@ -i $<
-
-%.b: %.o
-	python convert01.py < $< > $@
-	#./hex.sh < $<
-
-%: %.o
-	cd $(ROOT)/simulator && $(MAKE)
 	touch input
-	$(SIM) -f $< -o $(@:=.slog) -i input
+	$(SIM) -f $@ -o $(@:=.slog) -i ../../FPU/fadd.dat
 	hd $(@:=.slog)
-	cat $< eof > $@
+	cat eof >> $@
+
+%.b: %.s
+	cd $(ROOT)/simulator && $(MAKE)
+	$(AS) -f $(@:.b=) -i $<
+	python convert01.py < $(@:.b=) > $@
+	#./hex.sh < $<
 
 %.S:%.ml
 	#cd $(ROOT)/mincaml_compiler && ./to_cw3 && $(MAKE)
@@ -32,9 +33,6 @@ ASFILES = $(wildcard *.s)
 %.s: %.S
 	cat $(BOOT) $< > $@
 
-%: %.s
-
 clean:
 	rm -rf $(MLFILES:.ml=) $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) \
 	 $(ASFILES:.s=.o) $(ASFILES:.s=.b) $(ASFILES:.s=) $(ASFILES:.s=.slog) \
-	input output
