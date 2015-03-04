@@ -248,6 +248,32 @@ architecture Control_arch of Control is
     end case;
   end decode;
 
+  procedure redecode
+    (d_in : in decode_t;
+     gpreg : in regfile_t;
+     fpreg : in regfile_t;
+     w_d : in write_data_t;
+     d_out : out decode_t) is
+    variable r1, r2, f1, f2 : read_data_t;
+  begin
+     d_out := d_in;
+     get_gpreg(gpreg, d_in.d1.a, w_d, r1);
+     get_gpreg(gpreg, d_in.d2.a, w_d, r2);
+     get_fpreg(fpreg, d_in.d1.a, w_d, f1);
+     get_fpreg(fpreg, d_in.d2.a, w_d, f2);
+     if d_in.d1.f = '0' then
+       d_out.d1 := r1;
+     else
+       d_out.d1 := f1;
+     end if;
+     if d_in.d2.f = '0' then
+       d_out.d2 := r2;
+     else
+       d_out.d2 := f2;
+     end if;
+
+   end redecode;
+
   procedure execute
     (d : in decode_t;
      ma_d : in write_data_t;
@@ -592,7 +618,7 @@ begin
           v.pc := r.pc;
           v.f.pc := r.f.pc;
           v.f.i := instruction;
-          v.d := r.d;
+          redecode(r.d, gpreg, fpreg, v_wd, v.d);
           v.e := default_e;
         elsif branch_hit = '1' and v.d.br = "11" then -- taken branch
           v.state(1 downto 0) := "10";
