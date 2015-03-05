@@ -6,56 +6,8 @@
 #include <time.h>
 
 #define INFILE "new_sqrt_table.txt"
-#define TESTS 2000000
-#define IS_TIME_RAND 3 // 1ならsrand(time(NULL)) 0でも1でもなければsrand(IS_TIME_RAND)する
-//2 仮数部 all 1 だめ
 
-typedef union u2f{
-  uint32_t uuu;
-  float fff;
-}u2f;
-
-uint32_t binarytouint(char *bin){
-  uint32_t ret=0;
-  uint32_t temp=1u;
-  int i=0;
-  for(i=0;i<32;i++){
-    if(bin[31-i]=='1'){
-      ret += temp << i;
-    }
-  }
-  return ret;
-}
-
-char *uinttobinary(uint32_t ui){
-  char *ret=(char*)malloc(sizeof(char)*50);
-  int i;
-  for(i=0;i<32;i++){
-    if((ui >> i) & 1u){
-      ret[31-i]='1';
-    }
-    else
-      ret[31-i]='0';
-  }
-  ret[32]='\0';
-  return ret;
-}
-
-char *lluinttobinary(long long unsigned int ui){
-  char *ret=(char*)malloc(sizeof(char)*50);
-  int i;
-  for(i=0;i<36;i++){
-    if((ui >> i) & 1u){
-      ret[35-i]='1';
-    }
-    else
-      ret[35-i]='0';
-  }
-  ret[36]='\0';
-  return ret;
-}
-
-uint32_t downto(uint32_t i,int high,int low){
+static uint32_t downto(uint32_t i,int high,int low){
   int lsh = 31 - high;
   int rsh = lsh + low;
   i <<= lsh;
@@ -63,7 +15,7 @@ uint32_t downto(uint32_t i,int high,int low){
   return i;
 }
 
-long long unsigned int binarytoullint(char *bin){
+static long long unsigned int binarytoullint(char *bin){
   long long unsigned int ret=0;
   long long unsigned int temp=1;
   int i=0;
@@ -75,25 +27,25 @@ long long unsigned int binarytoullint(char *bin){
   return ret;
 }
 
-uint32_t yllui2uint(long long unsigned int i){
+static uint32_t yllui2uint(long long unsigned int i){
   return i>>13;
 }
 
-uint32_t lowllui2uint(long long unsigned int i){
+static uint32_t lowllui2uint(long long unsigned int i){
   i <<= 32;
   i >>= 32;
   return (uint32_t)i;
 }
 
-uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
+static uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
   sign <<= 31;
   exp <<= 23;
   return sign | exp | mant;
 }
 
-int tlb_flag = 0;
+static int tlb_flag = 0;
 static char tlb[2048][40];
-void init_tlb(){
+static void init_tlb(){
   int i = 0;
   FILE *fp = fopen(INFILE,"r");
   char str[40];
@@ -104,7 +56,7 @@ void init_tlb(){
   fclose(fp);
 }
 
-uint32_t fsqrt(uint32_t i){
+uint32_t fsqrt0(uint32_t i){
   uint32_t sign = 0;
   uint32_t i_exp = downto(i,30,23);
   uint32_t is_odd = downto(i,23,23);
@@ -211,4 +163,51 @@ uint32_t fsqrt1(uint32_t i){
   */
 
   return make_ans(sign,exp,downto(mant,22,0));
+}
+
+/*
+uint32_t fsqrt2(uint32_t i){
+*/
+uint32_t fsqrt(uint32_t i){
+  int index = (i >> 14) & 0x3ff; // 10bit
+  double a0 = 1 << 9 | index; // 10bit
+  double x0 = (index >> 9) ? (sqrt(2.0*a0) + sqrt(2.0*(a0+1.0))) * pow(2.0, -6.0) :
+    (sqrt(a0) + sqrt(a0+1.0)) * pow(2.0, -5.0); // 1.0 <= x0 < 2.0
+  double da = (index >> 9) ? pow(2.0, 12.0) / x0 : pow(2.0, 14.0) / (2.0 * x0);
+  double db = (index >> 9) ? x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 13.0) :
+    x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 14.0);
+  uint32_t ua = (uint32_t)da & 0x1fff; // 13 bit
+  uint32_t ub = (uint32_t)db & 0x7fffff; // 23bit
+  uint32_t iexp = (i >> 23) & 0xff; // 8bit
+  uint32_t ifrac = i & 0x3fff; //14bit
+  uint32_t oexp = iexp == 0 ? 0 : (iexp + 127) >> 1;
+  uint32_t ofrac = ((ua*ifrac) >> 13) + ub;
+
+  return oexp << 23 | ofrac;
+}
+
+void fsqrt2_table(){
+  int index; // 10bit
+  FILE *f = fopen("fsqrt_table.dat", "w");
+
+  for(index=0; index<=0x3ff; index++){
+    double a0 = 1 << 9 | index; // 10bit
+    double x0 = (index >> 9) ? (sqrt(2.0*a0) + sqrt(2.0*(a0+1.0))) * pow(2.0, -6.0) :
+      (sqrt(a0) + sqrt(a0+1.0)) * pow(2.0, -5.0); // 1.0 <= x0 < 2.0
+    double da = (index >> 9) ? pow(2.0, 13.0) / x0 : pow(2.0, 15.0) / (2.0 * x0);
+    double db = (index >> 9) ? x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 13.0) :
+      x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 14.0);
+    long long int ua = (long long int)da & 0x1fff; // 13 bit
+    long long int ub = (long long int)db & 0x7fffff; // 23bit
+    long long int data = ua << 23 | ub;
+    int digit;
+    char binary_str[37];
+    for(digit=0; digit<36; digit++){
+      binary_str[35-digit] = '0' + ((data >> digit) & 1);
+    }
+    binary_str[36] = '\0';
+    fprintf(f, "%s\n", binary_str);
+  }
+  fclose(f);
+
 }
