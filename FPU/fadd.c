@@ -1,5 +1,6 @@
 #include<stdint.h>
 #include<stdio.h>
+#include<stdlib.h>
 
 uint32_t sign(uint32_t a){
   return a & 0x80000000;
@@ -16,9 +17,9 @@ uint32_t frac(uint32_t a){
 uint32_t shift_right_round(uint32_t a, uint32_t n){
   uint32_t shift_r, shift_l;
 
-  if(n < 32) shift_r = a >> n;
+  if(n < 32) shift_r = (a << 3) >> n;
   else shift_r = 0;
-  if(28 - n < 32) shift_l = (a << (28 - n)) & 0xfffffff;
+  if(28 - n < 32) shift_l = ((a << 3) << (28 - n)) & 0xfffffff;
   else shift_l = 0;
 
   if(shift_l == 0){
@@ -35,6 +36,7 @@ uint32_t fadd(uint32_t a, uint32_t b){
   uint32_t calc;
   uint32_t sign_0, exp_dif, exp_0, big_frac, sml_frac;
   uint32_t sign_1, exp_1, frac_1;
+  uint32_t shift_right_in;
   uint32_t lead_zero, tmp;
   uint32_t frac_2;
   uint32_t exp_, frac_;
@@ -45,26 +47,27 @@ uint32_t fadd(uint32_t a, uint32_t b){
     sign_0 = sign(a);
     exp_dif = (expo(a) - expo(b)) >> 23;
     exp_0 = expo(a);
-    big_frac = (0x00800000 | frac(a)) << 3;
+    big_frac = ((1 << 23) | frac(a)) << 3;
     if(expo(b) != 0){
-      sml_frac = shift_right_round((0x00800000 | frac(b)) << 3, exp_dif);
+      shift_right_in = (1 << 23) | frac(b);
     }
     else{
-      sml_frac = 0;
+      shift_right_in = 0;
     }
   }
   else{
     sign_0 = sign(b);
     exp_dif = (expo(b) - expo(a)) >> 23;
     exp_0 = expo(b);
-    big_frac = (0x00800000 | frac(b)) << 3;
+    big_frac = ((1 << 23) | frac(b)) << 3;
     if(expo(a) != 0){
-      sml_frac = shift_right_round((0x00800000 | frac(a)) << 3, exp_dif);
+      shift_right_in = (1 << 23) | frac(a);
     }
     else{
-      sml_frac = 0;
+      shift_right_in = 0;
     }
   }
+  sml_frac = shift_right_round(shift_right_in, exp_dif);
 
   // stage2
   if(calc == 0){
@@ -86,25 +89,25 @@ uint32_t fadd(uint32_t a, uint32_t b){
 
 
   // stage3
-  if(lead_zero >= 25 || exp_1 + 0x00800000 < (lead_zero << 23)){
+  if(lead_zero >= 25 || (exp_1 >> 23) + 1 < lead_zero){
     exp_ = 0;
   }
   else if(exp_1 != 0x7f800000){
-    exp_ = exp_1 - (lead_zero << 23) + 0x00800000;
+    exp_ = exp_1 - (lead_zero << 23) + (1 << 23);
   }
   else{
     exp_ = exp_1;
   }
 
   frac_2 = (frac_1 << lead_zero);
-  if((frac_2 & 0x18) == 0 | (frac_2 & 0x1f) == 0x8 |
+  if((frac_2 & 0x18) == 0 || (frac_2 & 0x1f) == 0x8 ||
      (frac_2 & 0x18) == 0x10){
     frac_ = frac_2;
   }
   else{
     if((frac_2 & 0x07fffff0) == 0x07fffff0){
       frac_ = 0;
-      exp_ += 0x00800000;
+      exp_ += 1 << 23;
     }
     else{
       frac_ = frac_2 + 0x10;
@@ -121,6 +124,7 @@ uint32_t fadd(uint32_t a, uint32_t b){
   printf("exp_      %08x\n", exp_);
   printf("frac_2    %08x\n", frac_2);
   printf("frac_     %08x\n", frac_);
-*/
-  return sign_1 | exp_ | frac(frac_ >> 4);
+  */
+
+  return sign_1 | expo(exp_) | frac(frac_ >> 4);
 }
