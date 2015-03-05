@@ -2,61 +2,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define N 2048
-#define LOOPS 2000000
-#define SRAND 5  // must check 5 LOOPS 2000000
-#define KAI 12
+#include <math.h>
 
 #define INFILE "finv_table2048.txt"
 
-typedef union u2f{
-  uint32_t utemp;
-  float ftemp;
-}u2f;
+static char finv_table[2048][40];
+static int read_finv_table = 0;
 
-uint32_t binarytouint(char *bin){
-  uint32_t ret=0;
-  uint32_t temp=1u;
-  int i=0;
-  for(i=0;i<32;i++){
-    if(bin[31-i]=='1'){
-      ret += temp << i;
-    }
-  }
-  return ret;
-}
-
-char *uinttobinary(uint32_t ui){
-  char *ret=(char*)malloc(sizeof(char)*50);
-  int i;
-  for(i=0;i<32;i++){
-    if((ui >> i) & 1u){
-      ret[31-i]='1';
-    }
-    else
-      ret[31-i]='0';
-  }
-  ret[32]='\0';
-  return ret;
-}
-
-char *lluinttobinary(long long unsigned int ui){
-  char *ret=(char*)malloc(sizeof(char)*50);
-  int i;
-  for(i=0;i<36;i++){
-    if((ui >> i) & 1u){
-      ret[35-i]='1';
-    }
-    else
-      ret[35-i]='0';
-  }
-  ret[36]='\0';
-  return ret;
-}
-
-
-uint32_t downto(uint32_t i,int high,int low){
+static uint32_t downto(uint32_t i,int high,int low){
   int lsh = 31 - high;
   int rsh = lsh + low;
   i <<= lsh;
@@ -64,9 +17,7 @@ uint32_t downto(uint32_t i,int high,int low){
   return i;
 }
 
-static char tlb[2048][40];
-
-void init_tlb(){
+static void init_tlb(){
   int i;
   FILE *fp = fopen(INFILE,"r");
   char str[40];
@@ -74,14 +25,14 @@ void init_tlb(){
     printf("cannot open\n");
     exit(1);
   }
-  for(i=0;i<N;i++){
+  for(i=0;i<2048;i++){
     fscanf(fp,"%s",str);
-    strcpy(tlb[i],str);
+    strcpy(finv_table[i],str);
   }
   fclose(fp);
 }
 
-long long unsigned int binarytoullint(char *bin){
+static long long unsigned int binarytoullint(char *bin){
   long long unsigned int ret=0;
   long long unsigned int temp=1;
   int i=0;
@@ -93,26 +44,30 @@ long long unsigned int binarytoullint(char *bin){
   return ret;
 }
 
-uint32_t yllui2uint(long long unsigned int i){
+static uint32_t yllui2uint(long long unsigned int i){
   return i>>13;
 }
 
-uint32_t lowllui2uint(long long unsigned int i){
+static uint32_t lowllui2uint(long long unsigned int i){
   i <<= 32;
   i >>= 32;
-  return (uint32_t)i;
+  return (uint32_t)(i & ((1ll << 32) - 1));
 }
 
-uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
+static uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
   sign <<= 31;
   exp <<= 23;
   return sign | exp | mant;
 }
 
-uint32_t finv(uint32_t i){
+uint32_t finv0(uint32_t i){
   int index = downto(i,22,12);
-  long long unsigned int yd = binarytoullint(tlb[index]);
+  long long unsigned int yd;
   uint32_t ydtemplow,y,ymant,d;
+  if(read_finv_table == 0){
+    init_tlb();
+  }
+  yd = binarytoullint(finv_table[index]);
   ymant = yllui2uint(yd);
   y = (1 << 23) | ymant;
   ydtemplow = lowllui2uint(yd);
@@ -133,7 +88,7 @@ uint32_t finv(uint32_t i){
 uint32_t finv1(uint32_t i){
   int index = downto(i,22,12);
   int flag1;
-  long long unsigned int yd = binarytoullint(tlb[index]);
+  long long unsigned int yd = binarytoullint(finv_table[index]);
   uint32_t manti_const, manti_grad, grad_tmp, d, stub;
   uint32_t sign,exp,frac,ans;
   //stage 1
@@ -164,4 +119,47 @@ uint32_t finv1(uint32_t i){
   ans = make_ans(sign,exp,downto(frac,22,0));
 
   return ans;
+}
+
+/*
+uint32_t finv2(uint32_t i){
+*/
+uint32_t finv(uint32_t i){
+  int index = (i >> 12) & 0x7ff; // 11bit
+  double a0 = (double)((1 << 11) | index);
+  double x0 = pow(2.0, 11.0)/a0 + pow(2.0, 11.0)/(a0+1.0);
+  double da = x0 * x0 / 2.0 * pow(2.0, 12.0);
+  double db = x0 * pow(2.0, 24.0) - a0 * x0 * x0 * pow(2.0, 11.0);
+  uint32_t ua = (uint32_t)da & 0x1fff;// 13bit
+  uint32_t ub = (uint32_t)db & 0x7fffff; // 23bit
+  uint32_t sig = (i & (1 << 31)); // 1bit
+  uint32_t ex = (i >> 23) & 0xff; // 8bit
+  uint32_t x = i & 0xfff; // 12bit
+  uint32_t frac = ub - ((ua * x) >> 12); // 23bit
+
+  ex = ex > 253 ? 0 : 253-ex;
+  return sig | (ex << 23) | (frac & 0x7fffff);
+}
+
+void finv2_table(){
+  int index; // 11bit
+  FILE *f = fopen("finv_table.dat", "w");
+
+  for(index=0; index<=0x7ff; index++){
+    double a0 = (double)((1 << 11) | index);
+    double x0 = pow(2.0, 11.0)/a0 + pow(2.0, 11.0)/(a0+1.0);
+    double da = x0 * x0 / 2.0 * pow(2.0, 12.0);
+    double db = x0 * pow(2.0, 24.0) - a0 * x0 * x0 * pow(2.0, 11.0);
+    long long int ua = (long long int)da & 0x1fff; // 13bit
+    long long int ub = (long long int)db & 0x7fffff; // 23bit
+    long long int data = ua << 23 | ub;
+    int digit;
+    char binary_str[37];
+    for(digit=0; digit<36; digit++){
+      binary_str[35-digit] = '0' + ((data >> digit) & 1);
+    }
+    binary_str[36] = '\0';
+    fprintf(f, "%s\n", binary_str);
+  }
+  fclose(f);
 }
