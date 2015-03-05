@@ -13,10 +13,7 @@ uint32_t FPU::add(uint32_t x, uint32_t y){
 }
 
 uint32_t FPU::sub(uint32_t x, uint32_t y){
-	FU xfu, yfu, zfu;
-	xfu.r = x; yfu.r = y;
-	zfu.f = xfu.f - yfu.f;
-	return zfu.r;
+	return fadd(x, y ^ 0x80000000);
 }
 
 uint32_t FPU::mul(uint32_t x, uint32_t y){

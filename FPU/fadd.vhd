@@ -90,7 +90,7 @@ architecture fadd_arch of fadd is
   signal sml_frac : unsigned(27 downto 0);
   signal sign_0 : std_logic;
   signal shift_right_in : unsigned(24 downto 0);
-  signal exp_dif_1 : unsigned(7 downto 0);
+  signal exp_dif : unsigned(7 downto 0);
 
   signal frac_1 : unsigned(27 downto 0);
   signal sign_1 : std_logic;
@@ -118,11 +118,10 @@ begin
 
   SRR : shift_right_round port map(
     d => shift_right_in,
-    exp_dif => exp_dif_1,
+    exp_dif => exp_dif,
     o => sml_frac);
 
   process(clk)
-    variable exp_dif_0 : unsigned(7 downto 0);
     variable frac_2 : unsigned(27 downto 0);
     variable frac : unsigned(22 downto 0);
     variable exp : unsigned(7 downto 0);
@@ -132,7 +131,7 @@ begin
       calc <= a(31) xor b(31);
       if unsigned(a(30 downto 0)) > unsigned(b(30 downto 0)) then
         sign_0 <= a(31);
-        exp_dif_0 := unsigned(a(30 downto 23)) -
+        exp_dif <= unsigned(a(30 downto 23)) -
                    unsigned(b(30 downto 23));
         exp_0 <= unsigned(a(30 downto 23));
         big_frac <= unsigned("01" & a(22 downto 0) & "000");
@@ -143,7 +142,7 @@ begin
         end if;
       else
         sign_0 <= b(31);
-        exp_dif_0 := unsigned(b(30 downto 23)) -
+        exp_dif <= unsigned(b(30 downto 23)) -
                    unsigned(a(30 downto 23));
         exp_0 <= unsigned(b(30 downto 23));
         big_frac <= unsigned("01" & b(22 downto 0) & "000");
@@ -153,7 +152,6 @@ begin
           shift_right_in <= (others => '0');
         end if;
       end if;
-      exp_dif_1 <= exp_dif_0;
 
       -- stage2
       if calc = '0' then -- the same sign (addition)
@@ -174,8 +172,8 @@ begin
       end if;
 
       frac_2 := shift_left(frac_1, to_integer(lead_zero));
-      if frac_2(4 downto 3) = "00" or frac_2(4 downto 3) = "10" or
-        frac_2(4 downto 0) = "01000" then
+      if frac_2(4 downto 3) = "00" or frac_2(4 downto 0) = "01000" or
+        frac_2(4 downto 3) = "10" then
         frac := frac_2(26 downto 4);
       elsif frac_2(26 downto 4) = "111" & x"fffff" then --rounding and carry
         frac := (others => '0');
