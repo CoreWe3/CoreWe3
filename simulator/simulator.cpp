@@ -281,6 +281,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
+						output->flush();
 					}else{
 						ram[address] = greg[fm.L.ra].r;
 					}
