@@ -211,13 +211,20 @@ int main(int argc, char* argv[]){
 					it = instructions.erase(it);
 					break;
 				}
-			// XXXX x0 rx
-			case LD:
-			case FTOI:
+			// XXXX rx r0 r0
 			case ADD:
 			case SUB:
 			case SHR:
 			case SHL:
+				if (ISA::name2reg((*it)[2]) == 0 && ISA::name2reg((*it)[3]) == 0){
+					it = instructions.erase(it);
+					break;
+				}
+			
+			// XXXX x0 rx
+			case FTOI:
+			case ITOF:
+			case LD:
 			case LDIH:
 			case FLDI:
 			case VLDI:
