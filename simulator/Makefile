@@ -22,6 +22,15 @@ finv.o: ../FPU/finv.c
 fcmp.o: ../FPU/fcmp.c
 	$(C) ../FPU/fcmp.c $(CFLAG) -c -o $@
 
+fsqrt.o: ../FPU/fsqrt.c
+	$(C) ../FPU/fsqrt.c $(CFLAG) -c -o $@
+
+ftoi.o: ../FPU/ftoi.c
+	$(C) ../FPU/ftoi.c $(CFLAG) -c -o $@
+
+itof.o: ../FPU/itof.c
+	$(C) ../FPU/itof.c $(CFLAG) -c -o $@
+
 fpu.o: fpu.cpp fpu.h fpu_c.h
 	$(CC) fpu.cpp $(CFLAGS) -c -o $@
 
@@ -36,9 +45,9 @@ $(DIR)disassembler: disassembler.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) disassembler.cpp isa_class.o $(CFLAGS) -o $@
 
-$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fcmp.o finv.o
+$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fcmp.o finv.o fsqrt.o ftoi.o itof.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
-	$(CC) simulator.cpp isa_class.o fpu.o fadd.o fmul.o fcmp.o finv.o $(CFLAGS) -o $@
+	$(CC) simulator.cpp isa_class.o fpu.o fadd.o fmul.o fcmp.o finv.o fsqrt.o ftoi.o itof.o $(CFLAGS) -o $@
 
 $(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi

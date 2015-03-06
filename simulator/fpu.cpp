@@ -29,10 +29,7 @@ uint32_t FPU::inv(uint32_t x){
 }
 
 uint32_t FPU::sqrt(uint32_t x){
-	FU xfu, yfu;
-	xfu.r = x;
-	yfu.f = std::sqrt(xfu.f);
-	return yfu.r;
+	return fsqrt(x);
 }
 
 uint32_t FPU::abs(uint32_t x){
@@ -43,15 +40,9 @@ uint32_t FPU::abs(uint32_t x){
 }
 
 uint32_t FPU::_ftoi(uint32_t x){
-	FU xfu, yfu;
-	xfu.r = x;
-	yfu.d = std::round(xfu.f);
-	return yfu.r;
+	return ftoi(x);
 }
 
 uint32_t FPU::_itof(uint32_t x){
-	FU xfu, yfu;
-	xfu.r = x;
-	yfu.f = xfu.d;
-	return yfu.r;
+	return itof(x);
 }
