@@ -1,6 +1,7 @@
 (* sed -i -e "s/^print_global.*/(\* & *\)/" asm/init_globals.ml  *)
 (* sed -e "s/^(\\* \(print_global.*\\) \*\)$/\1/" asm/init_globals.ml *)
 
+let rec init_gobals _ = 
 
 (* オブジェクトの個数 *)
 let n_objects = create_array 1 0
@@ -150,5 +151,7 @@ print_global28 reflections;
 (* reflectionsの有効な要素数 *) 
 let n_reflections = create_array 1 0
 in
-print_global29 n_reflections;
-()
+print_global29 n_reflections
+
+in
+init_gobals ()
