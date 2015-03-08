@@ -76,8 +76,12 @@ int main(int argc, char* argv[]){
 		instructions.push_back(tmp);
 	}
 
-	//Initilaize Branch Profile
+	//Initilaize Profiler
 	vector<int> branchprofile(instructions.size());
+	vector<int> branchprofile2(instructions.size());
+	unsigned int faddfmul=0;
+	unsigned int fmulfadd=0;
+
 
 	//Initilaize RAM
 	vector<uint32_t> ram(RAMSIZE);
@@ -133,6 +137,7 @@ int main(int argc, char* argv[]){
 
 	//Main
 	unsigned long counter = 0;
+	uint32_t prev = 0;
 	map<string,unsigned long> profile;
 	for(auto el : INAMES){
 		profile[el.first] = 0;
@@ -182,6 +187,7 @@ int main(int argc, char* argv[]){
 					branchprofile[pc]-=1;
 					pc += 1;
 				}
+				branchprofile2[pc]+=1;
 				break;
 
 			case JLE:
@@ -192,6 +198,7 @@ int main(int argc, char* argv[]){
 					branchprofile[pc]-=1;
 					pc += 1;
 				}
+				branchprofile2[pc]+=1;
 				break;
 
 			case JLT:
@@ -202,6 +209,7 @@ int main(int argc, char* argv[]){
 					branchprofile[pc]-=1;
 					pc += 1;
 				}
+				branchprofile2[pc]+=1;
 				break;
 
 			case JSUB:
@@ -281,6 +289,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
+						output->flush();
 					}else{
 						ram[address] = greg[fm.L.ra].r;
 					}
@@ -392,6 +401,14 @@ int main(int argc, char* argv[]){
 		}
 		greg[0].r = 0;
 		freg[0].f = 0;
+	
+		// M
+		FORMAT fm2;
+		fm2.data = prev;
+		prev = fm.data;
+		if(fm.J.op==FADD && fm2.J.op==FMUL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
+		if(fm.J.op==FMUL && fm2.J.op==FADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
+
 		counter++;
 	}
 
@@ -418,7 +435,8 @@ END_MAIN:
 			cerr << "Can't open file : " << "branch.profile" << endl;
 			return 1;
 		}
-		for(auto x : branchprofile){
+		for(int i=0; i < branchprofile.size(); i++){
+			float x = 1.0*branchprofile[i]/branchprofile2[i];
 			fout2.write((char *)&x,sizeof(x));
 		}
 	}
@@ -440,5 +458,10 @@ END_MAIN:
 		cerr << el.first << ":" << el.second << " ";
 	}
 	cerr << endl;
+
+	//Print 
+	cerr << "fmulfadd:" << faddfmul << endl; 
+	cerr << "faddfmul:" << fmulfadd << endl; 
+
 	return 0;
 }
