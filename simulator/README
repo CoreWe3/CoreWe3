@@ -1,0 +1,23 @@
+#Assemble
+./assembler -f [Binary File] (-i [Input Assembly])
+
+#Disassemble
+./disassembler -f [Binary File] (-o [Output Assembly])
+
+##Simulate
+./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
+
+##Simulate(native)
+./simulator_n -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
+
+#View Binary File
+./hex.sh [Binary File]
+
+# コンパイルにはclangが必要です。aptからインストールすると
+# ライブラリのパスがうまく通らないようなので、
+# 環境変数の設定が必要かもしれません。
+
+# $ sudo apt-get update
+# $ sudo apt-get install clang
+# $ export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:`echo $LD_LIBRARY_PATH`
+
