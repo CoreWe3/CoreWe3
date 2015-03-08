@@ -87,6 +87,7 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 分岐命令とジャンプ命令によるストールは以下の通り。
 
 分岐命令
+
 | JEQ/JLE/JLT            | Stall Clock(s) |
 |------------------------|----------------|
 | Predicate as Taken     | 1              |
@@ -95,6 +96,7 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 
 
 ジャンプ命令
+
 | Instruction | Stall clock(s) |
 |-------------|----------------|
 | J           | 1              |
@@ -109,11 +111,8 @@ FLD FSTを用いると、4バイト分リトルエンディアンで入出力す
 * 実装済み命令
 
 LD ST FLD FST (ITOF) (FTOI) ADD SUB ADDI SHR SHL SHLI SHRI LDIH
-FADD FSUB FMUL FABS FINV FCMP FLDI J JEQ JLE JLT JSUB RET
+FADD FSUB FMUL FABS FINV FSQRT FCMP FLDI J JEQ JLE JLT JSUB RET
 
-* 未実装命令
-
-FSQRT
 
 ## TODO
 

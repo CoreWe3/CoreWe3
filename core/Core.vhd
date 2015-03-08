@@ -6,11 +6,11 @@ use UNISIM.VComponents.all;
 
 entity Core is
   generic (
-    DEBUG : boolean := false;
-    -- wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
-    -- wtime : std_logic_vector(15 downto 0) := x"03f5"); -- 116.66MHz M=7 D=4
-    -- wtime : std_logic_vector(15 downto 0) := x"047A"); -- 133MHz
+    DEBUG : boolean := true;
+    wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
+    --wtime : std_logic_vector(15 downto 0) := x"0364" -- 100MHz M=3 D=2
+    -- wtime : std_logic_vector(15 downto 0) := x"03f5"; -- 116.66MHz M=7 D=4
+    -- wtime : std_logic_vector(15 downto 0) := x"047A"; -- 133MHz
   port (
     MCLK1  : in    std_logic;
     RS_RX  : in    std_logic;
