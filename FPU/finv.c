@@ -11,7 +11,7 @@ typedef union u2f{
   float fff;
 }u2f;
 
-static uint32_t downto(uint32_t i,int high,int low){
+uint32_t downto(uint32_t i,int high,int low){
   int lsh = 31 - high;
   int rsh = lsh + low;
   i <<= lsh;
@@ -19,8 +19,7 @@ static uint32_t downto(uint32_t i,int high,int low){
   return i;
 }
 
-
-static long long unsigned int binarytoullint(char *bin){
+long long unsigned int binarytoullint(char *bin){
   long long unsigned int ret=0;
   long long unsigned int temp=1;
   int i=0;
@@ -32,31 +31,31 @@ static long long unsigned int binarytoullint(char *bin){
   return ret;
 }
 
-static uint32_t yllui2uint(long long unsigned int i){
+uint32_t yllui2uint(long long unsigned int i){
   return i>>13;
 }
 
-static uint32_t lowllui2uint(long long unsigned int i){
+uint32_t lowllui2uint(long long unsigned int i){
   i <<= 32;
   i >>= 32;
   return (uint32_t)i;
 }
 
-static uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
+uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
   sign <<= 31;
   exp <<= 23;
   return sign | exp | mant;
 }
 
-static double make_a(double index,double next){
+double make_a(double index,double next){
   return (1.0/index)*(1.0/next);
 }
 
-static double make_b(double index,double next){
+double make_b(double index,double next){
   return (sqrt(1.0/index) + sqrt(1.0/next))*(sqrt(1.0/index) + sqrt(1.0/next))/2.0;
 }
 
-static char *uint2binary(uint32_t ui,int high,int low){
+char *uint2binary(uint32_t ui,int high,int low){
   char *ret = (char*)malloc(sizeof(char)*33);
   int i;
   for(i=0;i<32;i++){
@@ -75,13 +74,13 @@ static char *uint2binary(uint32_t ui,int high,int low){
   return temp;
 }
 
-static double make_y(double a,double b,double x){
+double make_y(double a,double b,double x){
   return ((-1) * a * x) + b;
 }
 
 static char tlb[2048][40];
 
-static void make_table(){
+void make_table(){
   int i;
   double c = 1.0 / N;
   double index,next,a,b,y1,y2;
@@ -115,24 +114,8 @@ static void make_table(){
     strcpy(tlb[i],str);
   }
 }
-/*
-void init_tlb(){
-  int i;
-  FILE *fp = fopen(INFILE,"r");
-  char str[40];
-  if(fp == NULL){
-    printf("cannot open\n");
-    exit(1);
-  }
-  for(i=0;i<N;i++){
-    fscanf(fp,"%s",str);
-    strcpy(tlb[i],str);
-  }
-  fclose(fp);
-}
-*/
 
-static void init_tlb(){
+void init_tlb(){
   make_table();
 }
 
