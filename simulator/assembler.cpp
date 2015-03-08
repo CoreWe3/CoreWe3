@@ -15,12 +15,12 @@ map<string, unsigned int> labels;
 unsigned int getlabelvalue(string str, unsigned int line = 0){
 	if(str[0]=='.'){
 		if(labels.count(str)==0){
-			cerr << "Static label \"" << str << "\" is not detected" << endl;
+			cerr << "WARN : Static label \"" << str << "\" is not detected" << endl;
 		}
 		return (unsigned int)labels[str];
 	}else if(str[0]==':'){
 		if(labels.count(str)==0){
-			cerr << "Dinamic label \"" << str << "\" is not detected" << endl;
+			cerr << "WARN : Dinamic label \"" << str << "\" is not detected" << endl;
 		}
 		return (unsigned int)(labels[str] - (int)line);
 	}else{
@@ -38,7 +38,7 @@ unsigned int getlabelvalue(string str, unsigned int line = 0){
 			}
 		}
 		catch(...){
-			cerr << "Invalid Argument :" << str << endl;
+			cerr << "ERROR : Invalid Argument :" << str << endl;
 			exit(1);
 		}
 		return x.u;
@@ -72,10 +72,10 @@ int main(int argc, char* argv[]){
 				filename = optarg;
 				break;
 			case ':':
-				cerr << result << " needs value" << endl;
+				cerr << "ERROR : "<<result << " needs value" << endl;
 				return 1;
 			case '?':
-				cerr << "unknown option" << endl;
+				cerr << "ERROR : unknown option" << endl;
 				return 1;
 		}
 	}
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
 	if(filename != nullptr){
 		fin.open(filename);
 		if(fin.fail()){
-			cerr << "Can't open file" << endl;
+			cerr << "ERROR : Can't open file" << endl;
 			return 1;
 		}
 		din = &fin;
@@ -211,17 +211,11 @@ int main(int argc, char* argv[]){
 					it = instructions.erase(it);
 					break;
 				}
-			// XXXX rx r0 r0
+			// XXXX x0 rx
 			case ADD:
 			case SUB:
 			case SHR:
 			case SHL:
-				if (ISA::name2reg((*it)[2]) == 0 && ISA::name2reg((*it)[3]) == 0){
-					it = instructions.erase(it);
-					break;
-				}
-			
-			// XXXX x0 rx
 			case FTOI:
 			case ITOF:
 			case LD:
@@ -287,7 +281,7 @@ int main(int argc, char* argv[]){
 					fm.J.op = ISA::name2isa(el[0]);
 					unsigned int v = getlabelvalue(el[1], line);
 					if(v>0xFFFFFF&&v<0xFF000000){
-						cerr << "overflow immidiate : around " << line << endl;
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.J.cx = v;
 				}
@@ -302,7 +296,7 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
 					if(v>0x7FFF&&v<0xFFFF8000){
-						cerr << "overflow immidiate : around " << line << endl;
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
@@ -344,8 +338,11 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg(el[1]);
 					fm.L.rb = ISA::name2reg(el[2]);
 					unsigned int v = getlabelvalue(el[3], line);
-					if(v>0x7FFF&&v<0xFFFF8000){
-						cerr << "overflow immidiate : around " << line << endl;
+					if((fm.L.op!=ADDI&&v>0x7FFF&&v<0xFFFF8000)||(fm.L.op==ADDI&&v>0xFFFF&&v<0xFFFF0000)){
+						cerr << "WARN : overflow immidiate : around " << line << endl;
+					}
+					if(fm.L.op==ADDI&&v>0x7FFF&&v<0xFFFF8000){
+						cerr << "INFO : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
@@ -360,7 +357,7 @@ int main(int argc, char* argv[]){
 					fm.L.rb = ISA::name2reg(el[2]);
 					unsigned int v = getlabelvalue(el[3], line);
 					if(v>0xFFFF){
-						cerr << "overflow immidiate : around " << line << endl;
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
@@ -432,7 +429,7 @@ int main(int argc, char* argv[]){
 					fm.L.rb = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line)*-1;
 					if(v>0x7FFF&&v<0xFFFF8000){
-						cerr << "overflow immidiate : around " << line << endl;
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
@@ -441,7 +438,7 @@ int main(int argc, char* argv[]){
 				break;
 
 			default:
-				cerr << "This assembler has bug!" << endl;
+				cerr << "ERROR : This assembler has bug!" << endl;
 				exit(1);
 		}
 	}
@@ -451,11 +448,11 @@ int main(int argc, char* argv[]){
 	if(outputfilename != nullptr){
 		fout.open(outputfilename, ios::binary);
 		if(fout.fail()){
-			cerr << "Can't open file" << endl;
+			cerr << "ERROR : Can't open file" << endl;
 			return 1;
 		}
 	}else{
-		cerr << "No output file" << endl;
+		cerr << "ERROR : No output file" << endl;
 		return 1;
 	}
 
