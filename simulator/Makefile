@@ -51,7 +51,7 @@ $(DIR)disassembler: disassembler.cpp isa_class.o
 
 $(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
-	$(CC) simulator.cpp isa_class.o fpu.o fadd.o fmul.o fcmp.o finv.o fabs.o fsqrt.o ftoi.o itof.o $(CCFLAGS) -o $@
+	$(CC) $^ $(CCFLAGS) -o $@
 
 $(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
@@ -66,6 +66,8 @@ clean:
 	$(RM) isa_class.o
 	$(RM) fpu.o
 	$(RM) fpu_n.o
+	$(RM) ftoi.o
+	$(RM) itof.o
 	$(RM) fadd.o
 	$(RM) fmul.o
 	$(RM) finv.o

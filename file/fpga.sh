@@ -24,6 +24,8 @@ while getopts hi:l: OPT
 do
     case $OPT in
 	"h" ) FLAG_H="-h";;
+	"o" ) FLAG_O="-o";;
+	"b" ) FLAG_O="-b"; COUNT=$OPTARG;;
 	"i" ) FLAG_I="-i"; INPUT="$INPUT $OPTARG";;
 	"l" ) FLAG_L="-l"; LOG="$OPTARG";;
 	*   ) echo -e $HELP; exit 1 ;;
@@ -54,7 +56,7 @@ then
     done
 fi
 
-ssh $SERVER ./config_run.sh $FLAG_H $INPUTS $FLAG_L $LOG
+ssh $SERVER ./config_run.sh $FLAG_B $COUNT $FLAG_O $FLAG_H $INPUTS $FLAG_L $LOG
 
 if [ $FLAG_L ]
 then
