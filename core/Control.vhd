@@ -54,7 +54,7 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
-  component finv is
+  component finv2 is
     port (
       clk : in std_logic;
       stall : in std_logic;
@@ -559,7 +559,7 @@ begin
     b => std_logic_vector(r.e.fpu.d2),
     o => fmul_o);
 
-  finv_unit : finv port map (
+  finv_unit : finv2 port map (
     clk => clk,
     stall => bus_in.m.stall,
     i => std_logic_vector(r.e.fpu.d1),

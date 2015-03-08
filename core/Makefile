@@ -1,7 +1,7 @@
 SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/mandelbrot
+CODE = file/newton
 
 all: configure
 
@@ -23,5 +23,5 @@ core.bit: $(SOURCE) $(SCRIPTS) $(BOOTLOADER)
 %.o:%.s
 
 clean:
-	rm -rf *.flog core.bit
+	rm -rf *.flog core.bit ise/*
 	cd file && $(MAKE) clean

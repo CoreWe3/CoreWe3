@@ -8,7 +8,12 @@ uint32_t fmul(uint32_t a, uint32_t b){
   hh = (0x1000 | (0xfff & (a >> 11))) * (0x1000 | (0xfff & (b >> 11)));
   hl = (0x1000 | (0xfff & (a >> 11))) * (0x7ff & b);
   lh = (0x7ff & a) * (0x1000 | (0xfff & (b >> 11)));
-  exp_0 = (0xff & (a >> 23)) + (0xff & (b >> 23)) + 129;
+  if((0xff & (a >> 23)) == 0 ||  (0xff & (b >> 23)) == 0){
+    exp_0 = 0;
+  }
+  else{
+    exp_0 = (0xff & (a >> 23)) + (0xff & (b >> 23)) + 129;
+  }
   sign_0 = (0x80000000 & a) ^ (0x80000000 & b);
 
   frac_ = hh + (hl >> 11) + (lh >> 11) + 2;

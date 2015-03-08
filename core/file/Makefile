@@ -14,8 +14,7 @@ all:
 	cd $(ROOT)/simulator && $(MAKE)
 	$(AS) -f $@ -i $<
 	touch input
-	$(SIM) -f $@ -o $(@:=.slog) -i ../../FPU/fadd.dat
-	hd $(@:=.slog)
+	$(SIM) -f $@ -o $(@:=.slog) -i input
 	cat eof >> $@
 
 %.b: %.s

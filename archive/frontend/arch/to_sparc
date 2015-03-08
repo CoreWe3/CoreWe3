@@ -1,5 +1,0 @@
-#!/bin/sh
-# i'm in arch/
-cd $(dirname $0)
-cp SPARC/*.ml SPARC/*.mli ../src/
-cp SPARC/libmincaml.s ../stub/
