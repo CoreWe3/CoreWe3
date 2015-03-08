@@ -24,7 +24,7 @@ while getopts hi:l: OPT
 do
     case $OPT in
 	"h" ) FLAG_H="-h";;
-	"i" ) FLAG_I="-i"; INPUT="$OPTARG";;
+	"i" ) FLAG_I="-i"; INPUT="$INPUT $OPTARG";;
 	"l" ) FLAG_L="-l"; LOG="$OPTARG";;
 	*   ) echo -e $HELP; exit 1 ;;
     esac
@@ -48,10 +48,13 @@ fi
 if [ $FLAG_I ]
 then
     scp $INPUT $SERVER:~/ || exit 1
-    INPUT=`basename $INPUT`
+    for i in $INPUT
+    do
+	INPUTS="$INPUTS -i `basename $i`"
+    done
 fi
 
-ssh $SERVER ./config_run.sh $FLAG_H $FLAG_I $INPUT $FLAG_L $LOG
+ssh $SERVER ./config_run.sh $FLAG_H $INPUTS $FLAG_L $LOG
 
 if [ $FLAG_L ]
 then
