@@ -1,16 +1,9 @@
 (* I/O functions *)
 let rec read_int _ =
-  let a = read_char ()in
-  let a = a + ((read_char ()) lsl 8) in
-  let a = a + ((read_char ()) lsl 16) in
-  let a = a + ((read_char ()) lsl 24) in
-  a in
-
+  fasi (read_float()) in
+    
 let rec print_int x =
-  print_char x;
-  print_char (x lsr 8);
-  print_char (x lsr 16);
-  print_char (x lsr 24) in
+  print_float (iasf x)in
 
 (*floating-point operation*)
 let rec fhalf x = 0.5 *. x in
