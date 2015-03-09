@@ -63,13 +63,17 @@ int main(int argc, char* argv[]){
 	//Option Handler
 	char result;
 	char *filename = nullptr, *outputfilename = nullptr;
-	while((result=getopt(argc,argv,"f:i:"))!=-1){
+	bool showlabel = false;
+	while((result=getopt(argc,argv,"f:i:l"))!=-1){
 		switch(result){
 			case 'f': // Output File
 				outputfilename = optarg;
 				break;
 			case 'i': // Input File
 				filename = optarg;
+				break;
+			case 'l':
+				showlabel = true;
 				break;
 			case ':':
 				cerr << "ERROR : "<<result << " needs value" << endl;
@@ -458,6 +462,12 @@ int main(int argc, char* argv[]){
 
 	for(auto x : results){
 		fout.write((char *)&x,sizeof(x));
+	}
+
+	if(showlabel){
+		for(auto x : labels){
+			cerr << x.first << " : " << x.second << endl;
+		}
 	}
 
 	return 0;
