@@ -1,5 +1,6 @@
 #Assemble
-./assembler -f [Binary File] (-i [Input Assembly])
+./assembler -f [Binary File] (-i [Input Assembly]) (-l (show labels) )
+
 
 #Disassemble
 ./disassembler -f [Binary File] (-o [Output Assembly])
