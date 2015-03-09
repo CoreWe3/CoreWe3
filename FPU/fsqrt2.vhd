@@ -28,7 +28,7 @@ architecture fsqrt2_arch of fsqrt2 is
     end loop;
     return ram;
   end function;
-  signal ram : ramtype := InitRamFromFile("fsqrt_table.dat");
+  signal RAM : ramtype := InitRamFromFile("fsqrt_table.dat");
 
   signal data : unsigned(35 downto 0);
   signal iexp : unsigned(7 downto 0);
@@ -48,7 +48,7 @@ begin
 
     if rising_edge(clk) and stall = '0' then
       -- stage 1
-      data <= ram(to_integer(unsigned(i(23 downto 14))));
+      data <= RAM(to_integer(unsigned(i(23 downto 14))));
       iexp <= unsigned(i(30 downto 23));
       ifrac <= unsigned(i(13 downto 0));
 

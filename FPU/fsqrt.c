@@ -242,7 +242,7 @@ void fsqrt2_table(){
     double a0 = 1 << 9 | index; // 10bit
     double x0 = (index >> 9) ? (sqrt(2.0*a0) + sqrt(2.0*(a0+1.0))) * pow(2.0, -6.0) :
       (sqrt(a0) + sqrt(a0+1.0)) * pow(2.0, -5.0); // 1.0 <= x0 < 2.0
-    double da = (index >> 9) ? pow(2.0, 13.0) / x0 : pow(2.0, 15.0) / (2.0 * x0);
+    double da = (index >> 9) ? pow(2.0, 12.0) / x0 : pow(2.0, 14.0) / (2.0 * x0);
     double db = (index >> 9) ? x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 13.0) :
       x0 * pow(2.0, 22.0) + a0 / x0 * pow(2.0, 14.0);
     long long int ua = (long long int)da & 0x1fff; // 13 bit
@@ -259,16 +259,3 @@ void fsqrt2_table(){
   fclose(f);
 
 }
-/*
-int main(){
-  union{
-    float f;
-    uint32_t u;
-  } x,y;
-
-  x.f = 2.0;
-  y.u = fsqrt(x.u);
-  printf("%08x %f\n",y.u, y.f);
-  return 0;
-}
-*/
