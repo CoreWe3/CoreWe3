@@ -259,3 +259,16 @@ void fsqrt2_table(){
   fclose(f);
 
 }
+/*
+int main(){
+  union{
+    float f;
+    uint32_t u;
+  } x,y;
+
+  x.f = 2.0;
+  y.u = fsqrt(x.u);
+  printf("%08x %f\n",y.u, y.f);
+  return 0;
+}
+*/

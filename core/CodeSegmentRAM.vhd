@@ -38,13 +38,15 @@ begin
   process(clk)
   begin
     if rising_edge(clk) then
-      if bus_out.m.go = '1' and bus_out.m.a(19 downto 12) = x"FF" then
+      if bus_out.m.go = '1' and
+        bus_out.m.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
         if bus_out.m.we = '1' then
-          RAM(to_integer(bus_out.m.a(11 downto 0))) <=
+          RAM(to_integer(bus_out.m.a(ADDR_WIDTH-1 downto 0))) <=
             to_bitvector(std_logic_vector(bus_out.m.d));
         end if;
       end if;
-      bus_in.m.d <= unsigned(to_stdLogicVector(RAM(to_integer(bus_out.m.a(11 downto 0)))));
+      bus_in.m.d <= unsigned(to_stdLogicVector(
+        RAM(to_integer(bus_out.m.a(ADDR_WIDTH-1 downto 0)))));
       bus_in.i <= to_stdLogicVector(RAM(to_integer(bus_out.pc)));
     end if;
   end process;
