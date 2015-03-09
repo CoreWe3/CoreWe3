@@ -33,5 +33,5 @@ all:
 	cat $(BOOT) $< > $@
 
 clean:
-	rm -rf $(MLFILES:.ml=) $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) \
+	rm -rf $(MLFILES:.ml=) $(MLFILES:.ml=.s) $(MLFILES:.ml=.slog) $(MLFILES:.ml=.S)\
 	 $(ASFILES:.s=.o) $(ASFILES:.s=.b) $(ASFILES:.s=) $(ASFILES:.s=.slog) \
