@@ -131,8 +131,8 @@ done
 echo "cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml"
 cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml
 
-echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err"
-${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} 1> ${WORK_DIR}/${SOURCE}.log 2> ${WORK_DIR}/${SOURCE}.err
+echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE}"
+${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE}
 
 echo "cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s"
 cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
