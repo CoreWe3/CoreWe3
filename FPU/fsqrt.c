@@ -6,8 +6,56 @@
 #include <time.h>
 
 #define INFILE "new_sqrt_table.txt"
+#define TESTS 2000000
+#define IS_TIME_RAND 3 // 1ならsrand(time(NULL)) 0でも1でもなければsrand(IS_TIME_RAND)する
+//2 仮数部 all 1 だめ
 
-static uint32_t downto(uint32_t i,int high,int low){
+typedef union u2f{
+  uint32_t uuu;
+  float fff;
+}u2f;
+
+uint32_t fs_binarytouint(char *bin){
+  uint32_t ret=0;
+  uint32_t temp=1u;
+  int i=0;
+  for(i=0;i<32;i++){
+    if(bin[31-i]=='1'){
+      ret += temp << i;
+    }
+  }
+  return ret;
+}
+
+char *fs_uinttobinary(uint32_t ui){
+  char *ret=(char*)malloc(sizeof(char)*50);
+  int i;
+  for(i=0;i<32;i++){
+    if((ui >> i) & 1u){
+      ret[31-i]='1';
+    }
+    else
+      ret[31-i]='0';
+  }
+  ret[32]='\0';
+  return ret;
+}
+
+char *fs_lluinttobinary(long long unsigned int ui){
+  char *ret=(char*)malloc(sizeof(char)*50);
+  int i;
+  for(i=0;i<36;i++){
+    if((ui >> i) & 1u){
+      ret[35-i]='1';
+    }
+    else
+      ret[35-i]='0';
+  }
+  ret[36]='\0';
+  return ret;
+}
+
+uint32_t fs_downto(uint32_t i,int high,int low){
   int lsh = 31 - high;
   int rsh = lsh + low;
   i <<= lsh;
@@ -15,7 +63,7 @@ static uint32_t downto(uint32_t i,int high,int low){
   return i;
 }
 
-static long long unsigned int binarytoullint(char *bin){
+long long unsigned int fs_binarytoullint(char *bin){
   long long unsigned int ret=0;
   long long unsigned int temp=1;
   int i=0;
@@ -27,17 +75,17 @@ static long long unsigned int binarytoullint(char *bin){
   return ret;
 }
 
-static uint32_t yllui2uint(long long unsigned int i){
+uint32_t fs_yllui2uint(long long unsigned int i){
   return i>>13;
 }
 
-static uint32_t lowllui2uint(long long unsigned int i){
+uint32_t fs_lowllui2uint(long long unsigned int i){
   i <<= 32;
   i >>= 32;
   return (uint32_t)i;
 }
 
-static uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
+uint32_t fs_make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
   sign <<= 31;
   exp <<= 23;
   return sign | exp | mant;
@@ -45,7 +93,7 @@ static uint32_t make_ans(uint32_t sign,uint32_t exp,uint32_t mant){
 
 static int tlb_flag = 0;
 static char tlb[2048][40];
-static void init_tlb(){
+void fs_init_tlb(){
   int i = 0;
   FILE *fp = fopen(INFILE,"r");
   char str[40];
@@ -58,18 +106,18 @@ static void init_tlb(){
 
 uint32_t fsqrt0(uint32_t i){
   uint32_t sign = 0;
-  uint32_t i_exp = downto(i,30,23);
-  uint32_t is_odd = downto(i,23,23);
+  uint32_t i_exp = fs_downto(i,30,23);
+  uint32_t is_odd = fs_downto(i,23,23);
   uint32_t exp;
   uint32_t one = 127;
   if(tlb_flag == 0){
-    init_tlb();
+    fs_init_tlb();
     tlb_flag = 1;
   }
-  if(downto(i,30,0) == 0){
+  if(fs_downto(i,30,0) == 0){
     return i;
   }
-  if(downto(i,31,31) == 1){
+  if(fs_downto(i,31,31) == 1){
     return 0xffc00000;
   }
   if(i_exp >= one){
@@ -84,33 +132,33 @@ uint32_t fsqrt0(uint32_t i){
   }
   uint32_t index;
   if(is_odd == 1){
-    index = downto(i,22,15);
+    index = fs_downto(i,22,15);
   }else{
-    index = downto(i,22,14) + 256;
+    index = fs_downto(i,22,14) + 256;
   }
-  long long unsigned int yd = binarytoullint(tlb[index]);
+  long long unsigned int yd = fs_binarytoullint(tlb[index]);
   uint32_t ydtemplow,y,ymant,d;
-  ymant = yllui2uint(yd);
+  ymant = fs_yllui2uint(yd);
   y = (1 << 23) | ymant;
-  ydtemplow = lowllui2uint(yd);
-  d = (1 << 13) | downto(ydtemplow,12,0);
+  ydtemplow = fs_lowllui2uint(yd);
+  d = (1 << 13) | fs_downto(ydtemplow,12,0);
   uint32_t mant;
   if(is_odd == 1){
-    mant = y - ((d * ((1 << 15) - (downto(i,14,0)))) >> 15);
+    mant = y - ((d * ((1 << 15) - (fs_downto(i,14,0)))) >> 15);
   }else{
-    if(downto(i,22,0) == (1 << 23) - 1){
-      mant = downto(i,22,0);
+    if(fs_downto(i,22,0) == (1 << 23) - 1){
+      mant = fs_downto(i,22,0);
     }else{
-      mant = y - ((d * ((1 << 14) - (downto(i,13,0)))) >> 14);
+      mant = y - ((d * ((1 << 14) - (fs_downto(i,13,0)))) >> 14);
     }
   }
-  uint32_t ans = make_ans(sign,exp,downto(mant,22,0));
+  uint32_t ans = fs_make_ans(sign,exp,fs_downto(mant,22,0));
   return ans;
 }
 
 uint32_t fsqrt1(uint32_t i){
   uint32_t sign = 0;
-  uint32_t is_odd = downto(i,23,23);
+  uint32_t is_odd = fs_downto(i,23,23);
   uint32_t exp;
   uint32_t index;
   long long unsigned int yd;
@@ -118,40 +166,40 @@ uint32_t fsqrt1(uint32_t i){
   uint32_t mant;
   uint32_t constant, grad, stub;
   if(tlb_flag == 0){
-    init_tlb();
+    fs_init_tlb();
     tlb_flag = 1;
   }
 
 
-  if(downto(i,30,0) == 0){
+  if(fs_downto(i,30,0) == 0){
     return i;
   }
-  if(downto(i,31,31) == 1){
+  if(fs_downto(i,31,31) == 1){
     return 0xffc00000;
   }
 
-  exp = (downto(i,30,23)+127) >> 1;
+  exp = (fs_downto(i,30,23)+127) >> 1;
 
   if(is_odd == 1){
-    index = downto(i,22,15); // 8bit
+    index = fs_downto(i,22,15); // 8bit
   }else{
-    index = downto(i,22,14) + 256; // 10bit
+    index = fs_downto(i,22,14) + 256; // 10bit
   }
 
-  yd = binarytoullint(tlb[index]);
-  constant = yllui2uint(yd);
-  ydtemplow = lowllui2uint(yd);
-  grad = (1 << 13) | downto(ydtemplow,12,0);
+  yd = fs_binarytoullint(tlb[index]);
+  constant = fs_yllui2uint(yd);
+  ydtemplow = fs_lowllui2uint(yd);
+  grad = (1 << 13) | fs_downto(ydtemplow,12,0);
 
   if(is_odd == 1){
-    stub = ((grad * ((1 << 15) - (downto(i,14,0)))) >> 15);
+    stub = ((grad * ((1 << 15) - (fs_downto(i,14,0)))) >> 15);
     mant = constant - stub;
   }else{
-    if(downto(i,22,0) == (1 << 23) - 1){
+    if(fs_downto(i,22,0) == (1 << 23) - 1){
       stub = 0;
-      mant = downto(i,22,0);
+      mant = fs_downto(i,22,0);
     }else{
-      stub = ((grad * ((1 << 14) - (downto(i,13,0)))) >> 14);
+      stub = ((grad * ((1 << 14) - (fs_downto(i,13,0)))) >> 14);
       mant = constant - stub;
     }
   }
@@ -162,7 +210,7 @@ uint32_t fsqrt1(uint32_t i){
   printf("stub %x\n", stub);
   */
 
-  return make_ans(sign,exp,downto(mant,22,0));
+  return fs_make_ans(sign,exp,fs_downto(mant,22,0));
 }
 
 /*

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define N 1024
+#define N 2048
 #define DATA "new_finv_table.txt"
 #define fDATA "finv_full.txt"
 
@@ -85,9 +85,8 @@ int main(){
     char *y2s,*ds;
     char str[70];
     y2s = uint2binary(y2_mant,22,0);
-    ds = uint2binary(d,31,0);
+    ds = uint2binary(d,12,0);
     strcpy(str,y2s);
-    strcat(str," ");
     strcat(str,ds);
     free(y2s);
     free(ds);
