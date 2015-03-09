@@ -62,7 +62,7 @@ architecture Control_arch of Control is
       o : out std_logic_vector(31 downto 0));
   end component;
 
-  component fsqrt is
+  component fsqrt2 is
     port (
       clk : in std_logic;
       stall : in std_logic;
@@ -565,7 +565,7 @@ begin
     i => std_logic_vector(r.e.fpu.d1),
     o => finv_o);
 
-  fsqrt_unit : fsqrt port map (
+  fsqrt_unit : fsqrt2 port map (
     clk => clk,
     stall => bus_in.m.stall,
     i => std_logic_vector(r.e.fpu.d1),
