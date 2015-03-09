@@ -137,5 +137,5 @@ ${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} 1
 echo "cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s"
 cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
 
-echo "${REPO_ROOT}/simulator/bin/assembler ${WORK_DIR}/${SOURCE} < ${WORK_DIR}/_${SOURCE}.s 1> ${WORK_DIR}/${SOURCE}.label"
-${REPO_ROOT}/simulator/bin/assembler ${WORK_DIR}/${SOURCE} < ${WORK_DIR}/_${SOURCE}.s 1> ${WORK_DIR}/${SOURCE}.label
+echo "${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s"
+${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s 
