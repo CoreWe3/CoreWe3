@@ -64,11 +64,11 @@ uint32_t itof(uint32_t n){
 
   result = sign1 | (exp << 23) | frac;
 
-
+  /*
   printf("leading zero: %d\n", lead_zero0);
   printf("exp : 0x%x\n",exp);
   printf("frac: 0x%08x\n", frac);
   printf("result: 0x%08x\n", result);
-
+  */
   return result;
 }
