@@ -465,8 +465,17 @@ int main(int argc, char* argv[]){
 	}
 
 	if(showlabel){
+		list<tuple<string, unsigned int>> tl;
 		for(auto x : labels){
-			cerr << x.first << " : " << x.second << endl;
+			if (x.first[0] == '.'){
+				cerr << x.first << " : " << x.second << endl;
+			}else{
+				tl.push_back(tuple<string, unsigned int>(x.first, x.second));
+			}
+		}
+		tl.sort([](tuple<string, unsigned int> a, tuple<string, unsigned int> b)->bool { return get<1>(a) < get<1>(b); } );
+		for(auto y : tl){
+			cerr << get<0>(y) << " : " << get<1>(y) << endl;
 		}
 	}
 
