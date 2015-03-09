@@ -62,9 +62,10 @@ int main(int argc, char* argv[]){
 	}else{
 		cerr << "No input file." << endl;
 	}
-	vector<uint32_t> branchprofile;
-	while(fin2.read(reinterpret_cast<char*>(&tmp),sizeof(tmp))){
-		branchprofile.push_back(tmp);
+	vector<float> branchprofile;
+	float ftmp;
+	while(fin2.read(reinterpret_cast<char*>(&ftmp),sizeof(ftmp))){
+		branchprofile.push_back(ftmp);
 	}
 
 	//Error Detection
