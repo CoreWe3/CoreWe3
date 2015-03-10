@@ -24,6 +24,7 @@ int main(int argc, char* argv[]){
 	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
 	bool branchprofile_flag = false;
+	unsigned int mvcounter = 0;
 	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
 			case 'f': // Input Binary File
@@ -300,6 +301,7 @@ int main(int argc, char* argv[]){
 			case ADDI:
 				greg[fm.L.ra].u = greg[fm.L.rb].u + fm.L.cx;
 				pc+=1;
+				if(fm.L.cx == 0) mvcounter ++;
 				break;
 
 			case SHLI:
@@ -462,6 +464,6 @@ END_MAIN:
 	//Print 
 	cerr << "fmulfadd:" << fmulfadd << endl; 
 	cerr << "faddfmul:" << faddfmul << endl; 
-
+	cerr << "move:" << mvcounter << endl;
 	return 0;
 }
