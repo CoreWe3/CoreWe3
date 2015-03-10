@@ -407,7 +407,7 @@ int main(int argc, char* argv[]){
 		fm2.data = prev;
 		prev = fm.data;
 		if(fm.J.op==FADD && fm2.J.op==FMUL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
-		if(fm.J.op==FMUL && fm2.J.op==FADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
+		if(fm.J.op==FMUL && fm2.J.op==FADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) fmulfadd++;
 
 		counter++;
 	}
@@ -460,8 +460,8 @@ END_MAIN:
 	cerr << endl;
 
 	//Print 
-	cerr << "fmulfadd:" << faddfmul << endl; 
-	cerr << "faddfmul:" << fmulfadd << endl; 
+	cerr << "fmulfadd:" << fmulfadd << endl; 
+	cerr << "faddfmul:" << faddfmul << endl; 
 
 	return 0;
 }
