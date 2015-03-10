@@ -299,9 +299,6 @@ int main(int argc, char* argv[]){
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
-					if(v>0x7FFF&&v<0xFFFF8000){
-						cerr << "WARN : overflow immidiate : around " << line << endl;
-					}
 					fm.L.cx = v;
 				}
 				results.push_back(fm.data);
