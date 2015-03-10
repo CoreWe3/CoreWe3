@@ -1,4 +1,4 @@
-	ldi	r3	0xff014	; start address
+	ldi	r3	0xfe014	; start address
 	ldi	r8	0xffffffff	; eof
 :loop
 	ld	r4	r0	0xffff

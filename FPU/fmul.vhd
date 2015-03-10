@@ -31,7 +31,11 @@ begin
       hh <= unsigned("1" & a(22 downto 11)) * unsigned("1" & b(22 downto 11));
       hl <= unsigned("1" & a(22 downto 11)) * unsigned(b(10 downto 0));
       lh <= unsigned(a(10 downto 0)) * unsigned("1" & b(22 downto 11));
-      exp_0 <= unsigned("00" & a(30 downto 23)) + unsigned("00" & b(30 downto 23)) + 129;
+      if unsigned(a(30 downto 23)) = 0 or unsigned(b(30 downto 23)) = 0 then
+        exp_0 <= (others => '0');
+      else
+        exp_0 <= unsigned("00" & a(30 downto 23)) + unsigned("00" & b(30 downto 23)) + 129;
+        end if;
       sign_0 <= a(31) xor b(31);
 
       --stage2
