@@ -26,7 +26,8 @@ let rec xloop x =
   if x >= 1.0 then ()
   else (
     let xx = x *. 6.28 in
-    let c = (sqrt xx) /. 6.28 in
+    let yy = sqrt xx in
+    let c = yy /. 6.28 in
     yloop x (-1.0) c;
     xloop (x +. 0.015625)
   )
