@@ -63,13 +63,17 @@ int main(int argc, char* argv[]){
 	//Option Handler
 	char result;
 	char *filename = nullptr, *outputfilename = nullptr;
-	while((result=getopt(argc,argv,"f:i:"))!=-1){
+	bool showlabel = false;
+	while((result=getopt(argc,argv,"f:i:l"))!=-1){
 		switch(result){
 			case 'f': // Output File
 				outputfilename = optarg;
 				break;
 			case 'i': // Input File
 				filename = optarg;
+				break;
+			case 'l':
+				showlabel = true;
 				break;
 			case ':':
 				cerr << "ERROR : "<<result << " needs value" << endl;
@@ -295,9 +299,6 @@ int main(int argc, char* argv[]){
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
-					if(v>0x7FFF&&v<0xFFFF8000){
-						cerr << "WARN : overflow immidiate : around " << line << endl;
-					}
 					fm.L.cx = v;
 				}
 				results.push_back(fm.data);
@@ -458,6 +459,21 @@ int main(int argc, char* argv[]){
 
 	for(auto x : results){
 		fout.write((char *)&x,sizeof(x));
+	}
+
+	if(showlabel){
+		list<tuple<string, unsigned int>> tl;
+		for(auto x : labels){
+			if (x.first[0] == '.'){
+				cerr << x.first << " : " << x.second << endl;
+			}else{
+				tl.push_back(tuple<string, unsigned int>(x.first, x.second));
+			}
+		}
+		tl.sort([](tuple<string, unsigned int> a, tuple<string, unsigned int> b)->bool { return get<1>(a) < get<1>(b); } );
+		for(auto y : tl){
+			cerr << get<0>(y) << " : " << get<1>(y) << endl;
+		}
 	}
 
 	return 0;
