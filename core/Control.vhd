@@ -72,6 +72,8 @@ architecture Control_arch of Control is
 
   component fcmp is
     port (
+      clk : in std_logic;
+      stall : in std_logic;
       a : in std_logic_vector(31 downto 0);
       b : in std_logic_vector(31 downto 0);
       o : out std_logic_vector(31 downto 0));
@@ -152,103 +154,115 @@ architecture Control_arch of Control is
     end if;
   end forward_reg;
 
-  procedure decode
-    (i : in std_logic_vector(31 downto 0);
+  procedure prediction
+    (i  : in std_logic_vector(31 downto 0);
      pc : in unsigned(ADDR_WIDTH-1 downto 0);
+     p  : out prediction_t) is
+  begin
+    p := default_p;
+    p.pc := pc;
+    p.op := i(31 downto 26);
+    p.ra := unsigned(i(25 downto 21));
+    p.rb := unsigned(i(20 downto 16));
+    p.rc := unsigned(i(15 downto 11));
+    p.cx := unsigned(i(15 downto 0));
+    case i(31 downto 26) is
+      when J =>
+        p.br := "11";
+        p.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
+      when JEQ | JLE | JLT =>
+        p.br(1) := i(25);
+        p.br(0) := '1';
+        p.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
+      when JSUB =>
+        p.br := "11";
+        p.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
+      when RET =>
+        p.br := "01";
+      when others =>
+    end case;
+  end prediction;
+
+  procedure decode
+    (p : in prediction_t;
      gpreg : in regfile_t;
      fpreg : in regfile_t;
      w_d : in write_data_t;
      d : out decode_t) is
     variable ra, rb, rc, cr, lr, fa, fb, fc: read_data_t;
   begin
+    d := default_d;
 
-    ---forwarding
-    get_gpreg(gpreg, unsigned(i(25 downto 21)), w_d, ra);
-    get_gpreg(gpreg, unsigned(i(20 downto 16)), w_d, rb);
-    get_gpreg(gpreg, unsigned(i(15 downto 11)), w_d, rc);
+    get_gpreg(gpreg, p.ra, w_d, ra);
+    get_gpreg(gpreg, p.rb, w_d, rb);
+    get_gpreg(gpreg, p.rc, w_d, rc);
     get_gpreg(gpreg, "11110", w_d, cr);
     get_gpreg(gpreg, "11111", w_d, lr);
 
-    get_fpreg(fpreg, unsigned(i(25 downto 21)), w_d, fa);
-    get_fpreg(fpreg, unsigned(i(20 downto 16)), w_d, fb);
-    get_fpreg(fpreg, unsigned(i(15 downto 11)), w_d, fc);
+    get_fpreg(fpreg, p.ra, w_d, fa);
+    get_fpreg(fpreg, p.rb, w_d, fb);
+    get_fpreg(fpreg, p.cx, w_d, fc);
 
-    d := default_d;
-    d.pc := pc;
-    d.op := i(31 downto 26);
-    d.br := "00";
-    d.target := (others => '-');
-    case i(31 downto 26) is
+    d.pc := p.pc;
+    d.op := p.op;
+    d.imm := p.cx;
+    d.br := p.br;
+    d.target := p.target;
+    case p.op is
       when LD =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := rb;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when ST =>
         d.d1 := rb;
         d.d2 := ra;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when FLD =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := rb;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when FST =>
         d.d1 := rb;
         d.d2 := fa;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when I_TOF =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := rb;
       when F_TOI =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := fb;
       when ADD | SUB | SH_L | SH_R =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := rb;
         d.d2 := rc;
       when ADDI | SHLI | SHRI =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := rb;
-        d.imm := unsigned(resize(signed(i(15 downto 0)), 32));
       when LDIH =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := ra; -- ISA should rb
-        d.imm := resize(unsigned(i(15 downto 0)), 32);
       when F_ADD | F_SUB | F_MUL =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := fb;
         d.d2 := fc;
       when F_ABS | F_INV | F_SQRT =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := fb;
       when F_CMP =>
         d.dest := "11110";
         d.d1 := fb;
         d.d2 := fc;
       when FLDI =>
-        d.dest := unsigned(i(25 downto 21));
+        d.dest := p.ra;
         d.d1 := fb;
-        d.imm := resize(unsigned(i(15 downto 0)), 32);
       when J =>
-        d.br := "11";
-        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when JEQ | JLE | JLT =>
         d.d1 := cr;
-        d.br(1) := i(25);
-        d.br(0) := '1';
-        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when JSUB =>
         d.dest := "11111";
-        d.imm := unsigned(resize(signed(i(24 downto 0)), 32));
-        d.br := "11";
-        d.target := pc+unsigned(i(ADDR_WIDTH-1 downto 0));
       when RET =>
         d.d1 := lr;
-        d.br := "01";
       when others =>
     end case;
   end decode;
 
-  procedure redecode
+  procedure reread
     (d_in : in decode_t;
      gpreg : in regfile_t;
      fpreg : in regfile_t;
@@ -272,7 +286,7 @@ architecture Control_arch of Control is
        d_out.d2 := f2;
      end if;
 
-   end redecode;
+   end reread;
 
   procedure execute
     (d : in decode_t;
@@ -286,6 +300,7 @@ architecture Control_arch of Control is
      hazard : out std_logic) is
     variable d1, d2 : read_data_t;
     variable next_pc: unsigned(ADDR_WIDTH-1 downto 0);
+    variable imm32 : unsigned(31 downto 0);
   begin
 
     forward_reg(d.d1, ma_d, mw_d, mr_d, w_d, d1);
@@ -299,16 +314,17 @@ architecture Control_arch of Control is
     taken_branch := (others => '-');
     branch_hit := '1';
     hazard := '0';
+    imm32 := unsigned(resize(signed(d.imm), 32));
     case d.op is
       when LD =>
-        e.alu := (d1.d, d.imm, "00");
+        e.alu := (d1.d, imm32, "00");
         hazard := d1.h;
       when FLD =>
-        e.alu := (d1.d, d.imm, "00");
+        e.alu := (d1.d, imm32, "00");
         hazard := d1.h;
         e.wd.f := '1';
       when ST | FST =>
-        e.alu := (d1.d, d.imm, "00");
+        e.alu := (d1.d, imm32, "00");
         e.data := d2.d;
         hazard := d1.h or d2.h;
       when I_TOF =>
@@ -325,7 +341,7 @@ architecture Control_arch of Control is
         e.alu := (d1.d, d2.d, "01");
         hazard := d1.h or d2.h;
       when ADDI =>
-        e.alu := (d1.d, d.imm, "00");
+        e.alu := (d1.d, imm32, "00");
         hazard := d1.h;
       when SH_L =>
         e.alu := (d1.d, d2.d, "10");
@@ -334,13 +350,13 @@ architecture Control_arch of Control is
         e.alu := (d1.d, d2.d, "11");
         hazard := d1.h or d2.h;
       when SHLI =>
-        e.alu := (d1.d, d.imm, "10");
+        e.alu := (d1.d, imm32, "10");
         hazard := d1.h;
       when SHRI =>
-        e.alu := (d1.d, d.imm, "11");
+        e.alu := (d1.d, imm32, "11");
         hazard := d1.h;
       when LDIH =>
-        e.alu := (d.imm(15 downto 0) & d1.d(15 downto 0), (others => '0'), "00");
+        e.alu := (d.imm & d1.d(15 downto 0), (others => '0'), "00");
         hazard := d1.h;
       when F_ADD | F_MUL =>
         e.fpu := (d1.d, d2.d);
@@ -362,22 +378,20 @@ architecture Control_arch of Control is
         e.fpu := (d1.d, d2.d);
         hazard := d1.h or d2.h;
       when FLDI =>
-        e.data := d.imm(15 downto 0) & d1.d(31 downto 16);
+        e.data := d.imm & d1.d(31 downto 16);
         e.wd.f := '1';
         hazard := d1.h;
       when J =>
         e.wd.r := '1';
       when JEQ =>
-        if d1.d = 0 then -- taken
-          if d.br(1) = '0' then
-            branch_hit := '0';
-            taken_branch := d.target;
-          end if;
-        else -- not taken
-          if d.br(1) = '1' then
-            branch_hit := '0';
-            taken_branch := next_pc;
-          end if;
+        if d1.d = 0 and d.br(1) = '0' then
+          -- taken but predicted not taken
+          branch_hit := '0';
+          taken_branch := d.target;
+        elsif d1.d /= 0 and d.br(1) = '1' then
+          -- not taken but predicted taken
+          branch_hit := '0';
+          taken_branch := next_pc;
         end if;
         hazard := d1.h;
       when JLE =>
@@ -394,16 +408,14 @@ architecture Control_arch of Control is
         end if;
         hazard := d1.h;
       when JLT =>
-        if d1.d(31) = '1' then -- taken
-          if d.br(1) = '0' then
-            taken_branch := d.target;
-            branch_hit := '0';
-          end if;
-        else -- not taken
-          if d.br(1) = '1' then
-            branch_hit := '0';
-            taken_branch := next_pc;
-          end if;
+        if d1.d(31) = '1' and d.br(1) = '0' then
+          -- taken but predicted not taken
+          branch_hit := '0';
+          taken_branch := d.target;
+        elsif d1.d(31) = '0' and d.br(1) = '1' then
+          -- not taken but predicted taken
+          branch_hit := '0';
+          taken_branch := next_pc;
         end if;
         hazard := d1.h;
       when JSUB =>
@@ -419,7 +431,6 @@ architecture Control_arch of Control is
   procedure memory_access
     (e : in execute_t;
      alu : in unsigned(31 downto 0);
-     fcmp_o : in unsigned(31 downto 0);
      ma : out memory_access_t) is
   begin
     ma := default_ma;
@@ -437,9 +448,6 @@ architecture Control_arch of Control is
       when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI | LDIH =>
         ma.wd.d := alu;
         ma.wd.r := '1';
-      when F_CMP =>
-        ma.wd.d := fcmp_o;
-        ma.wd.r := '1';
       when FLDI =>
         ma.wd.d := e.data;
         ma.wd.r := '1';
@@ -454,10 +462,17 @@ architecture Control_arch of Control is
 
   procedure memory_wait
     (ma : in memory_access_t;
+     fcmp_o : in unsigned(31 downto 0);
      mw: out memory_wait_t) is
   begin
     mw.op := ma.op;
     mw.wd := ma.wd;
+    case ma.op is
+      when F_CMP =>
+        mw.wd.d := fcmp_o;
+        mw.wd.r := '1';
+      when others =>
+    end case;
   end memory_wait;
 
   procedure memory_read
@@ -572,6 +587,8 @@ begin
     o => fsqrt_o);
 
   fcmp_unit : fcmp port map (
+    clk => clk,
+    stall => bus_in.m.stall,
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
     o => fcmp_o);
@@ -599,15 +616,16 @@ begin
           instruction := r.f.i;
         end if;
 
-        memory_access(r.e, alu_o, unsigned(fcmp_o), v.ma);
-        memory_wait(r.ma, v.mw);
+        memory_access(r.e, alu_o, v.ma);
+        memory_wait(r.ma, unsigned(fcmp_o), v.mw);
         memory_read(r.mw, bus_in.m.d, v.mr);
         write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o), unsigned(fadd_o),
                    unsigned(fmul_o), unsigned(finv_o), unsigned(fsqrt_o), v_wd);
 
+        prediction(instruction, r.f.pc, v.p);
+        decode(r.p, gpreg, fpreg, v_wd, v.d);
         execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e,
                 branch_hit, taken_branch, data_hazard);
-        decode(instruction, r.f.pc, gpreg, fpreg, v_wd, v.d);
 
         v.pc := r.pc+1;
         v.f.pc := r.pc;
@@ -618,15 +636,16 @@ begin
           v.pc := r.pc;
           v.f.pc := r.f.pc;
           v.f.i := instruction;
-          redecode(r.d, gpreg, fpreg, v_wd, v.d);
+          v.p := r.p;
+          reread(r.d, gpreg, fpreg, v_wd, v.d);
           v.e := default_e;
-        elsif branch_hit = '1' and v.d.br = "11" then -- taken branch
+        elsif branch_hit = '1' and v.p.br = "11" then -- taken branch
           v.state(1 downto 0) := "10";
-          v.pc := v.d.target;
+          v.pc := v.p.target;
           v.f.pc := (others => '-');
-        elsif branch_hit = '1' and v.d.br = "01" then -- not taken branch
+        elsif branch_hit = '1' and v.p.br = "01" then -- not taken branch
           v.state(1 downto 0) := "00";
-        elsif branch_hit = '1' and v.d.br = "00" then  -- without any hazard
+        elsif branch_hit = '1' and v.p.br = "00" then  -- without any hazard
           v.state(1 downto 0) := "00";
         elsif branch_hit = '0' then -- branch prediction failed
           v.state(1 downto 0) := "11";
@@ -637,6 +656,7 @@ begin
           end if;
           v.f.pc := (others => '-');
           v.f.i := (others => '-');
+          v.p := default_p;
           v.d := default_d;
         end if;
 

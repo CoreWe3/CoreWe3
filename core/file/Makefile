@@ -24,6 +24,7 @@ min-rt.s: min-rt2.S
 	touch input
 	$(SIM) -f $@ -o $(@:=.slog) -i input
 	cat eof >> $@
+	cp $@ isim
 
 %.b: %.s
 	cd $(ROOT)/simulator && $(MAKE)

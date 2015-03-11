@@ -1,7 +1,7 @@
 SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/newton
+CODE = file/test
 
 all: configure
 

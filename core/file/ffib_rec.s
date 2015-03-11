@@ -1,5 +1,5 @@
 	ldi	r1	0xeefff
-	vfldi	f1	0x41200000	# n = 4
+	vfldi	f1	0x40800000	# n = 4
 	vfldi	f31	0x3f800000	# 1
 	jsub	:fib
 	fst	f1	r0	0xffff

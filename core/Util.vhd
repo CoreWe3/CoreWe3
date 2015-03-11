@@ -140,15 +140,36 @@ package Util is
     pc => (others => '-'),
     i => NOP);
 
+  type prediction_t is record
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    op : std_logic_vector(5 downto 0);
+    ra : unsigned(4 downto 0);
+    rb : unsigned(4 downto 0);
+    rc : unsigned(4 downto 0);
+    cx : unsigned(15 downto 0);
+    br : std_logic_vector(1 downto 0);
+    target : unsigned(ADDR_WIDTH-1 downto 0);
+  end record prediction_t;
+
+  constant default_p : prediction_t := (
+    pc => (others => '-'),
+    op => ADD,
+    ra => (others => '0'),
+    rb => (others => '0'),
+    rc => (others => '0'),
+    cx => (others => '-'),
+    br => "00",
+    target => (others => '-'));
+
   type decode_t is record
-    pc    : unsigned(ADDR_WIDTH-1 downto 0);
-    op    : std_logic_vector(5 downto 0);
-    d1    : read_data_t;
-    d2    : read_data_t;
-    dest  : unsigned(4 downto 0);
-    imm   : unsigned(31 downto 0);
-    br    : std_logic_vector(1 downto 0); -- br(1) taken, br(0) branch
-    target: unsigned(ADDR_WIDTH-1 downto 0);
+    pc : unsigned(ADDR_WIDTH-1 downto 0);
+    op : std_logic_vector(5 downto 0);
+    d1 : read_data_t;
+    d2 : read_data_t;
+    dest : unsigned(4 downto 0);
+    imm : unsigned(15 downto 0);
+    br : std_logic_vector(1 downto 0); -- br(1) taken, br(0) branch
+    target : unsigned(ADDR_WIDTH-1 downto 0);
   end record decode_t;
 
   constant default_d : decode_t := (
@@ -211,6 +232,7 @@ package Util is
     state : std_logic_vector(2 downto 0);
     pc : unsigned(ADDR_WIDTH-1 downto 0);
     f : fetch_t;
+    p : prediction_t;
     d : decode_t;
     e : execute_t;
     ma : memory_access_t;
@@ -222,6 +244,7 @@ package Util is
     state => "010",
     pc => (others => '0'),
     f => default_f,
+    p => default_p,
     d => default_d,
     e => default_e,
     ma => default_ma,
