@@ -82,6 +82,10 @@ int main(int argc, char* argv[]){
 	vector<int> branchprofile2(instructions.size());
 	unsigned int faddfmul=0;
 	unsigned int fmulfadd=0;
+	unsigned int addadd=0;
+	unsigned int addsub=0;
+	unsigned int subadd=0;
+	unsigned int subsub=0;
 
 
 	//Initilaize RAM
@@ -410,6 +414,10 @@ int main(int argc, char* argv[]){
 		prev = fm.data;
 		if(fm.J.op==FADD && fm2.J.op==FMUL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
 		if(fm.J.op==FMUL && fm2.J.op==FADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) fmulfadd++;
+		if(fm.J.op==ADD && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addadd++;
+		if(fm.J.op==ADD && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addsub++;
+		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
+		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
 
 		counter++;
 	}
@@ -464,6 +472,10 @@ END_MAIN:
 	//Print 
 	cerr << "fmulfadd:" << fmulfadd << endl; 
 	cerr << "faddfmul:" << faddfmul << endl; 
+	cerr << "addadd:" << addadd << endl; 
+	cerr << "addsub:" << addsub << endl; 
+	cerr << "subadd:" << subadd << endl; 
+	cerr << "subsub:" << subsub << endl; 
 	cerr << "move:" << mvcounter << endl;
 	return 0;
 }
