@@ -1,4 +1,4 @@
-	vfldi	f1	0x41200000	# n
+	vfldi	f1	10.0	# n
 	vfldi	f2	0x3f800000	# f(1) = 1
 	fadd	f3	f0	f0	# f(0) = 0
 	vfldi	f31	0x3f800000	# 1

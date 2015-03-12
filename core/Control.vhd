@@ -201,7 +201,7 @@ architecture Control_arch of Control is
 
     get_fpreg(fpreg, p.ra, w_d, fa);
     get_fpreg(fpreg, p.rb, w_d, fb);
-    get_fpreg(fpreg, p.cx, w_d, fc);
+    get_fpreg(fpreg, p.rc, w_d, fc);
 
     d.pc := p.pc;
     d.op := p.op;
