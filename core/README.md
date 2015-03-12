@@ -10,8 +10,8 @@
 | Decode and read register                            |
 | Execute integer and floating point arithmetic       |
 | Memory Access and execute floating point arithmetic |
-| Memory Wait and execute floating point arithmetic   |
-| Memory Read and floating point arithmetic           |
+| Memory Read and execute floating point arithmetic   |
+| Floating point arithmetic                           |
 | Write register                                      |
 
 毎クロック一つの命令を実行する。同時実行フラグ(@)が立つのは以下に示したMultiOpのみ。
@@ -24,9 +24,9 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 
 | Instruction | Latency | MultiOp |
 |-------------|---------|---------|
-| LD          | 2 ( *1) | N       |
+| LD          | 1 ( *1) | N       |
 | ST          | - ( *1) | N       |
-| FLD         | 2 ( *1) | N       |
+| FLD         | 1 ( *1) | N       |
 | FST         | - ( *1) | N       |
 | ITOF        | 3       | Y       |
 | FTOI        | 3       | Y       |
@@ -44,7 +44,7 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 | FINV        | 3       | Y       |
 | FSQRT       | 3       | Y       |
 | FABS        | 0       | Y       |
-| FCMP        | 0       | Y       |
+| FCMP        | 1       | Y       |
 | FLDI        | 0       | Y       |
 | J           | - ( *2) | N       |
 | JEQ         | - ( *2) | N       |
@@ -70,14 +70,14 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 
 | Load                  |     |
 |-----------------------|-----|
-| BRAM(キャッシュヒット) | 0   |
-| SRAM(キャッシュミス)   | 3   |
+| BRAM(cache hit)       | 0   |
+| SRAM(cache miss)      | 3   |
 | IO                    | 1~  |
 
 | Store                 |     |
 |-----------------------|-----|
-| BRAM(キャッシュヒット) | 0   |
-| SRAM(キャッシュミス)   | 0   |
+| BRAM(cache hit)       | 0   |
+| SRAM(cache miss)      | 0   |
 | IO                    | 1~  |
 
 
@@ -92,7 +92,7 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 |------------------------|----------------|
 | Predicate as Taken     | 1              |
 | Predicate as Not Taken | 0              |
-| Fail predication       | 2              |
+| Fail predication       | 3              |
 
 
 ジャンプ命令
@@ -101,7 +101,7 @@ latencyは各命令が実行されてからその結果を読み出せるまで�
 |-------------|----------------|
 | J           | 1              |
 | JSUB        | 1              |
-| RET         | 2              |
+| RET         | 3              |
 
 * IO
 
@@ -110,17 +110,15 @@ FLD FSTを用いると、4バイト分リトルエンディアンで入出力す
 
 * 実装済み命令
 
-LD ST FLD FST (ITOF) (FTOI) ADD SUB ADDI SHR SHL SHLI SHRI LDIH
+LD ST FLD FST ITOF FTOI ADD SUB ADDI SHR SHL SHLI SHRI LDIH
 FADD FSUB FMUL FABS FINV FSQRT FCMP FLDI J JEQ JLE JLT JSUB RET
 
 
 ## TODO
 
-* FPU組み込み
-
 * 周波数向上
 
-* キャッシュのラインサイズ増加(Burst mode使用)
+* キャッシュのラインサイズ増加
 
 * 2way-set associative キャッシュ
 

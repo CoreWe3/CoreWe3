@@ -117,21 +117,16 @@ architecture Control_arch of Control is
 
   procedure forward_reg
     (di  : in read_data_t;
-     ma_d : in write_data_t;
      mw_d : in write_data_t;
      mr_d : in write_data_t;
+     fw_d : in write_data_t;
      w_d : in write_data_t;
      do  : out read_data_t) is
   begin
     do := di;
     do.h := '1';
     if di.a /= 0 then
-      if ma_d.a = di.a and ma_d.f = di.f then
-        if ma_d.r = '1' then
-          do.d := ma_d.d;
-          do.h := '0';
-        end if;
-      elsif mw_d.a = di.a and mw_d.f = di.f then
+      if mw_d.a = di.a and mw_d.f = di.f then
         if mw_d.r = '1' then
           do.d := mw_d.d;
           do.h := '0';
@@ -139,6 +134,11 @@ architecture Control_arch of Control is
       elsif mr_d.a = di.a and mr_d.f = di.f then
         if mr_d.r = '1' then
           do.d := mr_d.d;
+          do.h := '0';
+        end if;
+      elsif fw_d.a = di.a and fw_d.f = di.f then
+        if fw_d.r = '1' then
+          do.d := fw_d.d;
           do.h := '0';
         end if;
       elsif w_d.a = di.a and w_d.f = di.f then
@@ -301,6 +301,10 @@ architecture Control_arch of Control is
     variable d1, d2 : read_data_t;
     variable next_pc: unsigned(ADDR_WIDTH-1 downto 0);
     variable imm32 : unsigned(31 downto 0);
+    variable addr : unsigned(19 downto 0);
+    variable eq : std_logic;
+    variable lt : std_logic;
+    variable le : std_logic;
   begin
 
     forward_reg(d.d1, ma_d, mw_d, mr_d, w_d, d1);
@@ -315,17 +319,31 @@ architecture Control_arch of Control is
     branch_hit := '1';
     hazard := '0';
     imm32 := unsigned(resize(signed(d.imm), 32));
+    addr := d1.d(19 downto 0) + unsigned(resize(signed(d.imm), 20));
+    if d1.d = 0 then
+      eq := '1';
+    else
+      eq := '0';
+    end if;
+    if d1.d(31) = '1' then
+      lt := '1';
+    else
+      lt := '0';
+    end if;
+    le := eq or lt;
     case d.op is
       when LD =>
-        e.alu := (d1.d, imm32, "00");
+        e.m := (addr, (others => '-'), '1', '0', '0');
         hazard := d1.h;
       when FLD =>
-        e.alu := (d1.d, imm32, "00");
+        e.m := (addr, (others => '-'), '1', '0', '1');
         hazard := d1.h;
         e.wd.f := '1';
-      when ST | FST =>
-        e.alu := (d1.d, imm32, "00");
-        e.data := d2.d;
+      when ST =>
+        e.m := (addr, d2.d, '1', '1', '0');
+        hazard := d1.h or d2.h;
+      when FST =>
+        e.m := (addr, d2.d, '1', '1', '1');
         hazard := d1.h or d2.h;
       when I_TOF =>
         e.fpu := (d1.d, (others => '-'));
@@ -356,7 +374,8 @@ architecture Control_arch of Control is
         e.alu := (d1.d, imm32, "11");
         hazard := d1.h;
       when LDIH =>
-        e.alu := (d.imm & d1.d(15 downto 0), (others => '0'), "00");
+        e.wd.d := d.imm & d1.d(15 downto 0);
+        e.wd.r := '1';
         hazard := d1.h;
       when F_ADD | F_MUL =>
         e.fpu := (d1.d, d2.d);
@@ -371,105 +390,74 @@ architecture Control_arch of Control is
         e.wd.f := '1';
         hazard := d1.h;
       when F_ABS =>
-        e.data := '0' & d1.d(30 downto 0);
+        e.wd.d := '0' & d1.d(30 downto 0);
         e.wd.f := '1';
+        e.wd.r := '1';
         hazard := d1.h;
       when F_CMP =>
         e.fpu := (d1.d, d2.d);
         hazard := d1.h or d2.h;
       when FLDI =>
-        e.data := d.imm & d1.d(31 downto 16);
+        e.wd.d := d.imm & d1.d(31 downto 16);
         e.wd.f := '1';
+        e.wd.r := '1';
         hazard := d1.h;
       when J =>
         e.wd.r := '1';
       when JEQ =>
-        if d1.d = 0 and d.br(1) = '0' then
+        if eq = '1' and d.br(1) = '0' then
           -- taken but predicted not taken
           branch_hit := '0';
           taken_branch := d.target;
-        elsif d1.d /= 0 and d.br(1) = '1' then
+        elsif eq = '0' and d.br(1) = '1' then
           -- not taken but predicted taken
           branch_hit := '0';
           taken_branch := next_pc;
         end if;
         hazard := d1.h;
       when JLE =>
-        if d1.d(31) = '1' or d1.d = 0 then --taken
-          if d.br(1) = '0' then
-            branch_hit := '0';
-            taken_branch := d.target;
-          end if;
-        else -- not taken
-          if d.br(1) = '1' then
-            branch_hit := '0';
-            taken_branch := next_pc;
-          end if;
-        end if;
-        hazard := d1.h;
-      when JLT =>
-        if d1.d(31) = '1' and d.br(1) = '0' then
+        if le = '1' and d.br(1) = '0' then
           -- taken but predicted not taken
           branch_hit := '0';
           taken_branch := d.target;
-        elsif d1.d(31) = '0' and d.br(1) = '1' then
+        elsif le = '0' and d.br(1) = '1' then
+          -- not taken but predicted taken
+          branch_hit := '0';
+          taken_branch := next_pc;
+        end if;
+        hazard := d1.h;
+      when JLT =>
+        if lt = '1' and d.br(1) = '0' then
+          -- taken but predicted not taken
+          branch_hit := '0';
+          taken_branch := d.target;
+        elsif lt = '0' and d.br(1) = '1' then
           -- not taken but predicted taken
           branch_hit := '0';
           taken_branch := next_pc;
         end if;
         hazard := d1.h;
       when JSUB =>
-        e.data := resize(d.pc, 32);
+        e.wd.d := resize(next_pc, 32);
+        e.wd.r := '1';
       when RET =>
         branch_hit := '0';
-        taken_branch := d1.d(ADDR_WIDTH-1 downto 0)+1;
+        taken_branch := d1.d(ADDR_WIDTH-1 downto 0);
         hazard := d1.h;
       when others =>
     end case;
   end execute;
 
-  procedure memory_access
+  procedure memory_wait
     (e : in execute_t;
      alu : in unsigned(31 downto 0);
-     ma : out memory_access_t) is
+     mw : out memory_wait_t) is
   begin
-    ma := default_ma;
-    ma.op := e.op;
-    ma.wd := e.wd;
+    mw.op := e.op;
+    mw.wd := e.wd;
     case e.op is
-      when LD =>
-        ma.m := (alu(19 downto 0), (others => '-'), '1', '0', '0');
-      when FLD =>
-        ma.m := (alu(19 downto 0), (others => '-'), '1', '0', '1');
-      when ST =>
-        ma.m := (alu(19 downto 0), e.data, '1', '1', '0');
-      when FST =>
-        ma.m := (alu(19 downto 0), e.data, '1', '1', '1');
-      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI | LDIH =>
-        ma.wd.d := alu;
-        ma.wd.r := '1';
-      when FLDI =>
-        ma.wd.d := e.data;
-        ma.wd.r := '1';
-      when J | JEQ | JLE | JLT | RET =>
-        ma.wd.r := '1';
-      when JSUB =>
-        ma.wd.d := e.data;
-        ma.wd.r := '1';
-      when others =>
-    end case;
-  end memory_access;
-
-  procedure memory_wait
-    (ma : in memory_access_t;
-     fcmp_o : in unsigned(31 downto 0);
-     mw: out memory_wait_t) is
-  begin
-    mw.op := ma.op;
-    mw.wd := ma.wd;
-    case ma.op is
-      when F_CMP =>
-        mw.wd.d := fcmp_o;
+      when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
+        mw.wd.d := alu;
         mw.wd.r := '1';
       when others =>
     end case;
@@ -477,6 +465,7 @@ architecture Control_arch of Control is
 
   procedure memory_read
     (mw : in memory_wait_t;
+     fcmp_o : in unsigned(31 downto 0);
      mem_o : in unsigned(31 downto 0);
      mr : out memory_read_t) is
   begin
@@ -487,12 +476,23 @@ architecture Control_arch of Control is
       when LD | FLD =>
         mr.wd.d := mem_o;
         mr.wd.r := '1';
+      when F_CMP =>
+        mr.wd.d := fcmp_o;
+        mr.wd.r := '1';
       when others =>
     end case;
   end memory_read;
 
-  procedure write_back
+  procedure fpu_wait
     (mr : in memory_read_t;
+     fw : out fpu_wait_t) is
+  begin
+    fw.op := mr.op;
+    fw.wd := mr.wd;
+  end fpu_wait;
+
+  procedure write_back
+    (fw : in fpu_wait_t;
      ftoi_o : in unsigned(31 downto 0);
      itof_o : in unsigned(31 downto 0);
      fadd_o : in unsigned(31 downto 0);
@@ -501,8 +501,8 @@ architecture Control_arch of Control is
      fsqrt_o : in unsigned(31 downto 0);
      w : out write_data_t) is
   begin
-    w := mr.wd;
-    case mr.op is
+    w := fw.wd;
+    case fw.op is
       when F_TOI =>
         w.d := ftoi_o;
         w.r := '1';
@@ -542,7 +542,7 @@ architecture Control_arch of Control is
 
 begin
   bus_out.pc <= r.pc;
-  bus_out.m <= r.ma.m;
+  bus_out.m <= r.e.m;
 
   alu_unit : alu port map (
     di => r.e.alu,
@@ -616,15 +616,15 @@ begin
           instruction := r.f.i;
         end if;
 
-        memory_access(r.e, alu_o, v.ma);
-        memory_wait(r.ma, unsigned(fcmp_o), v.mw);
-        memory_read(r.mw, bus_in.m.d, v.mr);
-        write_back(r.mr, unsigned(ftoi_o), unsigned(itof_o), unsigned(fadd_o),
+        memory_wait(r.e, alu_o, v.mw);
+        memory_read(r.mw, unsigned(fcmp_o), bus_in.m.d, v.mr);
+        fpu_wait(r.mr, v.fw);
+        write_back(r.fw, unsigned(ftoi_o), unsigned(itof_o), unsigned(fadd_o),
                    unsigned(fmul_o), unsigned(finv_o), unsigned(fsqrt_o), v_wd);
 
         prediction(instruction, r.f.pc, v.p);
         decode(r.p, gpreg, fpreg, v_wd, v.d);
-        execute(r.d, v.ma.wd, v.mw.wd, v.mr.wd, v_wd, v.e,
+        execute(r.d, v.mw.wd, v.mr.wd, v.fw.wd, v_wd, v.e,
                 branch_hit, taken_branch, data_hazard);
 
         v.pc := r.pc+1;
@@ -672,7 +672,7 @@ begin
         if r.state = "000" then
           v.f.i := bus_in.i;
         end if;
-        v.ma.m := default_memory_request;
+        v.e.m := default_memory_request;
       end if;
 
       r <= v;

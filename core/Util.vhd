@@ -185,28 +185,17 @@ package Util is
   type execute_t is record
     op     : std_logic_vector(5 downto 0);
     pc     : unsigned(ADDR_WIDTH-1 downto 0);
-    data   : unsigned(31 downto 0);
     alu    : alu_in_t;
     fpu    : fpu_in_t;
+    m  : memory_request_t;
     wd : write_data_t;
   end record execute_t;
 
   constant default_e : execute_t := (
     op => ADD,
     pc => (others => '-'),
-    data => (others => '-'),
     alu => default_alu,
     fpu => default_fpu_in,
-    wd => default_write_data);
-
-  type memory_access_t is record
-    op : std_logic_vector(5 downto 0);
-    m  : memory_request_t;
-    wd : write_data_t;
-  end record memory_access_t;
-
-  constant default_ma : memory_access_t := (
-    op => ADD,
     m  => default_memory_request,
     wd => default_write_data);
 
@@ -228,6 +217,15 @@ package Util is
     op => ADD,
     wd => default_write_data);
 
+  type fpu_wait_t is record
+    op : std_logic_vector(5 downto 0);
+    wd : write_data_t;
+  end record fpu_wait_t;
+
+  constant default_fw : fpu_wait_t := (
+    op => ADD,
+    wd => default_write_data);
+
   type cpu_t is record
     state : std_logic_vector(2 downto 0);
     pc : unsigned(ADDR_WIDTH-1 downto 0);
@@ -235,9 +233,9 @@ package Util is
     p : prediction_t;
     d : decode_t;
     e : execute_t;
-    ma : memory_access_t;
     mw : memory_wait_t;
     mr : memory_read_t;
+    fw : fpu_wait_t;
   end record cpu_t;
 
   constant init_r : cpu_t := (
@@ -247,9 +245,9 @@ package Util is
     p => default_p,
     d => default_d,
     e => default_e,
-    ma => default_ma,
     mw => default_mw,
-    mr => default_mr);
+    mr => default_mr,
+    fw => default_fw);
 
 end package Util;
 
