@@ -18,6 +18,12 @@ min-rt2.ml: min-rt.ml
 min-rt.s: min-rt2.S
 	cat $(ROOT)/lib/asm/rt_boot.s $(ROOT)/lib/asm/libmincaml.S $< > $@
 
+min-rt: min-rt.s
+	cd $(ROOT)/simulator && $(MAKE)
+	$(AS) -f $@ -i $<
+	$(SIM) -f $@ -o $(@:=.slog) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld
+	cat eof >> $@
+
 %: %.s
 	cd $(ROOT)/simulator && $(MAKE)
 	$(AS) -f $@ -i $<

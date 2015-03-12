@@ -28,7 +28,7 @@
 .min_caml_light_dirvec 247
 .min_caml_reflections 254
 .min_caml_n_reflections 434
-	LDI	r2	0xfdfff	#init sp
+	LDI	r2	0xfbfff	#init sp
 	LDI	r1	0	#init hp
 	JSUB	:_min_caml_init_gobals
 	J	:_min_caml_start
