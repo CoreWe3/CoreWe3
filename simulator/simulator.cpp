@@ -166,6 +166,8 @@ int main(int argc, char* argv[]){
 			goto END_MAIN;
 		}
 
+		counter++;
+
 		FORMAT fm;
 		fm.data = instructions[pc];
 		profile[ISA::isa2name(fm.J.op)]++;
@@ -419,7 +421,6 @@ int main(int argc, char* argv[]){
 		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
 		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
 
-		counter++;
 	}
 
 END_MAIN:
