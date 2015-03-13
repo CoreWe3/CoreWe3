@@ -24,7 +24,6 @@ int main(int argc, char* argv[]){
 	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
 	bool branchprofile_flag = false;
-	unsigned int mvcounter = 0;
 	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
 			case 'f': // Input Binary File
@@ -86,7 +85,10 @@ int main(int argc, char* argv[]){
 	unsigned int addsub=0;
 	unsigned int subadd=0;
 	unsigned int subsub=0;
-	unsigned int addshl=0;
+	unsigned int mvcounter = 0;
+	unsigned int icounter = 0;
+	unsigned int ocounter = 0;
+	
 
 
 	//Initilaize RAM
@@ -272,6 +274,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 						if (input->eof())
 						{
@@ -293,6 +296,7 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 						output->flush();
 					}else{
@@ -329,6 +333,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 						if (input->eof())
 						{
@@ -350,6 +355,7 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
 						ram[address] = freg[fm.L.ra].r;
@@ -418,7 +424,6 @@ int main(int argc, char* argv[]){
 		if(fm.J.op==ADD && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addsub++;
 		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
 		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
-		if(fm.J.op==ADD && fm2.J.op==SHL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addshl++;
 
 	}
 
@@ -476,7 +481,8 @@ END_MAIN:
 	cerr << "addsub:" << addsub << endl; 
 	cerr << "subadd:" << subadd << endl; 
 	cerr << "subsub:" << subsub << endl; 
-	cerr << "addshl:" << addshl << endl; 
 	cerr << "move:" << mvcounter << endl;
+	cerr << "io_in:" << icounter << endl;
+	cerr << "io_out:" << ocounter << endl;
 	return 0;
 }
