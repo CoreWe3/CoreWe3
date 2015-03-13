@@ -26,7 +26,7 @@ static void init_tlb(){
     exit(1);
   }
   for(i=0;i<2048;i++){
-    fscanf(fp,"%s",str);
+    if (fscanf(fp,"%s",str) != 1) exit(1);
     strcpy(finv_table[i],str);
   }
   fclose(fp);

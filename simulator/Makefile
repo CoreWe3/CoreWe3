@@ -1,7 +1,8 @@
-CCFLAGS = -std=c++11 -O3 -Wall
-CFLAGS = -std=c11 -O3 -Wall
-CC = clang++
-C = clang
+CCFLAGS = -std=c++11 -Ofast -Wall -march=native
+CFLAGS = -std=c11 -Ofast -Wall -march=native
+
+CC = g++
+C = gcc
 DIR = ./bin/
 
 .PHONY: all
