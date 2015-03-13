@@ -86,6 +86,7 @@ int main(int argc, char* argv[]){
 	unsigned int addsub=0;
 	unsigned int subadd=0;
 	unsigned int subsub=0;
+	unsigned int addshl=0;
 
 
 	//Initilaize RAM
@@ -141,7 +142,7 @@ int main(int argc, char* argv[]){
 
 
 	//Main
-	unsigned long counter = 0;
+	long long int counter = 0;
 	uint32_t prev = 0;
 	vector<unsigned long> profile(INAMES.size(),0);
 
@@ -417,6 +418,7 @@ int main(int argc, char* argv[]){
 		if(fm.J.op==ADD && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addsub++;
 		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
 		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
+		if(fm.J.op==ADD && fm2.J.op==SHL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addshl++;
 
 	}
 
@@ -474,6 +476,7 @@ END_MAIN:
 	cerr << "addsub:" << addsub << endl; 
 	cerr << "subadd:" << subadd << endl; 
 	cerr << "subsub:" << subsub << endl; 
+	cerr << "addshl:" << addshl << endl; 
 	cerr << "move:" << mvcounter << endl;
 	return 0;
 }

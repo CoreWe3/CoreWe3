@@ -261,7 +261,8 @@ int main(int argc, char* argv[]){
 	//Make Assembly
 	list<uint32_t> results;
 	line = 0;
-	for(auto el : instructions){
+	for(auto i = instructions.begin(); i != instructions.end(); i++){
+		auto el = *i;
 		FORMAT fm;
 		fm.data = 0;
 		if(el[0][0]=='@'){
@@ -299,6 +300,9 @@ int main(int argc, char* argv[]){
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
+					if(v>0xFFFF){
+						cerr << "WARN : overflow immidiate : around " << line << endl;
+					}
 					fm.L.cx = v;
 				}
 				results.push_back(fm.data);
@@ -331,7 +335,6 @@ int main(int argc, char* argv[]){
 			case ST:
 			case FLD:
 			case FST:
-			case ADDI:
 			case SHLI:
 			case SHRI:
 				{
@@ -339,11 +342,25 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg(el[1]);
 					fm.L.rb = ISA::name2reg(el[2]);
 					unsigned int v = getlabelvalue(el[3], line);
-					if((fm.L.op!=ADDI&&v>0x7FFF&&v<0xFFFF8000)||(fm.L.op==ADDI&&v>0xFFFF&&v<0xFFFF0000)){
+
+					if(v>0x7FFF&&v<0xFFFF8000){
 						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
-					if(fm.L.op==ADDI&&v>0x7FFF&&v<0xFFFF8000){
-						cerr << "INFO : overflow immidiate : around " << line << endl;
+					fm.L.cx = v;
+				}
+				results.push_back(fm.data);
+				line++;
+				break;
+			
+			case ADDI:
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+
+					if( (v>0xFFFF&&v<0xFFFF0000) || (v>0x7FFF&&v<0xFFFF8000&& !(next(i)!=instructions.end()&&ISA::name2isa((*next(i))[0])==LDIH&& ISA::name2reg(el[1]) == ISA::name2reg((*next(i))[1]) ))){
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
