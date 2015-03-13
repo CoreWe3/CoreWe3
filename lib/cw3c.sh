@@ -13,6 +13,8 @@ usage() {
     echo " --lib-ml   mincamlのライブラリ(デフォルトでlib/mincaml/libmincaml.ml)"
     echo " --lib-asm  アセンブリのライブラリ(デフォルトでlib/asm/libmincaml.S)"
     echo " --boot     ブートローダー(デフォルトでlib/asm/boot.s)"
+    echo " --iconst   定数汎用レジスタ"
+    echo " --fconst   定数浮動小数点レジスタ"
     echo
     echo "--work-dirに以下のファイルが生成されます。"
     echo '$FILE.ml    mincamlのライブラリと結合されたmincamlソース'
@@ -162,6 +164,9 @@ cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
 echo "${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s -f"
 ${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s -l
 
-if `wc -c min-rt-cw3 | cut -d ' ' -f1 -` > 131000; then
-	echo -e "\e[31mThe size of binary is too large\e[m"
+FSIZE=`wc -c ${WORK_DIR}/${SOURCE} | cut -d ' ' -f1 -`
+if ${FSIZE} -lt 131000; then
+	echo -e "\e[31mThe size of binary is too large : ${FSIZE}\e[m"
+else
+	echo -e "The size of binary : ${FSIZE}"
 fi
