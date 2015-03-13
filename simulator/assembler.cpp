@@ -126,6 +126,8 @@ int main(int argc, char* argv[]){
 	}
 
 	//Optimize LDI and VFLDI
+	//Detect Immidiate Emergence Rate
+	map<unsigned int, unsigned int> gimm_counter, fimm_counter;
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0]==':'){
 			it++;
@@ -136,6 +138,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
+						gimm_counter[v]++;
 						if (v > 0x7fff){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
@@ -167,6 +170,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
+						fimm_counter[v]++;
 						if ((v & 0xffff)!=0){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
@@ -199,6 +203,34 @@ int main(int argc, char* argv[]){
 				break;
 		}
 	}
+
+	cerr << "========================" << endl;
+	cerr << "Immidiate Emergence Rate" << endl;
+	list<tuple<unsigned int, unsigned int>> gimm;
+	for(auto x : gimm_counter){
+		gimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));
+	}
+	gimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
+	int tempcounter = 0;
+	cerr << "General Register" << endl;
+	for(auto y : gimm){
+		cerr << " " << get<0>(y) << " : " << get<1>(y) << endl;
+		tempcounter++;
+		if(tempcounter > 10) break;
+	}
+	list<tuple<unsigned int, unsigned int>> fimm;
+	for(auto x : fimm_counter){
+		fimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));
+	}
+	fimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
+	tempcounter = 0;
+	cerr << "Float Register" << endl;
+	for(auto y : fimm){
+		cerr << " " << get<0>(y) << " : " << get<1>(y) << endl;
+		tempcounter++;
+		if(tempcounter > 10) break;
+	}
+	cerr << "========================" << endl;
 
 	//Optimize NOP
 	for(auto it = instructions.begin(); it != instructions.end();){
