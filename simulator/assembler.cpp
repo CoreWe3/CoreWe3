@@ -210,6 +210,7 @@ int main(int argc, char* argv[]){
 	for(auto x : gimm_counter){
 		gimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));
 	}
+
 	gimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
 	int tempcounter = 0;
 	cerr << "General Register" << endl;
@@ -225,8 +226,14 @@ int main(int argc, char* argv[]){
 	fimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
 	tempcounter = 0;
 	cerr << "Float Register" << endl;
+
+	union{
+		unsigned int d;
+		float f;
+	} fu;
 	for(auto y : fimm){
-		cerr << " " << get<0>(y) << " : " << get<1>(y) << endl;
+		fu.d = get<0>(y);
+		cerr << " " << get<0>(y) << "(" << fu.f << ")" << " : " << get<1>(y) << endl;
 		tempcounter++;
 		if(tempcounter > 10) break;
 	}
