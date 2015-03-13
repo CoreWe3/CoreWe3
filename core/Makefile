@@ -1,26 +1,30 @@
-SOURCE = $(wildcard *.vhd) $(wildcard ../FPU/*.vhd)
+ROOT = $(shell git rev-parse --show-toplevel)
+vpath % file
+SOURCE = $(wildcard *.vhd) $(wildcard $(ROOT)/FPU/*.vhd)
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/newton
+CODE = min-rt
 
-all: configure
+all: conf_rt
 
-.PHONY: configure bit all clean
+.PHONY: conf_rt configure bit all clean
+
+conf_rt: min-rt core.bit
+	scp $^ troublesome:~
+	ssh troublesome "./config.sh min-rt"
 
 configure: $(CODE) core.bit
-	../file/fpga.sh -h -i $(CODE) -l $(notdir $(CODE:=.flog)) core.bit
+	$(ROOT)/file/fpga.sh -h -i $(CODE) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld \
+	-l $(notdir $(CODE:=.flog)) core.bit
 	#../file/fpga.sh core.bit
 
 core.bit: $(SOURCE) $(SCRIPTS) $(BOOTLOADER)
 	./ise_cmd.sh
 
-%.s:%.ml
-	cd file && $(MAKE) $(notdir $@)
-%:%.s
-	cd file && $(MAKE) $(notdir $@)
-%.b:%.s
-	cd file && $(MAKE) $(notdir $@)
-%.o:%.s
+%: %.s
+	cd file && $(MAKE) $@
+%: %.ml
+	cd file && $(MAKE) $@
 
 clean:
 	rm -rf *.flog core.bit ise/*
