@@ -51,6 +51,8 @@ WORK_DIR=${REPO_ROOT}/simulator/bin
 LIB_ML=${REPO_ROOT}/lib/mincaml/libmincaml.ml
 
 INLINE=0
+ICONST=""
+FCONST=""
 
 LIB_S=${REPO_ROOT}/lib/asm/libmincaml.S
 BOOT_S=${REPO_ROOT}/lib/asm/boot.s
@@ -80,6 +82,26 @@ do
                 exit 1
             fi
             INLINE="$2"
+            shift 2
+            ;;
+        '--iconst' )
+            if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                echo "$0: option requires an argument" 1>&2
+                exit 1
+            fi
+            if ! expr "$2" : '[0-9]*' > /dev/null; then
+                echo "$0: '$2' is not number" 1>&2
+                exit 1
+            fi
+            ICONST=${ICONST}"-iconst $2 "
+            shift 2
+            ;;
+        '--fconst' )
+            if [[ -z "$2" ]] || [[ "$2" =~ ^-+ ]]; then
+                echo "$0: option requires an argument" 1>&2
+                exit 1
+            fi
+            FCONST=${FCONST}"-fconst $2 "
             shift 2
             ;;
         '--lib-ml' )
@@ -131,11 +153,11 @@ done
 echo "cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml"
 cat ${LIB_ML} ${param} > ${WORK_DIR}/${SOURCE}.ml
 
-echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE}"
-${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE}
+echo "${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE}  ${ICONST} ${FCONST}"
+${REPO_ROOT}/mincaml_compiler/min-caml ${WORK_DIR}/${SOURCE} -inline ${INLINE} ${ICONST} ${FCONST}
 
 echo "cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s"
 cat ${BOOT_S} ${LIB_S} ${WORK_DIR}/${SOURCE}.s > ${WORK_DIR}/_${SOURCE}.s
 
-echo "${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s"
-${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s 
+echo "${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s -f"
+${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s -l
