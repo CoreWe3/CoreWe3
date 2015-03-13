@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 package Util is
-  constant ADDR_WIDTH : integer := 14;
+  constant ADDR_WIDTH : integer := 15;
   constant CACHE_WIDTH : integer := 8;
   constant FIFO_WIDTH : integer := 10;
   constant BOOTLOADER: string := "file/bootloader.b";

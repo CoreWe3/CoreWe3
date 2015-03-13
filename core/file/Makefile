@@ -21,7 +21,7 @@ min-rt.s: min-rt2.S
 min-rt: min-rt.s
 	cd $(ROOT)/simulator && $(MAKE)
 	$(AS) -f $@ -i $<
-	$(SIM) -f $@ -o $(@:=.slog) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld
+	#$(SIM) -f $@ -o $(@:=.slog) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld
 	cat eof >> $@
 
 %: %.s
@@ -41,7 +41,7 @@ min-rt: min-rt.s
 %.S:%.ml
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
 	cat $(ROOT)/lib/mincaml/libmincaml.ml $< > $(@:.S=_.ml)
-	$(MINCAML) $(@:.S=_)
+	$(MINCAML) $(@:.S=_) -inline 71
 	mv $(@:.S=_.s) $@
 	rm $(@:.S=_.ml)
 
