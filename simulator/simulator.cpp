@@ -143,10 +143,7 @@ int main(int argc, char* argv[]){
 	//Main
 	unsigned long counter = 0;
 	uint32_t prev = 0;
-	map<string,unsigned long> profile;
-	for(auto el : INAMES){
-		profile[el.first] = 0;
-	}
+	vector<unsigned long> profile(INAMES.size(),0);
 
 	while(pc < instructions.size()){
 		if(pc == breakpoint){
@@ -170,7 +167,7 @@ int main(int argc, char* argv[]){
 
 		FORMAT fm;
 		fm.data = instructions[pc];
-		profile[ISA::isa2name(fm.J.op)]++;
+		profile[fm.J.op]++;
 		switch(fm.J.op){
 			// no regs and imm
 			case RET:
@@ -465,8 +462,8 @@ END_MAIN:
 		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
 	}
 	cerr << endl;
-	for(auto el : profile){
-		cerr << el.first << ":" << el.second << " ";
+	for(unsigned int i=0;i<profile.size();i++){
+		cerr << ISA::isa2name(i) << ":" << profile[i] << ",";
 	}
 	cerr << endl;
 
