@@ -152,11 +152,11 @@ int main(int argc, char* argv[]){
 		if(pc == breakpoint){
 			//Print Reg
 			cerr << "== counter : " << counter << endl;
-			for(int i=0;i<greg.size();i++){
+			for(unsigned int i=0;i<greg.size();i++){
 				cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
 			}
 			cerr << endl;
-			for(int i=0;i<freg.size();i++){
+			for(unsigned int i=0;i<freg.size();i++){
 				cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
 			}
 			cerr << endl;
@@ -165,6 +165,8 @@ int main(int argc, char* argv[]){
 			cerr << "Stop by Instruction Limit." << endl;
 			goto END_MAIN;
 		}
+
+		counter++;
 
 		FORMAT fm;
 		fm.data = instructions[pc];
@@ -419,7 +421,6 @@ int main(int argc, char* argv[]){
 		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
 		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
 
-		counter++;
 	}
 
 END_MAIN:
@@ -445,7 +446,7 @@ END_MAIN:
 			cerr << "Can't open file : " << "branch.profile" << endl;
 			return 1;
 		}
-		for(int i=0; i < branchprofile.size(); i++){
+		for(unsigned int i=0; i < branchprofile.size(); i++){
 			float x = 1.0*branchprofile[i]/branchprofile2[i];
 			fout2.write((char *)&x,sizeof(x));
 		}
@@ -456,11 +457,11 @@ END_MAIN:
 	cerr << "Instructions = " << counter << endl;
 
 	//Print Reg
-	for(int i=0;i<greg.size();i++){
+	for(unsigned int i=0;i<greg.size();i++){
 		cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
 	}
 	cerr << endl;
-	for(int i=0;i<freg.size();i++){
+	for(unsigned int i=0;i<freg.size();i++){
 		cerr << ISA::freg2name(i) << ":" << hex << "0x" << freg[i].r << dec << "(" << freg[i].f << ")" <<  " ";
 	}
 	cerr << endl;
