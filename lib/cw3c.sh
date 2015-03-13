@@ -165,8 +165,8 @@ echo "${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DI
 ${REPO_ROOT}/simulator/bin/assembler -f ${WORK_DIR}/${SOURCE} -i ${WORK_DIR}/_${SOURCE}.s -l
 
 FSIZE=`wc -c ${WORK_DIR}/${SOURCE} | cut -d ' ' -f1 -`
-if ${FSIZE} -lt 131000; then
-	echo -e "\e[31mThe size of binary is too large : ${FSIZE}\e[m"
-else
+if [ $FSIZE -lt 131000 ]; then
 	echo -e "The size of binary : ${FSIZE}"
+else
+	echo -e "\e[31mThe size of binary is too large : ${FSIZE}\e[m"
 fi
