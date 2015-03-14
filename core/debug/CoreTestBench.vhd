@@ -33,7 +33,7 @@ architecture CoreTestBench_arch of CoreTestBench is
 
   component SRAM
     generic (
-      WIDTH : integer := 10);
+      WIDTH : integer := 12);
     port (
       clk : in std_logic;
       ZD : inout std_logic_vector(31 downto 0);

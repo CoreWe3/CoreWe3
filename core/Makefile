@@ -14,8 +14,7 @@ conf_rt: min-rt core.bit
 	ssh troublesome "./config.sh min-rt"
 
 configure: $(CODE) core.bit
-	$(ROOT)/file/fpga.sh -h -i $(CODE) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld \
-	-l $(notdir $(CODE:=.flog)) core.bit
+	$(ROOT)/file/fpga.sh -h -i $< -l $(notdir $(CODE:=.flog)) core.bit
 	#../file/fpga.sh core.bit
 
 core.bit: $(SOURCE) $(SCRIPTS) $(BOOTLOADER)

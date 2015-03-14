@@ -111,19 +111,17 @@ begin
     empty => tempty,
     full => tfull);
 
-  reply.d <= unsigned(r.data);
-  reply.stall <= '0' when r.state = x"00" else
-                 '1';
-
   main : process(clk)
     variable vreq : memory_request_t;
     variable v : mmio_t;
+    variable vrep : memory_reply_t;
   begin
     if rising_edge(clk) then
       v := r;
       v.rdeq := '0';
       v.tenq := '0';
       v.tdi := (others => '-');
+      vrep := ((others => '-'), '1', '0');
       if r.state = x"00" then
         vreq := request;
       else
@@ -170,6 +168,8 @@ begin
                 end if;
               end if;
             end if;
+          else
+            vrep.busy := '0';
           end if;
         when x"01" => --wait trasmit byte
           if tfull = '0' then
@@ -179,6 +179,7 @@ begin
           end if;
         when x"02" => --finish transmit byte
           v.state := x"00";
+          vrep.busy := '0';
         when x"10" => --wait receive byte
           if rempty = '0' then
             v.rdeq := '1';
@@ -187,8 +188,10 @@ begin
         when x"11" => -- complete receive byte
           v.state := x"12";
         when x"12" => -- finish transmit byte
-          v.data := x"000000" & rdo;
           v.state := x"00";
+          vrep.busy := '0';
+          vrep.d := unsigned(x"000000" & rdo);
+          vrep.complete := '1';
         when X"20" => --wait transmit word1
           if tfull = '0' then
             v.tdi := std_logic_vector(vreq.d(7 downto 0));
@@ -221,6 +224,7 @@ begin
           end if;
         when x"27" => -- finish transmit word
           v.state := x"00";
+          vrep.busy := '0';
         when x"30" => --wait receive word1;
           if rempty = '0' then
             v.rdeq := '1';
@@ -259,8 +263,10 @@ begin
         when x"3a" => -- complete receive word
           v.state := x"3b";
         when x"3b" => -- finish receive word
-          v.data(31 downto 24) := rdo;
           v.state := x"00";
+          vrep.busy := '0';
+          vrep.d := unsigned(rdo & r.data(23 downto 0));
+          vrep.complete := '1';
         when others =>
       end case;
 
@@ -269,6 +275,7 @@ begin
       end if;
 
       r <= v;
+      reply <= vrep;
 
     end if;
   end process;

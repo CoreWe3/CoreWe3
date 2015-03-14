@@ -294,6 +294,7 @@ architecture Control_arch of Control is
      mw_d : in write_data_t;
      mr_d : in write_data_t;
      w_d : in write_data_t;
+     mem_busy : in std_logic;
      e : out execute_t;
      branch_hit : out std_logic;
      taken_branch : out unsigned(ADDR_WIDTH-1 downto 0);
@@ -334,17 +335,17 @@ architecture Control_arch of Control is
     case d.op is
       when LD =>
         e.m := (addr, (others => '-'), '1', '0', '0');
-        hazard := d1.h;
+        hazard := d1.h or mem_busy;
       when FLD =>
         e.m := (addr, (others => '-'), '1', '0', '1');
-        hazard := d1.h;
+        hazard := d1.h or mem_busy;
         e.wd.f := '1';
       when ST =>
         e.m := (addr, d2.d, '1', '1', '0');
-        hazard := d1.h or d2.h;
+        hazard := d1.h or d2.h or mem_busy;
       when FST =>
         e.m := (addr, d2.d, '1', '1', '1');
-        hazard := d1.h or d2.h;
+        hazard := d1.h or d2.h or mem_busy;
       when I_TOF =>
         e.fpu := (d1.d, (others => '-'));
         e.wd.f := '1';
@@ -446,6 +447,7 @@ architecture Control_arch of Control is
         hazard := d1.h;
       when others =>
     end case;
+
   end execute;
 
   procedure memory_wait
@@ -455,7 +457,10 @@ architecture Control_arch of Control is
   begin
     mw.op := e.op;
     mw.wd := e.wd;
+    mw.load := '0';
     case e.op is
+      when LD | FLD =>
+        mw.load := '1';
       when ADD | SUB | ADDI | SH_L | SH_R | SHLI | SHRI =>
         mw.wd.d := alu;
         mw.wd.r := '1';
@@ -467,15 +472,20 @@ architecture Control_arch of Control is
     (mw : in memory_wait_t;
      fcmp_o : in unsigned(31 downto 0);
      mem_o : in unsigned(31 downto 0);
-     mr : out memory_read_t) is
+     mem_cmp : in std_logic;
+     mr : out memory_read_t;
+     stall : out std_logic) is
   begin
     mr := default_mr;
     mr.op := mw.op;
     mr.wd := mw.wd;
+    stall := mw.load and (not mem_cmp);
     case mw.op is
       when LD | FLD =>
-        mr.wd.d := mem_o;
-        mr.wd.r := '1';
+        if mem_cmp = '1' then
+          mr.wd.d := mem_o;
+          mr.wd.r := '1';
+        end if;
       when F_CMP =>
         mr.wd.d := fcmp_o;
         mr.wd.r := '1';
@@ -493,52 +503,45 @@ architecture Control_arch of Control is
 
   procedure write_back
     (fw : in fpu_wait_t;
-     ftoi_o : in unsigned(31 downto 0);
-     itof_o : in unsigned(31 downto 0);
-     fadd_o : in unsigned(31 downto 0);
-     fmul_o : in unsigned(31 downto 0);
-     finv_o : in unsigned(31 downto 0);
-     fsqrt_o : in unsigned(31 downto 0);
+     fpu : in fpu_out_t;
      w : out write_data_t) is
   begin
     w := fw.wd;
     case fw.op is
       when F_TOI =>
-        w.d := ftoi_o;
+        w.d := unsigned(fpu.ftoi);
         w.r := '1';
       when I_TOF =>
-        w.d := itof_o;
+        w.d := unsigned(fpu.itof);
         w.r := '1';
       when F_ADD =>
-        w.d := fadd_o;
+        w.d := unsigned(fpu.fadd);
         w.r := '1';
       when F_SUB =>
-        w.d := fadd_o;
+        w.d := unsigned(fpu.fadd);
         w.r := '1';
       when F_MUL =>
-        w.d := fmul_o;
+        w.d := unsigned(fpu.fmul);
         w.r := '1';
       when F_INV =>
-        w.d := finv_o;
+        w.d := unsigned(fpu.finv);
         w.r := '1';
       when F_SQRT =>
-        w.d := fsqrt_o;
+        w.d := unsigned(fpu.fsqrt);
         w.r := '1';
       when others =>
     end case;
   end procedure;
 
   signal r : cpu_t := init_r;
+  signal s : cpu_t;
+  signal wd : write_data_t;
   signal gpreg : regfile_t := init_regfile;
   signal fpreg : regfile_t := init_regfile;
   signal alu_o : unsigned(31 downto 0);
-  signal ftoi_o : std_logic_vector(31 downto 0);
-  signal itof_o : std_logic_vector(31 downto 0);
-  signal fadd_o : std_logic_vector(31 downto 0);
-  signal fmul_o : std_logic_vector(31 downto 0);
-  signal finv_o : std_logic_vector(31 downto 0);
-  signal fsqrt_o : std_logic_vector(31 downto 0);
+  signal fpu_o : fpu_out_t;
   signal fcmp_o : std_logic_vector(31 downto 0);
+  signal fpu_stall : std_logic;
 
 begin
   bus_out.pc <= r.pc;
@@ -550,48 +553,50 @@ begin
 
   ftoi_unit : ftoi port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     i => std_logic_vector(r.e.fpu.d1),
-    o => ftoi_o);
+    o => fpu_o.ftoi);
 
   itof_unit : itof port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     i => std_logic_vector(r.e.fpu.d1),
-    o => itof_o);
+    o => fpu_o.itof);
 
   fadd_unit : fadd port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
-    o => fadd_o);
+    o => fpu_o.fadd);
 
   fmul_unit : fmul port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
-    o => fmul_o);
+    o => fpu_o.fmul);
 
   finv_unit : finv2 port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     i => std_logic_vector(r.e.fpu.d1),
-    o => finv_o);
+    o => fpu_o.finv);
 
   fsqrt_unit : fsqrt2 port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     i => std_logic_vector(r.e.fpu.d1),
-    o => fsqrt_o);
+    o => fpu_o.fsqrt);
 
   fcmp_unit : fcmp port map (
     clk => clk,
-    stall => bus_in.m.stall,
+    stall => fpu_stall,
     a => std_logic_vector(r.e.fpu.d1),
     b => std_logic_vector(r.e.fpu.d2),
     o => fcmp_o);
+
+  fpu_stall <= r.mw.load and (not bus_in.m.complete);
 
   control_unit : process(clk)
     variable v : cpu_t;
@@ -600,85 +605,81 @@ begin
     variable data_hazard : std_logic;
     variable branch_hit : std_logic;
     variable taken_branch : unsigned(ADDR_WIDTH-1 downto 0);
-    variable mem_stall : std_logic;
+    variable stall : std_logic;
   begin
     if rising_edge(clk) then
       v := r;
-      mem_stall := bus_in.m.stall;
 
-      v.state(2) := mem_stall;
-      if mem_stall = '0' then
-        if r.state = "000" then
-          instruction := bus_in.i;
-        elsif r.state(1 downto 0) = "10" or r.state(1 downto 0) = "11" then
-          instruction := NOP;
-        else
-          instruction := r.f.i;
-        end if;
-
-        memory_wait(r.e, alu_o, v.mw);
-        memory_read(r.mw, unsigned(fcmp_o), bus_in.m.d, v.mr);
-        fpu_wait(r.mr, v.fw);
-        write_back(r.fw, unsigned(ftoi_o), unsigned(itof_o), unsigned(fadd_o),
-                   unsigned(fmul_o), unsigned(finv_o), unsigned(fsqrt_o), v_wd);
-
-        prediction(instruction, r.f.pc, v.p);
-        decode(r.p, gpreg, fpreg, v_wd, v.d);
-        execute(r.d, v.mw.wd, v.mr.wd, v.fw.wd, v_wd, v.e,
-                branch_hit, taken_branch, data_hazard);
-
-        v.pc := r.pc+1;
-        v.f.pc := r.pc;
-        v.f.i := (others => '-');
-
-        if data_hazard = '1' then -- data hazard
-          v.state(1 downto 0) := "01";
-          v.pc := r.pc;
-          v.f.pc := r.f.pc;
-          v.f.i := instruction;
-          v.p := r.p;
-          reread(r.d, gpreg, fpreg, v_wd, v.d);
-          v.e := default_e;
-        elsif branch_hit = '1' and v.p.br = "11" then -- taken branch
-          v.state(1 downto 0) := "10";
-          v.pc := v.p.target;
-          v.f.pc := (others => '-');
-        elsif branch_hit = '1' and v.p.br = "01" then -- not taken branch
-          v.state(1 downto 0) := "00";
-        elsif branch_hit = '1' and v.p.br = "00" then  -- without any hazard
-          v.state(1 downto 0) := "00";
-        elsif branch_hit = '0' then -- branch prediction failed
-          v.state(1 downto 0) := "11";
-          if r.d.br(1) = '1' then -- predicted as taken
-            v.pc := r.d.pc+1;
-          else -- predicted as not taken
-            v.pc := taken_branch;
-          end if;
-          v.f.pc := (others => '-');
-          v.f.i := (others => '-');
-          v.p := default_p;
-          v.d := default_d;
-        end if;
-
-        -- write
-        if v_wd.f = '0' then
-          gpreg(to_integer(v_wd.a)) <= v_wd.d;
-        else
-          fpreg(to_integer(v_wd.a)) <= v_wd.d;
-        end if;
-
-      else -- mem_stall = '1'
-
-        if r.state = "000" then
-          v.f.i := bus_in.i;
-        end if;
-        v.e.m := default_memory_request;
+      if r.state = "000" then
+        instruction := bus_in.i;
+      elsif r.state(1 downto 0) = "10" or r.state(1 downto 0) = "11" then
+        instruction := NOP;
+      else
+        instruction := r.f.i;
       end if;
 
+      memory_wait(r.e, alu_o, v.mw);
+      memory_read(r.mw, unsigned(fcmp_o), bus_in.m.d, bus_in.m.complete, v.mr, stall);
+      fpu_wait(r.mr, v.fw);
+      write_back(r.fw, fpu_o, v_wd);
+
+      prediction(instruction, r.f.pc, v.p);
+      decode(r.p, gpreg, fpreg, v_wd, v.d);
+      execute(r.d, v.mw.wd, v.mr.wd, v.fw.wd, v_wd, bus_in.m.busy, v.e,
+              branch_hit, taken_branch, data_hazard);
+
+      v.pc := r.pc+1;
+      v.f.pc := r.pc;
+      v.f.i := (others => '-');
+
+      if stall = '1' and r.state(2) = '0' then -- start stalling
+        v := r;
+        v.state(2) := '1';
+        v.f.i := instruction;
+        v.e.m := default_memory_request;
+      elsif stall = '1' and bus_in.m.busy = '1' then -- during stall
+        v := r;
+        v.e.m := default_memory_request;
+      elsif stall = '1' then -- during stall continuous load
+        v := r;
+      elsif data_hazard = '1' then -- data hazard
+        v.state := "001";
+        v.pc := r.pc;
+        v.f.pc := r.f.pc;
+        v.f.i := instruction;
+        v.p := r.p;
+        reread(r.d, gpreg, fpreg, v_wd, v.d);
+        v.e := default_e;
+      elsif branch_hit = '1' and v.p.br = "11" then -- taken branch
+        v.state := "010";
+        v.pc := v.p.target;
+        v.f.pc := (others => '-');
+      elsif branch_hit = '1' and v.p.br = "01" then -- not taken branch
+        v.state := "000";
+      elsif branch_hit = '1' and v.p.br = "00" then  -- without any hazard
+        v.state := "000";
+      elsif branch_hit = '0' then -- branch prediction failed
+        v.state := "011";
+        if r.d.br(1) = '1' then -- predicted as taken
+          v.pc := r.d.pc+1;
+        else -- predicted as not taken
+          v.pc := taken_branch;
+        end if;
+        v.f.pc := (others => '-');
+        v.f.i := (others => '-');
+        v.p := default_p;
+        v.d := default_d;
+      end if;
+
+      -- write
+      if v_wd.f = '0' then
+        gpreg(to_integer(v_wd.a)) <= v_wd.d;
+      else
+        fpreg(to_integer(v_wd.a)) <= v_wd.d;
+      end if;
       r <= v;
 
     end if;
-
   end process;
 
 end Control_arch;

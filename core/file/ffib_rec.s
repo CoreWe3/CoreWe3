@@ -1,4 +1,4 @@
-	ldi	r1	0xeefff
+	ldi	r1	0xf7fff
 	vfldi	f1	0x40800000	# n = 4
 	vfldi	f31	0x3f800000	# 1
 	jsub	:fib

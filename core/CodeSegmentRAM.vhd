@@ -36,21 +36,25 @@ architecture CodeSegmentRAM_arch of CodeSegmentRAM is
 begin
 
   process(clk)
+    variable vrep : memory_reply_t;
   begin
     if rising_edge(clk) then
+      vrep := ((others => '-'), '0', '0');
       if bus_out.m.go = '1' and
-        bus_out.m.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
+        bus_out.m.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) and
+        bus_out.m.a(19 downto 0) /= ones(19 downto 0) then
         if bus_out.m.we = '1' then
           RAM(to_integer(bus_out.m.a(ADDR_WIDTH-1 downto 0))) <=
             to_bitvector(std_logic_vector(bus_out.m.d));
+        else
+          vrep.d := unsigned(to_stdLogicVector(
+            RAM(to_integer(bus_out.m.a(ADDR_WIDTH-1 downto 0)))));
+          vrep.complete := '1';
         end if;
       end if;
-      bus_in.m.d <= unsigned(to_stdLogicVector(
-        RAM(to_integer(bus_out.m.a(ADDR_WIDTH-1 downto 0)))));
       bus_in.i <= to_stdLogicVector(RAM(to_integer(bus_out.pc)));
+      bus_in.m <= vrep;
     end if;
   end process;
-
-  bus_in.m.stall <= '0';
 
 end CodeSegmentRAM_arch;

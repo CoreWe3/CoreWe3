@@ -24,17 +24,31 @@ architecture MemoryCache_arch of MemoryCache is
     unsigned(20 downto CACHE_WIDTH);
 
   type memory_cache_t is record
-    buf1 : memory_request_t;
-    buf2 : memory_request_t;
-    stall : unsigned(1 downto 0);
+    req1 : memory_request_t;
+    req2 : memory_request_t;
+    state : unsigned(1 downto 0);
     data : unsigned(31 downto 0);
     we : std_logic;
-    ZD_buf : unsigned(31 downto 0);
+    ZD : unsigned(31 downto 0);
   end record;
 
+  impure function init_tag(dummy : in std_logic) return tag_t is
+    variable tag : tag_t;
+  begin
+    for i in tag_t'range loop
+      tag(i) := (others => '0');
+    end loop;
+    return tag;
+  end function;
+
   signal cache : cache_t;
-  signal tag : tag_t;
-  signal r : memory_cache_t;
+  signal tag : tag_t := init_tag('0');
+  signal r : memory_cache_t := (default_memory_request,
+                                default_memory_request,
+                                "00",
+                                (others => '-'),
+                                '0',
+                                (others => '-'));
 
 begin
   ZA <= std_logic_vector(request.a);
@@ -43,75 +57,73 @@ begin
         (others => 'Z');
 
   process(clk)
-    variable vreq1, vreq2 : memory_request_t;
+    variable v : memory_cache_t;
     variable tagd : unsigned(20 downto CACHE_WIDTH);
-    variable data : unsigned(31 downto 0);
-    variable we : std_logic;
-    variable stall : std_logic;
+    variable vrep : memory_reply_t;
+    variable vZD : unsigned(31 downto 0);
   begin
     if rising_edge(clk) then
-      data := (others => '-');
-      we := '0';
-      stall := '0';
+      v := r;
+      v.data := (others => '-');
+      v.we := '0';
+      vrep := ((others => '-'), '0', '0');
+      v.ZD := unsigned(ZD);
 
-      if r.stall = "00" then
-        vreq1 := request;
-        vreq2 := r.buf1;
+      if r.state = "00" then
+        v.req1 := request;
+        v.req2 := r.req1;
       else
-        vreq1 := r.buf1;
-        vreq2 := r.buf2;
+        v.req1 := r.req1;
+        v.req2 := r.req2;
       end if;
 
-      case r.stall is
+      case r.state is
         when "00" =>
-          if vreq1.go = '1' and
-            vreq1.a(19 downto ADDR_WIDTH) /= ones(19 downto ADDR_WIDTH) then
-            if vreq1.we = '1' then
-              cache(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0))) <= vreq1.d;
-              tag(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0))) <=
-                '1' & vreq1.a(19 downto CACHE_WIDTH);
-            end if;
-            tagd := tag(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0)));
-            if tagd(20) = '1' and
-              tagd(19 downto CACHE_WIDTH) = vreq1.a(19 downto CACHE_WIDTH) then
-              reply.d <= cache(to_integer(vreq1.a(CACHE_WIDTH-1 downto 0)));
+          if v.req1.go = '1' and
+            v.req1.a(19 downto ADDR_WIDTH) /= ones(19 downto ADDR_WIDTH) then
+            tagd := tag(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0)));
+            if v.req1.we = '1' then --store
+              cache(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0))) <= v.req1.d;
+              tag(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0))) <=
+                '1' & v.req1.a(19 downto CACHE_WIDTH);
+            elsif v.req1.we = '0' and tagd(20) = '1' and
+              tagd(19 downto CACHE_WIDTH) = v.req1.a(19 downto CACHE_WIDTH) then
+              -- load and cache hit
+              vrep.d := cache(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0)));
+              vrep.complete := '1';
             else
-              reply.d <= (others => '-');
-              if vreq1.we = '0' then
-                stall := '1';
-              end if;
+              -- load and cache miss
+              v.state := "01";
+              vrep.busy := '1';
             end if;
           end if;
 
-          if vreq2.go = '1' and vreq2.we = '1' and
-            vreq2.a(19 downto 12) /= ones(19 downto ADDR_WIDTH) then
-            data := vreq2.d;
-            we := '1';
+          if v.req2.go = '1' and v.req2.we = '1' and
+            v.req2.a(19 downto ADDR_WIDTH) /= ones(19 downto ADDR_WIDTH) then
+            v.data := v.req2.d;
+            v.we := '1';
           end if;
+
         when "01" =>
-          reply.d <= (others => '-');
-          stall := '1';
+          v.state := "10";
+          vrep.busy := '1';
         when "10" =>
-          reply.d <= (others => '-');
-          stall := '1';
+          v.state := "11";
+          vrep.busy := '1';
         when "11" =>
-          reply.d <= r.ZD_buf;
+          v.state := "00";
+          vrep.d := r.ZD;
+          cache(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0))) <= r.ZD;
+          tag(to_integer(v.req1.a(CACHE_WIDTH-1 downto 0))) <=
+            '1' & v.req1.a(19 downto CACHE_WIDTH);
+          vrep.complete := '1';
+          v.req1 := default_memory_request;
         when others =>
-          reply.d <= (others => '-');
+          v.state := "00";
       end case;
 
-      if stall = '0' then
-        r.buf1 <= vreq1;
-        r.buf2 <= vreq2;
-        r.stall <= "00";
-      else
-        r.stall <= r.stall+1;
-      end if;
-
-      reply.stall <= stall;
-      r.data <= data;
-      r.we <= we;
-      r.ZD_buf <= unsigned(ZD);
+      reply <= vrep;
+      r <= v;
     end if;
   end process;
 

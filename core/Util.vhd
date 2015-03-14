@@ -44,7 +44,8 @@ package Util is
 
   type memory_reply_t is record
     d : unsigned(31 downto 0);
-    stall : std_logic;
+    busy : std_logic;
+    complete: std_logic;
   end record;
 
   type memory_request_t is record
@@ -91,6 +92,15 @@ package Util is
   constant default_fpu_in : fpu_in_t := (
     d1 => (others => '-'),
     d2 => (others => '-'));
+
+  type fpu_out_t is record
+    fadd : std_logic_vector(31 downto 0);
+    fmul : std_logic_vector(31 downto 0);
+    itof : std_logic_vector(31 downto 0);
+    ftoi : std_logic_vector(31 downto 0);
+    finv : std_logic_vector(31 downto 0);
+    fsqrt : std_logic_vector(31 downto 0);
+  end record;
 
   type regfile_t is array(0 to 31) of unsigned(31 downto 0);
 
@@ -201,11 +211,13 @@ package Util is
 
   type memory_wait_t is record
     op : std_logic_vector(5 downto 0);
+    load : std_logic;
     wd : write_data_t;
   end record memory_wait_t;
 
   constant default_mw : memory_wait_t := (
     op => ADD,
+    load => '0',
     wd => default_write_data);
 
   type memory_read_t is record
