@@ -3,12 +3,14 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <tuple>
 using namespace std;
 
 #include <getopt.h>
 #include "isa_class.h"
 #include "isa.h"
 #include "fpu.h"
+#include "ram.h"
 
 string int2hexstring(unsigned int i){
 	stringstream stream;
@@ -89,24 +91,8 @@ int main(int argc, char* argv[]){
 	unsigned int icounter = 0;
 	unsigned int ocounter = 0;
 	
-
-
 	//Initilaize RAM
-	vector<uint32_t> ram(RAMSIZE);
-	if(ramfilename != nullptr){
-		fin.open(filename, ios::in|ios::binary);
-		if(fin.fail()){
-			cerr << "Can't open file" << endl;
-			return 1;
-		}
-		int c = 0;
-		while(fin.read(reinterpret_cast<char*>(&tmp),sizeof(tmp)) && c < RAMSIZE){
-			ram[c] = tmp;
-			c++;
-		}
-	}else{
-		cerr << "RAM is initilaized with zero." << endl;
-	}
+	RAM ram(ramfilename);
 
 	//Initilaize IO
 	istream *input;
@@ -282,7 +268,7 @@ int main(int argc, char* argv[]){
 							goto END_MAIN;
 						}
 					}
-					else greg[fm.L.ra].r = ram[address];
+					else greg[fm.L.ra].r = ram.read(address);
 				}
 				pc+=1;
 				break;
@@ -300,7 +286,7 @@ int main(int argc, char* argv[]){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 						output->flush();
 					}else{
-						ram[address] = greg[fm.L.ra].r;
+						ram.write(address, greg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -341,7 +327,7 @@ int main(int argc, char* argv[]){
 							goto END_MAIN;
 						}
 					}
-					else freg[fm.L.ra].r = ram[address];
+					else freg[fm.L.ra].r = ram.read(address);
 				}
 				pc+=1;
 				break;
@@ -358,7 +344,7 @@ int main(int argc, char* argv[]){
 						ocounter++;
 						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
-						ram[address] = freg[fm.L.ra].r;
+						ram.write(address, freg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -473,6 +459,8 @@ END_MAIN:
 		cerr << ISA::isa2name(i) << ":" << profile[i] << ",";
 	}
 	cerr << endl;
+	
+	ram.printramstatus();
 
 	//Print 
 	cerr << "fmulfadd:" << fmulfadd << endl; 

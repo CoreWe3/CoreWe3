@@ -12,6 +12,9 @@ all: $(DIR)assembler $(DIR)disassembler $(DIR)simulator $(DIR)simulator_n $(DIR)
 isa_class.o: isa_class.cpp isa_class.h isa.h
 	$(CC) isa_class.cpp $(CCFLAGS) -c -o $@
 
+ram.o: ram.cpp ram.h isa.h
+	$(CC) ram.cpp $(CCFLAGS) -c -o $@
+
 fadd.o: ../FPU/fadd.c
 	$(C) ../FPU/fadd.c $(CFLAGS) -c -o $@
 
@@ -50,13 +53,13 @@ $(DIR)disassembler: disassembler.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) disassembler.cpp isa_class.o $(CCFLAGS) -o $@
 
-$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o
+$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) $^ $(CCFLAGS) -o $@
 
-$(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o
+$(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o ram.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
-	$(CC) simulator.cpp isa_class.o fpu_n.o $(CCFLAGS) -o $@
+	$(CC) $^ $(CCFLAGS) -o $@
 
 $(DIR)bfi: bfi.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
@@ -71,8 +74,11 @@ clean:
 	$(RM) itof.o
 	$(RM) fadd.o
 	$(RM) fmul.o
+	$(RM) fsqrt.o
+	$(RM) fabs.o
 	$(RM) finv.o
 	$(RM) fcmp.o
+	$(RM) ram.o
 	$(RM) $(addprefix $(DIR), assembler)
 	$(RM) $(addprefix $(DIR), disassembler)
 	$(RM) $(addprefix $(DIR), simulator)
