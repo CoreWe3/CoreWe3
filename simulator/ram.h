@@ -13,15 +13,15 @@ using namespace std;
 #define LINESIZE2 16
 #define CACHEWIDTH2 256
 
-#define LINESIZE3 16
-#define CACHEWIDTH3 128
-#define WAYSIZE 2
+#define LINESIZE3 128
+#define CACHEWIDTH3 32
+#define WAYSIZE1 4
 
 class RAM {
 	private:
 		vector<uint32_t> ram;
 		vector<uint32_t> tag1, tag2;
-		vector<vector<uint32_t>> tags, age;
+		vector<vector<uint32_t>> tags1, age1;
 		unsigned long long counter, hitcounter1, hitcounter2, hitcounter3;
 	public:
 		RAM(char*);

@@ -1,12 +1,14 @@
 #Assemble
 ./assembler -f [Binary File] (-i [Input Assembly]) (-l (show labels) )
 
-
 #Disassemble
 ./disassembler -f [Binary File] (-o [Output Assembly])
 
 ##Simulate
 ./simulator -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
+
+##Simulate with cache hit counter
+./simulator_c -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
 
 ##Simulate(native)
 ./simulator_n -f [Binary File]  (-o [IO Output]) (-i [IO Input]) (-r [RAM Initial Data]) (-d [Output RAM Dump]) (-l [Instruction Limit]) (-b [Break Point])
