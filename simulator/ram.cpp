@@ -4,7 +4,8 @@
 #include "ram.h"
 #include "isa.h"
 
-RAM::RAM(char* filename):ram(RAMSIZE, 0), tag1(CACHEWIDTH1, -1), tag2(CACHEWIDTH2, -1){
+RAM::RAM(char* filename):
+	ram(RAMSIZE, 0), tag1(CACHEWIDTH1, -1), tag2(CACHEWIDTH2, -1), tags(CACHEWIDTH3, vector<uint32_t>(WAYSIZE ,-1)), age(CACHEWIDTH3, vector<uint32_t>(WAYSIZE,0)){
 	if(filename != nullptr){
 		ifstream fin;
 		fin.open(filename, ios::in|ios::binary);
@@ -21,29 +22,42 @@ RAM::RAM(char* filename):ram(RAMSIZE, 0), tag1(CACHEWIDTH1, -1), tag2(CACHEWIDTH
 	}else{
 		cerr << "RAM is initilaized with zero." << endl;
 	}
-	hitcounter1 = hitcounter2 = counter = 0;
+	hitcounter1 = hitcounter2 = hitcounter3 = counter = 0;
 }
 
 uint32_t RAM::read(uint32_t addr){
 	counter++;
-	int line1 = (addr/LINESIZE1)% CACHEWIDTH1;
-	int t1 =  (addr/LINESIZE1)/CACHEWIDTH1;
-	if (tag1[t1] == addr/LINESIZE1/CACHEWIDTH1) hitcounter1++;
+	//Type 1
+	uint32_t line1 = (addr/LINESIZE1) % CACHEWIDTH1;
+	uint32_t t1 =  (addr/LINESIZE1)/CACHEWIDTH1;
+	if (tag1[line1] == t1) hitcounter1++;
 	else tag1[line1] = t1;
-	int line2 = (addr/LINESIZE2)% CACHEWIDTH2;
-	int t2 =  (addr/LINESIZE2)/CACHEWIDTH2;
-	if (tag2[t2] == addr/LINESIZE2/CACHEWIDTH2) hitcounter2++;
+	//Type 2
+	uint32_t line2 = (addr/LINESIZE2) % CACHEWIDTH2;
+	uint32_t t2 =  (addr/LINESIZE2)/CACHEWIDTH2;
+	if (tag2[line2] == t2) hitcounter2++;
 	else tag2[line2] = t2;
+	//Type 3
+	/*int line3 = (addr/LINESIZE3) % CACHEWIDTH3;
+	int t3 =  (addr/LINESIZE3)/CACHEWIDTH3;
+	for(auto el : tags[t3]){
+		
+	}*/
+	
 	return ram[addr];
 }
 
 void RAM::write(uint32_t addr, uint32_t v){
-	int line1 = (addr/LINESIZE1)% CACHEWIDTH1;
-	int t1 =  (addr/LINESIZE1)/CACHEWIDTH1;
+	//Type 1
+	uint32_t line1 = (addr/LINESIZE1)% CACHEWIDTH1;
+	uint32_t t1 =  (addr/LINESIZE1)/CACHEWIDTH1;
 	tag1[line1] = t1;
-	int line2 = (addr/LINESIZE2)% CACHEWIDTH2;
-	int t2 =  (addr/LINESIZE2)/CACHEWIDTH2;
+	//Type 2
+	uint32_t line2 = (addr/LINESIZE2)% CACHEWIDTH2;
+	uint32_t t2 =  (addr/LINESIZE2)/CACHEWIDTH2;
 	tag2[line2] = t2;
+	//Type 3
+	
 	ram[addr] = v;
 }
 

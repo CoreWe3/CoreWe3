@@ -10,16 +10,19 @@ using namespace std;
 #define LINESIZE1 1
 #define CACHEWIDTH1 256
 
-#define LINESIZE2 2
+#define LINESIZE2 16
 #define CACHEWIDTH2 256
+
+#define LINESIZE3 16
+#define CACHEWIDTH3 128
+#define WAYSIZE 2
 
 class RAM {
 	private:
 		vector<uint32_t> ram;
-		//vector<tuple<uint32_t, vector<uint32_t>>> cache;
-		vector<uint32_t> tag1;
-		vector<uint32_t> tag2;
-		unsigned long long counter, hitcounter1, hitcounter2;
+		vector<uint32_t> tag1, tag2;
+		vector<vector<uint32_t>> tags, age;
+		unsigned long long counter, hitcounter1, hitcounter2, hitcounter3;
 	public:
 		RAM(char*);
 		vector<uint32_t>::const_iterator begin() const;
