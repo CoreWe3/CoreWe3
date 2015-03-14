@@ -3,12 +3,14 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <tuple>
 using namespace std;
 
 #include <getopt.h>
 #include "isa_class.h"
 #include "isa.h"
 #include "fpu.h"
+#include "ram.h"
 
 string int2hexstring(unsigned int i){
 	stringstream stream;
@@ -24,7 +26,6 @@ int main(int argc, char* argv[]){
 	long long int limit = -1;
 	char *filename = nullptr, *io_outputfilename = nullptr, *io_inputfilename = nullptr, *ramfilename = nullptr, *outputramfilename = nullptr;
 	bool branchprofile_flag = false;
-	unsigned int mvcounter = 0;
 	while((result=getopt(argc,argv,"f:i:o:r:d:l:b:p"))!=-1){
 		switch(result){
 			case 'f': // Input Binary File
@@ -86,25 +87,12 @@ int main(int argc, char* argv[]){
 	unsigned int addsub=0;
 	unsigned int subadd=0;
 	unsigned int subsub=0;
-	unsigned int addshl=0;
-
-
+	unsigned int mvcounter = 0;
+	unsigned int icounter = 0;
+	unsigned int ocounter = 0;
+	
 	//Initilaize RAM
-	vector<uint32_t> ram(RAMSIZE);
-	if(ramfilename != nullptr){
-		fin.open(filename, ios::in|ios::binary);
-		if(fin.fail()){
-			cerr << "Can't open file" << endl;
-			return 1;
-		}
-		int c = 0;
-		while(fin.read(reinterpret_cast<char*>(&tmp),sizeof(tmp)) && c < RAMSIZE){
-			ram[c] = tmp;
-			c++;
-		}
-	}else{
-		cerr << "RAM is initilaized with zero." << endl;
-	}
+	RAM ram(ramfilename);
 
 	//Initilaize IO
 	istream *input;
@@ -272,6 +260,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 						if (input->eof())
 						{
@@ -279,7 +268,7 @@ int main(int argc, char* argv[]){
 							goto END_MAIN;
 						}
 					}
-					else greg[fm.L.ra].r = ram[address];
+					else greg[fm.L.ra].r = ram.read(address);
 				}
 				pc+=1;
 				break;
@@ -293,10 +282,11 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 						output->flush();
 					}else{
-						ram[address] = greg[fm.L.ra].r;
+						ram.write(address, greg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -329,6 +319,7 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 						if (input->eof())
 						{
@@ -336,7 +327,7 @@ int main(int argc, char* argv[]){
 							goto END_MAIN;
 						}
 					}
-					else freg[fm.L.ra].r = ram[address];
+					else freg[fm.L.ra].r = ram.read(address);
 				}
 				pc+=1;
 				break;
@@ -350,9 +341,10 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
-						ram[address] = freg[fm.L.ra].r;
+						ram.write(address, freg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -418,7 +410,6 @@ int main(int argc, char* argv[]){
 		if(fm.J.op==ADD && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addsub++;
 		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
 		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
-		if(fm.J.op==ADD && fm2.J.op==SHL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addshl++;
 
 	}
 
@@ -468,6 +459,8 @@ END_MAIN:
 		cerr << ISA::isa2name(i) << ":" << profile[i] << ",";
 	}
 	cerr << endl;
+	
+	ram.printramstatus();
 
 	//Print 
 	cerr << "fmulfadd:" << fmulfadd << endl; 
@@ -476,7 +469,8 @@ END_MAIN:
 	cerr << "addsub:" << addsub << endl; 
 	cerr << "subadd:" << subadd << endl; 
 	cerr << "subsub:" << subsub << endl; 
-	cerr << "addshl:" << addshl << endl; 
 	cerr << "move:" << mvcounter << endl;
+	cerr << "io_in:" << icounter << endl;
+	cerr << "io_out:" << ocounter << endl;
 	return 0;
 }
