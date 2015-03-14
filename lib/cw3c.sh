@@ -13,7 +13,7 @@ usage() {
     echo " --lib-ml   mincamlのライブラリ(デフォルトでlib/mincaml/libmincaml.ml)"
     echo " --lib-asm  アセンブリのライブラリ(デフォルトでlib/asm/libmincaml.S)"
     echo " --boot     ブートローダー(デフォルトでlib/asm/boot.s)"
-    echo " --iconst   定数汎用レジスタ"
+    echo " --iconst   定数汎用レジスタ(負の数は --iconst \" -1\" みたいな感じで)"
     echo " --fconst   定数浮動小数点レジスタ"
     echo
     echo "--work-dirに以下のファイルが生成されます。"
