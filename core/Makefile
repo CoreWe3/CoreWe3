@@ -2,7 +2,7 @@ ROOT = $(shell git rev-parse --show-toplevel)
 SOURCE = $(wildcard *.vhd) $(wildcard $(ROOT)/FPU/*.vhd)
 SCRIPTS = core.xst core.ucf core.ut
 BOOTLOADER = file/bootloader.b
-CODE = file/memtest
+CODE = file/test
 
 all: configure
 
