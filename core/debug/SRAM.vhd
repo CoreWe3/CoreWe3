@@ -15,7 +15,7 @@ end SRAM;
 
 architecture arch_sram of SRAM is
 
-  type RAM_t is array (0 to 2**WIDTH -1) of natural;
+  type RAM_t is array (0 to 2**WIDTH -1) of std_logic_vector(31 downto 0);
   signal RAM : RAM_t;
 
   signal xwa1 : std_logic := '1';
@@ -24,11 +24,10 @@ architecture arch_sram of SRAM is
   signal addr2: unsigned(WIDTH-1 downto 0) := (others => '0');
 begin
 
-  ZD <= std_logic_vector(to_unsigned(RAM(to_integer(addr2)), 32)) when xwa2 = '1' else
+  ZD <= RAM(to_integer(addr2)) when xwa2 = '1' else
         (others => 'Z');
 
   process(clk)
-    variable vzd : std_logic_vector(31 downto 0);
   begin
     if rising_edge(clk) then
       xwa1 <= XWA;
@@ -41,7 +40,7 @@ begin
       end if;
       addr2 <= addr1;
       if xwa2 = '0' then
-        RAM(to_integer(addr2)) <= to_integer(unsigned(ZD));
+        RAM(to_integer(addr2)) <= ZD;
       end if;
     end if;
   end process;

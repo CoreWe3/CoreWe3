@@ -49,8 +49,7 @@ architecture Memory_arch of Memory is
   end component;
 
   type memory_t is record
-    stall : std_logic;
-    state : std_logic_vector(1 downto 0);
+    busy : std_logic;
     buf : memory_request_t;
   end record;
 
@@ -88,59 +87,38 @@ begin
     variable vreq : memory_request_t;
   begin
     v := r;
-    if r.stall = '0' then
-      vreq := bus_out.m;
-    else
+    v.busy := io_reply.busy or cache_reply.busy;
+
+    if v.busy = '1' then
+      vreq := default_memory_request;
+    elsif r.busy = '1' then
       vreq := r.buf;
+    else
+      vreq := bus_out.m;
     end if;
 
-    case r.state is
-      when "01" =>
-        v.stall := io_reply.stall;
-      when "11" =>
-        v.stall := cache_reply.stall;
-      when others =>
-        v.stall := '0';
-    end case;
-
-    if v.stall = '0' then
-      if vreq.go = '1' then
-        if vreq.a = x"FFFFF" then
-          v.state := "01"; -- read io
-        elsif vreq.a(19 downto ADDR_WIDTH) = ones(19 downto ADDR_WIDTH) then
-          v.state := "10"; -- read code(BRAM)
-        else
-          v.state := "11"; -- read cache(SRAM)
-        end if;
-      else
-        v.state := "00";
-      end if;
-    end if;
-
-    if v.stall = '1' and r.stall = '0' then -- start stalling
+    if v.busy = '1' and r.busy = '0' then -- start stalling
       v.buf := bus_out.m;
     end if;
 
-    if v.stall = '0' and r.stall = '1' then -- finish stalling
-      vreq := r.buf;
-    else
-      vreq := bus_out.m;
-    end if;
-
     request <= vreq;
-    bus_in.i <= code_bus_in.i;
     code_bus_out <= (bus_out.pc, vreq);
+    bus_in.i <= code_bus_in.i;
 
-    case r.state is
-      when "01" =>
-        bus_in.m <= io_reply;
-      when "10" =>
-        bus_in.m <= code_bus_in.m;
-      when "11" =>
-        bus_in.m <= cache_reply;
-      when others =>
-        bus_in.m <= ((others => '-'), '0');
-    end case;
+    if io_reply.complete = '1' then
+      bus_in.m.d <= io_reply.d;
+      bus_in.m.complete <= '1';
+    elsif code_bus_in.m.complete = '1' then
+      bus_in.m.d <= code_bus_in.m.d;
+      bus_in.m.complete <= '1';
+    elsif cache_reply.complete = '1' then
+      bus_in.m.d <= cache_reply.d;
+      bus_in.m.complete <= '1';
+    else
+      bus_in.m.d <= (others => '-');
+      bus_in.m.complete <= '0';
+    end if;
+    bus_in.m.busy <= v.busy;
 
     s <= v;
   end process;

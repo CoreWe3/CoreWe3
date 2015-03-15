@@ -16,12 +16,12 @@ all: min-rt
 #  	$(ROOT)/raytracer-ocaml/preprocess.py $< > $@
 
 min-rt.s: min-rt2.S
-	caat $(ROOT)/lib/asm/rt_boot.s $(ROOT)/lib/asm/libmincaml.S $< > $@
+	cat $(ROOT)/lib/asm/rt_boot.s $(ROOT)/lib/asm/libmincaml.S $< > $@
 
 min-rt: min-rt.s
 	cd $(ROOT)/simulator && $(MAKE)
 	$(AS) -f $@ -i $<
-	#$(SIM) -f $@ -o $(@:=.slog) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld
+	$(SIM) -f $@ -o $(@:=.slog) -i $(ROOT)/raytracer-ocaml/sld_bin/contest.sld
 	cat eof >> $@
 
 %: %.s
@@ -41,7 +41,7 @@ min-rt: min-rt.s
 %.S:%.ml
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
 	cat $(ROOT)/lib/mincaml/libmincaml.ml $< > $(@:.S=_.ml)
-	$(MINCAML) $(@:.S=_) -inline 71
+	$(MINCAML) $(@:.S=_)
 	mv $(@:.S=_.s) $@
 	rm $(@:.S=_.ml)
 
