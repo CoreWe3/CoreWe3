@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 package Util is
   constant ADDR_WIDTH : integer := 15;
-  constant CACHE_WIDTH : integer := 8;
+  constant CACHE_INDEX : integer := 8;
   constant FIFO_WIDTH : integer := 10;
   constant BOOTLOADER: string := "file/bootloader.b";
   constant ones : unsigned(31 downto 0) := (others => '1');
