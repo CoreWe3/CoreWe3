@@ -205,7 +205,7 @@ int main(int argc, char* argv[]){
 	}
 
 	cerr << "========================" << endl;
-	cerr << "Immidiate Emergence Rate" << endl;
+	cerr << "Immediate Emergence Rate" << endl;
 	list<tuple<unsigned int, unsigned int>> gimm;
 	for(auto x : gimm_counter){
 		gimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));

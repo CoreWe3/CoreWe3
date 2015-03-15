@@ -13,9 +13,9 @@ using namespace std;
 #define LINESIZE2 16
 #define CACHEWIDTH2 256
 
-#define LINESIZE3 128
-#define CACHEWIDTH3 32
-#define WAYSIZE1 4
+#define LINESIZE3 16
+#define CACHEWIDTH3 512
+#define WAYSIZE1 3
 
 class RAM {
 	private:
