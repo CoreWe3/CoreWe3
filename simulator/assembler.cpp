@@ -126,6 +126,8 @@ int main(int argc, char* argv[]){
 	}
 
 	//Optimize LDI and VFLDI
+	//Detect Immidiate Emergence Rate
+	map<unsigned int, unsigned int> gimm_counter, fimm_counter;
 	for(auto it = instructions.begin(); it != instructions.end();){
 		if((*it)[0][0]==':'){
 			it++;
@@ -136,6 +138,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
+						gimm_counter[v]++;
 						if (v > 0x7fff){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"ADDI", (*it)[1], "r0", to_string(v & 0xffff)};
@@ -167,6 +170,7 @@ int main(int argc, char* argv[]){
 				{
 					if((*it)[2][0]!=':'){
 						unsigned int v = getlabelvalue((*it)[2]);
+						fimm_counter[v]++;
 						if ((v & 0xffff)!=0){
 							if((*it)[0][0]!='@'){
 								vector<string> itmp1 {"FLDI", (*it)[1], "f0", to_string(v & 0xffff)};
@@ -199,6 +203,41 @@ int main(int argc, char* argv[]){
 				break;
 		}
 	}
+
+	cerr << "========================" << endl;
+	cerr << "Immediate Emergence Rate" << endl;
+	list<tuple<unsigned int, unsigned int>> gimm;
+	for(auto x : gimm_counter){
+		gimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));
+	}
+
+	gimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
+	int tempcounter = 0;
+	cerr << "General Register" << endl;
+	for(auto y : gimm){
+		cerr << " " << get<0>(y) << " : " << get<1>(y) << endl;
+		tempcounter++;
+		if(tempcounter > 10) break;
+	}
+	list<tuple<unsigned int, unsigned int>> fimm;
+	for(auto x : fimm_counter){
+		fimm.push_back(tuple<unsigned int, unsigned int>(x.first, x.second));
+	}
+	fimm.sort([](tuple<unsigned int, unsigned int> a, tuple<unsigned int, unsigned int> b)->bool { return get<1>(a) > get<1>(b); } );
+	tempcounter = 0;
+	cerr << "Float Register" << endl;
+
+	union{
+		unsigned int d;
+		float f;
+	} fu;
+	for(auto y : fimm){
+		fu.d = get<0>(y);
+		cerr << " " << get<0>(y) << "(" << fu.f << ")" << " : " << get<1>(y) << endl;
+		tempcounter++;
+		if(tempcounter > 10) break;
+	}
+	cerr << "========================" << endl;
 
 	//Optimize NOP
 	for(auto it = instructions.begin(); it != instructions.end();){
@@ -261,7 +300,8 @@ int main(int argc, char* argv[]){
 	//Make Assembly
 	list<uint32_t> results;
 	line = 0;
-	for(auto el : instructions){
+	for(auto i = instructions.begin(); i != instructions.end(); i++){
+		auto el = *i;
 		FORMAT fm;
 		fm.data = 0;
 		if(el[0][0]=='@'){
@@ -299,6 +339,9 @@ int main(int argc, char* argv[]){
 					fm.L.op = ISA::name2isa(el[0]);
 					fm.L.ra = ISA::name2reg(el[1]);
 					unsigned int v = getlabelvalue(el[2], line);
+					if(v>0xFFFF){
+						cerr << "WARN : overflow immidiate : around " << line << endl;
+					}
 					fm.L.cx = v;
 				}
 				results.push_back(fm.data);
@@ -331,7 +374,6 @@ int main(int argc, char* argv[]){
 			case ST:
 			case FLD:
 			case FST:
-			case ADDI:
 			case SHLI:
 			case SHRI:
 				{
@@ -339,11 +381,25 @@ int main(int argc, char* argv[]){
 					fm.L.ra = ISA::name2reg(el[1]);
 					fm.L.rb = ISA::name2reg(el[2]);
 					unsigned int v = getlabelvalue(el[3], line);
-					if((fm.L.op!=ADDI&&v>0x7FFF&&v<0xFFFF8000)||(fm.L.op==ADDI&&v>0xFFFF&&v<0xFFFF0000)){
+
+					if(v>0x7FFF&&v<0xFFFF8000){
 						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
-					if(fm.L.op==ADDI&&v>0x7FFF&&v<0xFFFF8000){
-						cerr << "INFO : overflow immidiate : around " << line << endl;
+					fm.L.cx = v;
+				}
+				results.push_back(fm.data);
+				line++;
+				break;
+			
+			case ADDI:
+				{
+					fm.L.op = ISA::name2isa(el[0]);
+					fm.L.ra = ISA::name2reg(el[1]);
+					fm.L.rb = ISA::name2reg(el[2]);
+					unsigned int v = getlabelvalue(el[3], line);
+
+					if( (v>0xFFFF&&v<0xFFFF0000) || (v>0x7FFF&&v<0xFFFF8000&& !(next(i)!=instructions.end()&&ISA::name2isa((*next(i))[0])==LDIH&& ISA::name2reg(el[1]) == ISA::name2reg((*next(i))[1]) ))){
+						cerr << "WARN : overflow immidiate : around " << line << endl;
 					}
 					fm.L.cx = v;
 				}
