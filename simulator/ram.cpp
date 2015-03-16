@@ -27,8 +27,9 @@ RAM::RAM(char* filename):
 	hitcounter1 = hitcounter2 = hitcounter3 = counter = 0;
 }
 
-uint32_t RAM::read(uint32_t addr){
-	return ram[addr];
+int RAM::read(uint32_t addr, uint32_t& v){
+	v = ram[addr];
+	return 3;
 }
 
 void RAM::write(uint32_t addr, uint32_t v){
