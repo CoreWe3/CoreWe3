@@ -137,11 +137,14 @@ int main(int argc, char* argv[]){
 	uint32_t prev = 0;
 	long long int clock = 0; 
 	vector<unsigned long> profile(INAMES.size(),0);
-
+	
+	int breakpointcounter=0;
 	while(pc < instructions.size()){
 		if(pc == breakpoint){
 			//Print Reg
+			breakpointcounter++;
 			cerr << "== counter : " << counter << endl;
+			cerr << "== num : " << breakpointcounter << endl;
 			for(unsigned int i=0;i<greg.size();i++){
 				cerr << ISA::greg2name(i) << ":" << hex << "0x" << greg[i].r << dec << "(" << greg[i].d  << ")" << " ";
 			}
@@ -549,6 +552,6 @@ END_MAIN:
 	cerr << "move:" << mvcounter << endl;
 	cerr << "io_in:" << icounter << endl;
 	cerr << "io_out:" << ocounter << endl;
-	cerr << "clock:" << clock + 6 + max(*max_element(gregage.begin(), gregage.end()), *max_element(fregage.begin(), fregage.end()) )<< endl;
+	cerr << "clock:" << clock + 7 + max(*max_element(gregage.begin(), gregage.end()), *max_element(fregage.begin(), fregage.end()) )<< endl;
 	return 0;
 }

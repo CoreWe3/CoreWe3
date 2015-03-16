@@ -4,10 +4,7 @@
 #include "ram.h"
 #include "isa.h"
 
-RAM::RAM(char* filename):
-	ram(RAMSIZE, 0), tag1(CACHEWIDTH1, -1), tag2(CACHEWIDTH2, -1),
-	tags1(CACHEWIDTH3, vector<uint32_t>(WAYSIZE1 ,-1)), age1(CACHEWIDTH3, vector<uint32_t>(WAYSIZE1,1))
-{
+RAM::RAM(char* filename):ram(RAMSIZE, 0){
 	if(filename != nullptr){
 		ifstream fin;
 		fin.open(filename, ios::in|ios::binary);
@@ -24,7 +21,6 @@ RAM::RAM(char* filename):
 	}else{
 		cerr << "RAM is initilaized with zero." << endl;
 	}
-	hitcounter1 = hitcounter2 = hitcounter3 = counter = 0;
 }
 
 int RAM::read(uint32_t addr, uint32_t& v){

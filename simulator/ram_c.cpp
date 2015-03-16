@@ -5,7 +5,7 @@
 #include "isa.h"
 
 RAM::RAM(char* filename):
-	ram(RAMSIZE, 0), tag1(CACHEWIDTH1, -1), tag2(CACHEWIDTH2, -1),
+	ram(RAMSIZE, 0), 
 	tags1(CACHEWIDTH3, vector<uint32_t>(WAYSIZE1 ,-1)), age1(CACHEWIDTH3, vector<uint32_t>(WAYSIZE1,1))
 {
 	if(filename != nullptr){
@@ -24,7 +24,7 @@ RAM::RAM(char* filename):
 	}else{
 		cerr << "RAM is initilaized with zero." << endl;
 	}
-	hitcounter1 = hitcounter2 = hitcounter3 = counter = swap = 0;
+	hitcounter = counter = swap = 0;
 }
 
 int RAM::read(uint32_t addr, uint32_t &v){
@@ -37,22 +37,22 @@ int RAM::read(uint32_t addr, uint32_t &v){
 			index = i;
 		}
 	}
-	uint32_t maxage = 0;
-	unsigned int oldestindex = 0;
 	int l;
-	for(unsigned int i = 0; i< age1[line3].size();i++){
-		age1[line3][i]++;
-		if(maxage < age1[line3][i]) {
-			maxage = age1[line3][i];
-			oldestindex = i;
-		}
-	}
 	if (index == -1){
+		uint32_t maxage = 0;
+		unsigned int oldestindex = 0;
+		for(unsigned int i = 0; i< age1[line3].size();i++){
+			age1[line3][i]++;
+			if(maxage < age1[line3][i]) {
+				maxage = age1[line3][i];
+				oldestindex = i;
+			}
+		}
 		tags1[line3][oldestindex]=t3;
 		age1[line3][oldestindex]=0;
 		l = 3;
 	}else{
-		hitcounter3++;
+		hitcounter++;
 		l = 0;
 		age1[line3][index] = 0;
 	}
@@ -101,6 +101,6 @@ vector<uint32_t>::const_iterator RAM::end() const{
 }
 
 void RAM::printramstatus(){
-	cerr << WAYSIZE1 <<"way (linesize=" << LINESIZE3 << "word line=" << CACHEWIDTH3 << ") :" << hitcounter3*1.0/counter << endl;
+	cerr << WAYSIZE1 <<"way (linesize=" << LINESIZE3 << "word line=" << CACHEWIDTH3 << ") :" << hitcounter*1.0/counter << endl;
 	cerr << "Cache Swap :" << swap << endl;
 }
