@@ -2,6 +2,7 @@ ROOT = $(shell git rev-parse --show-toplevel)
 AS = $(ROOT)/simulator/bin/assembler
 SIM = $(ROOT)/simulator/bin/simulator
 MINCAML = $(ROOT)/mincaml_compiler/min-caml
+MCFLAGS = -inline 64
 MLFILES = $(wildcard *.ml)
 ASFILES = $(wildcard *.s)
 
@@ -41,7 +42,7 @@ min-rt: min-rt.s
 %.S:%.ml
 	cd $(ROOT)/mincaml_compiler && $(MAKE)
 	cat $(ROOT)/lib/mincaml/libmincaml.ml $< > $(@:.S=_.ml)
-	$(MINCAML) $(@:.S=_)
+	$(MINCAML) $(MCFLAGS) $(@:.S=_)
 	mv $(@:.S=_.s) $@
 	rm $(@:.S=_.ml)
 

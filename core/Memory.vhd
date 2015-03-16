@@ -14,6 +14,7 @@ entity Memory is
     ZD      : inout std_logic_vector(31 downto 0);
     ZA      : out   std_logic_vector(19 downto 0);
     XWA     : out   std_logic;
+    ADVA    : out   std_logic;
     bus_out : in    bus_out_t;
     bus_in  : out   bus_in_t);
 end Memory;
@@ -44,6 +45,7 @@ architecture Memory_arch of Memory is
       ZD      : inout std_logic_vector(31 downto 0);
       ZA      : out   std_logic_vector(19 downto 0);
       XWA     : out   std_logic;
+      ADVA    : out   std_logic;
       request : in    memory_request_t;
       reply   : out   memory_reply_t);
   end component;
@@ -79,6 +81,7 @@ begin
     ZD => ZD,
     ZA => ZA,
     XWA => XWA,
+    ADVA => ADVA,
     request => request,
     reply => cache_reply);
 
