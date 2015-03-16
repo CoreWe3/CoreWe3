@@ -9,10 +9,6 @@ let rec print_int x =
 let rec fhalf x = 0.5 *. x in
 let rec fsqr x = x *. x in
 let rec fneg x = -.x in
-let rec fless x y = x < y in
-let rec fiszero x = x = 0.0 in
-let rec fispos x = x > 0.0 in
-let rec fisneg x = x < 0.0 in 
 
 let rec sin_cos_reduction f =
   let rec init_p a p =
