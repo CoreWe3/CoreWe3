@@ -52,8 +52,9 @@ WORK_DIR=${REPO_ROOT}/simulator/bin
 
 LIB_ML=${REPO_ROOT}/lib/mincaml/libmincaml.ml
 
-INLINE=0
+INLINE=81
 ICONST=""
+#ICONST=""
 FCONST=""
 
 LIB_S=${REPO_ROOT}/lib/asm/libmincaml.S
