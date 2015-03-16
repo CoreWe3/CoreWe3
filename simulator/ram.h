@@ -7,8 +7,8 @@
 
 using namespace std;
 
-#define LINESIZE3 4
-#define CACHEWIDTH3 256
+#define LINESIZE3 8
+#define CACHEWIDTH3 64
 #define WAYSIZE1 2
 
 class RAM {
