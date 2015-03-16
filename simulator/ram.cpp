@@ -28,8 +28,9 @@ int RAM::read(uint32_t addr, uint32_t& v){
 	return 3;
 }
 
-void RAM::write(uint32_t addr, uint32_t v){
+int RAM::write(uint32_t addr, uint32_t v){
 	ram[addr] = v;
+	return 0;
 }
 
 vector<uint32_t>::const_iterator RAM::begin() const{
@@ -41,4 +42,7 @@ vector<uint32_t>::const_iterator RAM::end() const{
 }
 
 void RAM::printramstatus(){
+}
+
+void RAM::update(int i){
 }

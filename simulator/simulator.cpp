@@ -332,7 +332,7 @@ int main(int argc, char* argv[]){
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 						output->flush();
 					}else{
-						ram.write(address, greg[fm.L.ra].r);
+						stall = ram.write(address, greg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -399,7 +399,7 @@ int main(int argc, char* argv[]){
 						ocounter++;
 						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
-						ram.write(address, freg[fm.L.ra].r);
+						stall = ram.write(address, freg[fm.L.ra].r);
 					}
 				}
 				pc+=1;
@@ -480,6 +480,7 @@ int main(int argc, char* argv[]){
 		//cerr << "pc: " << pc << " latency: " << latency << " stall " << stall << endl;
 		clock += latency;
 		clock += stall;
+		ram.update(latency+stall);
 		// M
 		FORMAT fm2;
 		fm2.data = prev;
@@ -521,7 +522,6 @@ END_MAIN:
 			fout2.write((char *)&x,sizeof(x));
 		}
 	}
-
 
 	cerr << "Program Counter = " << pc << endl;
 	cerr << "Instructions = " << counter << endl;
