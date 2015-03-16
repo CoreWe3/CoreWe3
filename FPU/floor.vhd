@@ -402,8 +402,8 @@ begin
 --stage2
 	if tmp(31) = '1' then
 
-	    if flag2<='1' then
-	       r<=(tmp(31 downto 23) + "000000001") & "00000000000000000000000" ;
+	    if flag2='1' then
+	       r<=(tmp(31 downto 23) + "000000001") & "00000000000000000000000";
             else
 	       r<=tmp + flag;
 	    end if;
