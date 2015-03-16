@@ -8,8 +8,10 @@ entity Core is
   generic (
     DEBUG : boolean := false;
     --wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
-    -- wtime : std_logic_vector(15 downto 0) := x"03f5"; -- 116.66MHz M=7 D=4
+    --wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
+    --wtime : std_logic_vector(15 downto 0) := x"0398"); -- 106MHz M=8 D=5
+    --wtime : std_logic_vector(15 downto 0) := x"03f5"); -- 116.66MHz M=7 D=4
+    wtime : std_logic_vector(15 downto 0) := x"0411"); -- 120MHz M=9 D=5
     -- wtime : std_logic_vector(15 downto 0) := x"047A"; -- 133MHz
   port (
     MCLK1  : in    std_logic;
@@ -41,7 +43,8 @@ architecture Core_arch of Core is
       RS_RX : in    std_logic;
       ZD    : inout std_logic_vector(31 downto 0);
       ZA    : out   std_logic_vector(19 downto 0);
-      XWA   : out   std_logic);
+      XWA   : out   std_logic;
+      ADVA  : out   std_logic);
   end component;
 
   signal iclk : std_logic;
@@ -75,8 +78,8 @@ begin  -- arch_core
 
     dcm : DCM_BASE
       generic map (
-        CLKFX_MULTIPLY => 3, -- M
-        CLKFX_DIVIDE => 2)   -- D
+        CLKFX_MULTIPLY => 9, -- M
+        CLKFX_DIVIDE => 5)   -- D
       port map (
         CLKIN => iclk,
         CLKFB => bfbclk,
@@ -118,7 +121,8 @@ begin  -- arch_core
     RS_RX => RS_RX,
     ZD    => ZD,
     ZA    => ZA,
-    XWA   => XWA);
+    XWA   => XWA,
+    ADVA  => ADVA);
 
   XE1 <= '0';
   E2A <= '1';
@@ -128,9 +132,8 @@ begin  -- arch_core
   XZCKE <= '0';
   ZCLKMA(0) <= sysclk;
   ZCLKMA(1) <= sysclk;
-  ADVA <= '0';
   XFT <= '1';
-  XLBO <= '1';
+  XLBO <= '0';
   ZZA <= '0';
 
 end Core_arch;

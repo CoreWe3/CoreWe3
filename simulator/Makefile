@@ -1,15 +1,22 @@
-CCFLAGS = -std=c++11 -O3 -Wall
-CFLAGS = -std=c11 -O3 -Wall
-CC = clang++
-C = clang
+CCFLAGS = -std=c++11 -Ofast -Wall -march=native
+CFLAGS = -std=c11 -Ofast -Wall -march=native
+
+CC = g++
+C = gcc
 DIR = ./bin/
 
 .PHONY: all
 
-all: $(DIR)assembler $(DIR)disassembler $(DIR)simulator $(DIR)simulator_n $(DIR)bfi
+all: $(DIR)assembler $(DIR)disassembler $(DIR)simulator $(DIR)simulator_n $(DIR)simulator_c $(DIR)bfi
 
 isa_class.o: isa_class.cpp isa_class.h isa.h
 	$(CC) isa_class.cpp $(CCFLAGS) -c -o $@
+
+ram.o: ram.cpp ram.h isa.h
+	$(CC) ram.cpp $(CCFLAGS) -c -o $@
+
+ram_c.o: ram_c.cpp ram.h isa.h
+	$(CC) ram_c.cpp $(CCFLAGS) -c -o $@
 
 fadd.o: ../FPU/fadd.c
 	$(C) ../FPU/fadd.c $(CFLAGS) -c -o $@
@@ -49,13 +56,17 @@ $(DIR)disassembler: disassembler.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) disassembler.cpp isa_class.o $(CCFLAGS) -o $@
 
-$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o
+$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) $^ $(CCFLAGS) -o $@
 
-$(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o
+$(DIR)simulator_c: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram_c.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
-	$(CC) simulator.cpp isa_class.o fpu_n.o $(CCFLAGS) -o $@
+	$(CC) $^ $(CCFLAGS) -o $@
+
+$(DIR)simulator_n: simulator.cpp isa_class.o fpu_n.o ram.o
+	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
+	$(CC) $^ $(CCFLAGS) -o $@
 
 $(DIR)bfi: bfi.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
@@ -70,12 +81,17 @@ clean:
 	$(RM) itof.o
 	$(RM) fadd.o
 	$(RM) fmul.o
+	$(RM) fsqrt.o
+	$(RM) fabs.o
 	$(RM) finv.o
 	$(RM) fcmp.o
+	$(RM) ram.o
+	$(RM) ram_c.o
 	$(RM) $(addprefix $(DIR), assembler)
 	$(RM) $(addprefix $(DIR), disassembler)
 	$(RM) $(addprefix $(DIR), simulator)
 	$(RM) $(addprefix $(DIR), simulator_n)
+	$(RM) $(addprefix $(DIR), simulator_c)
 	$(RM) $(addprefix $(DIR), bfi)
 
 #A lot of thanks to nullpohead.

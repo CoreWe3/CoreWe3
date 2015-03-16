@@ -9,10 +9,6 @@ let rec print_int x =
 let rec fhalf x = 0.5 *. x in
 let rec fsqr x = x *. x in
 let rec fneg x = -.x in
-let rec fless x y = x < y in
-let rec fiszero x = x = 0.0 in
-let rec fispos x = x > 0.0 in
-let rec fisneg x = x < 0.0 in 
 
 let rec sin_cos_reduction f =
   let rec init_p a p =
@@ -105,12 +101,6 @@ let rec atan f =
 	  else
 	    1.5707963267948966 -. (kernel_atan (1.0 /. a)) in
   if s = 0 then a else -.a in
-
-let rec floor x =
-  if 8388608.0 <= fabs x then x
-  else
-    let y = float_of_int (int_of_float x) in
-    if x < y then y -. 1.0 else y in
 
 (*other*)
 let rec xor x y = 
