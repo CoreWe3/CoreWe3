@@ -8,8 +8,10 @@ entity Core is
   generic (
     DEBUG : boolean := false;
     --wtime : std_logic_vector(15 downto 0) := x"023D"); -- 66MHz
-    wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
-    -- wtime : std_logic_vector(15 downto 0) := x"03f5"; -- 116.66MHz M=7 D=4
+    --wtime : std_logic_vector(15 downto 0) := x"0364"); -- 100MHz M=3 D=2
+    --wtime : std_logic_vector(15 downto 0) := x"0398"); -- 106MHz M=8 D=5
+    --wtime : std_logic_vector(15 downto 0) := x"03f5"); -- 116.66MHz M=7 D=4
+    wtime : std_logic_vector(15 downto 0) := x"0411"); -- 120MHz M=9 D=5
     -- wtime : std_logic_vector(15 downto 0) := x"047A"; -- 133MHz
   port (
     MCLK1  : in    std_logic;
@@ -76,8 +78,8 @@ begin  -- arch_core
 
     dcm : DCM_BASE
       generic map (
-        CLKFX_MULTIPLY => 3, -- M
-        CLKFX_DIVIDE => 2)   -- D
+        CLKFX_MULTIPLY => 9, -- M
+        CLKFX_DIVIDE => 5)   -- D
       port map (
         CLKIN => iclk,
         CLKFB => bfbclk,
