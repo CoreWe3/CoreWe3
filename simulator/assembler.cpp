@@ -233,7 +233,7 @@ int main(int argc, char* argv[]){
 	} fu;
 	for(auto y : fimm){
 		fu.d = get<0>(y);
-		cerr << " " << get<0>(y) << "(" << fu.f << ")" << " : " << get<1>(y) << endl;
+		cerr << " " << hex << get<0>(y) << dec << "(" << fu.f << ")" << " : " << get<1>(y) << endl;
 		tempcounter++;
 		if(tempcounter > 10) break;
 	}

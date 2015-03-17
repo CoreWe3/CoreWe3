@@ -134,6 +134,8 @@ int main(int argc, char* argv[]){
 
 	//Main
 	long long int counter = 0;
+	long long int stallcounter = 0;
+	
 	uint32_t prev = 0;
 	long long int clock = 0; 
 	vector<unsigned long> profile(INAMES.size(),0);
@@ -491,6 +493,7 @@ int main(int argc, char* argv[]){
 		//cerr << "pc: " << pc << " latency: " << latency << " stall " << stall << endl;
 		clock += latency;
 		clock += stall;
+		stallcounter += stall;
 		ram.update(latency+stall);
 		// M
 		FORMAT fm2;
@@ -564,5 +567,6 @@ END_MAIN:
 	cerr << "io_in:" << icounter << endl;
 	cerr << "io_out:" << ocounter << endl;
 	cerr << "clock:" << clock + 7 + max(*max_element(gregage.begin(), gregage.end()), *max_element(fregage.begin(), fregage.end()) )<< endl;
+	cerr << "stall:"  << stallcounter << endl;
 	return 0;
 }
