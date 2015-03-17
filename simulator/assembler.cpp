@@ -354,6 +354,7 @@ int main(int argc, char* argv[]){
 			case FINV:
 			case FSQRT:
 			case FABS:
+			case FLR:
 				fm.A.op = ISA::name2isa(el[0]);
 				fm.A.ra = ISA::name2reg(el[1]);
 				fm.A.rb = ISA::name2reg(el[2]);
