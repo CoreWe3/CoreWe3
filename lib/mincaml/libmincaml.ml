@@ -42,7 +42,7 @@ let rec kernel_cos f =
   1.0 +. ((c2 *. f2) +. ((c4 *. f4) +. (c6 *. f6))) in
 let rec sin f = 
   let s = if f < 0.0 then 1 else 0 in
-  let a = if s = 0 then f else -.f in
+  let a = fabs f in
   let a = sin_cos_reduction a in
   let pi = 3.141592653589793 in
   let (a, s) = if a < pi then (a, s) else (a -. pi, 1 - s) in
@@ -53,14 +53,11 @@ let rec sin f =
 	    kernel_cos (pio2 -. a)
 	  else
 	    kernel_sin a in
-  if s = 0 then 
-    if a < 0.0 then -.a else a
-  else 
-    if a < 0.0 then a else -.a in
+  if s = 0 then fabs a else -.(fabs a) in
 
 let rec cos f = 
   let s = 0 in
-  let a = if f > 0.0 then f else -.f in
+  let a = fabs f in
   let a = sin_cos_reduction a in
   let pi = 3.141592653589793 in
   let (a, s) = if a < pi then (a, s) else (a -. pi, 1 - s) in
@@ -71,10 +68,7 @@ let rec cos f =
 	    kernel_sin (pio2 -. a)
 	  else
 	    kernel_cos a in
-  if s = 0 then
-    if a < 0.0 then -.a else a
-  else
-    if a < 0.0 then a else -.a in
+  if s = 0 then fabs a else -.(fabs a) in
 
 let rec atan f =
   let rec kernel_atan f = 
@@ -92,15 +86,20 @@ let rec atan f =
     let t11 = -0.08976446 in
     let t13 = 0.060035485 in
     f +. ((t3 *. f3) +. ((t5 *. f5) +. ((t7 *. f7) +. ((t9 *. f9) +. ((t11 *. f11) +. (t13 *. f13)))))) in
-  let s = if f < 0.0 then 1 else 0 in
-  let a = if s = 0 then f else -.f in
+  let a = fabs f in
   let a = if a < 0.4375 then
 	    kernel_atan a
 	  else if a < 2.4375 then
 	    0.7853981633974483 +. (kernel_atan ((a -. 1.0) /. (a +. 1.0)))
 	  else
 	    1.5707963267948966 -. (kernel_atan (1.0 /. a)) in
-  if s = 0 then a else -.a in
+  if 0.0 < f then a else -.a in
+
+let rec floor x =
+  if 8388608.0 <= fabs x then x
+  else
+    let y = float_of_int (int_of_float x) in
+    if x < y then y -. 1.0 else y in
 
 (*other*)
 let rec xor x y = 
