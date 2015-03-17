@@ -95,11 +95,11 @@ let rec atan f =
 	    1.5707963267948966 -. (kernel_atan (1.0 /. a)) in
   if 0.0 < f then a else -.a in
 
-let rec floor x =
-  if 8388608.0 <= fabs x then x
-  else
-    let y = float_of_int (int_of_float x) in
-    if x < y then y -. 1.0 else y in
+(* let rec floor x = *)
+(*   if 8388608.0 <= fabs x then x *)
+(*   else *)
+(*     let y = float_of_int (int_of_float x) in *)
+(*     if x < y then y -. 1.0 else y in *)
 
 (*other*)
 let rec xor x y = 
