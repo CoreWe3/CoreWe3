@@ -82,6 +82,15 @@ int main(int argc, char* argv[]){
 	//Initilaize Profiler
 	vector<int> branchprofile(instructions.size());
 	vector<int> branchprofile2(instructions.size());
+	unsigned int faddfmul=0;
+	unsigned int fmulfadd=0;
+	unsigned int addadd=0;
+	unsigned int addsub=0;
+	unsigned int subadd=0;
+	unsigned int subsub=0;
+	unsigned int mvcounter = 0;
+	unsigned int icounter = 0;
+	unsigned int ocounter = 0;
 	
 	//Initilaize RAM
 	RAM ram(ramfilename);
@@ -117,12 +126,16 @@ int main(int argc, char* argv[]){
 
 	//Initilaize REG and PC
 	vector<REG> greg(GREGNAMES.size());
+	vector<int> gregage(GREGNAMES.size());
 	vector<REG> freg(FREGNAMES.size());
+	vector<int> fregage(GREGNAMES.size());
 	unsigned int pc=0;
 
 
 	//Main
 	long long int counter = 0;
+	uint32_t prev = 0;
+	long long int clock = 0; 
 	vector<unsigned long> profile(INAMES.size(),0);
 	
 	int breakpointcounter=0;
@@ -146,6 +159,8 @@ int main(int argc, char* argv[]){
 			goto END_MAIN;
 		}
 
+		int latency = 1;
+		int stall = 0;
 		counter++;
 
 		FORMAT fm;
@@ -155,6 +170,8 @@ int main(int argc, char* argv[]){
 			// no regs and imm
 			case RET:
 				pc = greg[31].u;
+				latency += gregage[31];
+				stall = 3;
 				break;
 
 				// 1 imm
@@ -164,88 +181,119 @@ int main(int argc, char* argv[]){
 					goto END_MAIN;
 				}
 				pc += fm.J.cx;
+				stall = 1;
 				break;
 
 			case JEQ:
 				if(greg[30].d == 0){
 					branchprofile[pc]+=1;
 					pc += fm.J.cx;
+					if (fm.J.br==1) stall = 1;
+					else stall = 3;
 				}else{
 					branchprofile[pc]-=1;
 					pc += 1;
+					if (fm.J.br==0) stall = 0;
+					else stall = 3;
 				}
 				branchprofile2[pc]+=1;
+				latency += gregage[30];
 				break;
 
 			case JLE:
 				if(greg[30].d <= 0){
 					branchprofile[pc]+=1;
 					pc += fm.J.cx;
+					if (fm.J.br==1) stall = 1;
+					else stall = 3;
 				}else{
 					branchprofile[pc]-=1;
 					pc += 1;
+					if (fm.J.br==0) stall = 0;
+					else stall = 3;
 				}
 				branchprofile2[pc]+=1;
+				latency += gregage[30];
 				break;
 
 			case JLT:
 				if(greg[30].d < 0){
 					branchprofile[pc]+=1;
 					pc += fm.J.cx;
+					if (fm.J.br==1) stall = 1;
+					else stall = 3;
 				}else{
 					branchprofile[pc]-=1;
 					pc += 1;
+					if (fm.J.br==0) stall = 0;
+					else stall = 3;
 				}
 				branchprofile2[pc]+=1;
+				latency += gregage[30];
 				break;
 
 			case JSUB:
 				greg[31].u = pc + 1;
 				pc += fm.J.cx;
+				latency += gregage[31];
+				stall = 1;
 				break;
 
 				// 1 greg, 1 imm
 			case LDIH:
 				greg[fm.L.ra].u = (fm.L.cx << 16) + (greg[fm.L.ra].u & 0xffff);
 				pc+=1;
+				latency += gregage[fm.L.ra];
 				break;
 
 				// 1 freg, 1 greg
 			case ITOF:
 				freg[fm.L.ra].r = FPU::_itof(greg[fm.L.rb].r);
 				pc+=1;
+				latency += gregage[fm.L.rb];
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 				// 1 greg, 1 freg
 			case FTOI:
 				greg[fm.L.ra].r = FPU::_ftoi(freg[fm.L.rb].r);
 				pc+=1;
+				latency += fregage[fm.L.rb];
+				gregage[fm.L.ra] = latency+3;
 				break;
 
 				// 2 freg
 			case FINV:
 				freg[fm.A.ra].r = FPU::inv(freg[fm.A.rb].r);
 				pc+=1;
+				latency += fregage[fm.A.rb];
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 			case FSQRT:
 				freg[fm.A.ra].r = FPU::sqrt(freg[fm.A.rb].r);
 				pc+=1;
+				latency += fregage[fm.A.rb];
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 			case FABS:
 				freg[fm.A.ra].r = FPU::abs(freg[fm.A.rb].r);
 				pc+=1;
+				latency += fregage[fm.A.rb];
 				break;
 
 			case FCMP:
 				greg[30].d = FPU::cmp(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
+				latency += max(fregage[fm.A.rb], fregage[fm.A.rc]);
+				fregage[fm.L.ra] = latency+1;
 				break;
 			
 			case FLR:
 				freg[fm.A.ra].r = FPU::floor(freg[fm.A.rb].r);
 				pc+=1;
+				latency += fregage[fm.A.rb];
 				break;
 
 				// 2 gregs, 1 imm
@@ -259,18 +307,24 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(greg[fm.L.ra].r), sizeof(char));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
+						stall = 1000;
 					}
 					else {
-						ram.read(address, greg[fm.L.ra].r);
+
+						int t = ram.read(address, greg[fm.L.ra].r);
+						stall = t;
 					}
 				}
 				pc+=1;
+				latency += gregage[fm.A.rb];
+				gregage[fm.L.ra] = latency+1;
 				break;
 
 			case ST:
@@ -282,28 +336,35 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(greg[fm.L.ra].r), sizeof(char));
 						output->flush();
 					}else{
-						ram.write(address, greg[fm.L.ra].r);
+						int t = ram.write(address, greg[fm.L.ra].r);
+						stall = t;
 					}
 				}
 				pc+=1;
+				latency += max(gregage[fm.A.ra], gregage[fm.A.rb]);
 				break;
 
 			case ADDI:
 				greg[fm.L.ra].u = greg[fm.L.rb].u + fm.L.cx;
 				pc+=1;
+				if(fm.L.cx == 0) mvcounter ++;
+				latency += gregage[fm.L.rb];
 				break;
 
 			case SHLI:
 				greg[fm.L.ra].u = greg[fm.L.rb].u << fm.L.cx;
 				pc+=1;
+				latency += gregage[fm.L.rb];
 				break;
 
 			case SHRI:
 				greg[fm.L.ra].u = greg[fm.L.rb].u >> fm.L.cx;
 				pc+=1;
+				latency += gregage[fm.L.rb];
 				break;
 
 				// 1 freg, 1greg, 1 imm
@@ -317,18 +378,23 @@ int main(int argc, char* argv[]){
 					}
 					if (address == IOADDR)
 					{
+						icounter++;
 						input->read((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 						if (input->eof())
 						{
 							cerr << "No input any longer" << endl;
 							goto END_MAIN;
 						}
+						stall = 10;
 					}
 					else{
-						ram.read(address, freg[fm.L.ra].r);
+						int t = ram.read(address, freg[fm.L.ra].r);
+						stall = t;
 					}
 				}
 				pc+=1;
+				latency += gregage[fm.L.rb];
+				fregage[fm.L.ra] = latency+1;
 				break;
 
 			case FST:
@@ -340,55 +406,69 @@ int main(int argc, char* argv[]){
 						goto END_MAIN;
 					}
 					if (address == IOADDR){
+						ocounter++;
 						output->write((char*)&(freg[fm.L.ra].r), sizeof(uint32_t));
 					}else{
-						ram.write(address, freg[fm.L.ra].r);
+						int t = ram.write(address, freg[fm.L.ra].r);
+						stall = t;
 					}
 				}
 				pc+=1;
+				latency += max(fregage[fm.L.ra], gregage[fm.L.rb]);
 				break;
 
 				// 2 freg, 1 imm
 			case FLDI:
 				freg[fm.L.ra].u = (fm.L.cx << 16) + (freg[fm.L.rb].u >> 16);
 				pc+=1;
+				latency += fregage[fm.L.rb];
 				break;
 
 				// 3 gregs
 			case ADD:
 				greg[fm.A.ra].u = greg[fm.A.rb].u + greg[fm.A.rc].u;
 				pc+=1;
+				latency += max(gregage[fm.A.rb], gregage[fm.A.rb]);
 				break;
 
 			case SUB:
 				greg[fm.A.ra].u = greg[fm.A.rb].u - greg[fm.A.rc].u;
 				pc+=1;
+				latency += max(gregage[fm.A.rb], gregage[fm.A.rb]);
 				break;
 
 			case SHL:
 				greg[fm.A.ra].u = greg[fm.A.rb].u << greg[fm.A.rc].u;
 				pc+=1;
+				latency += max(gregage[fm.A.rb], gregage[fm.A.rb]);
 				break;
 
 			case SHR:
 				greg[fm.A.ra].u = greg[fm.A.rb].u >> greg[fm.A.rc].u;
 				pc+=1;
+				latency += max(gregage[fm.A.rb], gregage[fm.A.rb]);
 				break;
 
 				// 3 fregs
 			case FADD:
 				freg[fm.A.ra].r = FPU::add(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
+				latency += max(fregage[fm.A.rb], fregage[fm.A.rb]);
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 			case FSUB:
 				freg[fm.A.ra].r = FPU::sub(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
+				latency += max(fregage[fm.A.rb], fregage[fm.A.rb]);
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 			case FMUL:
 				freg[fm.A.ra].r = FPU::mul(freg[fm.A.rb].r, freg[fm.A.rc].r);
 				pc+=1;
+				latency += max(fregage[fm.A.rb], fregage[fm.A.rb]);
+				fregage[fm.L.ra] = latency+3;
 				break;
 
 			default:
@@ -399,6 +479,30 @@ int main(int argc, char* argv[]){
 		greg[0].r = 0;
 		freg[0].f = 0;
 		
+		for(auto &el : gregage){
+			el -= latency;
+			if (el < 0 ) el = 0;
+		}
+		
+		for(auto &el : fregage){
+			el -= latency;
+			if (el < 0 ) el = 0;
+		}
+		//cerr << "pc: " << pc << " latency: " << latency << " stall " << stall << endl;
+		clock += latency;
+		clock += stall;
+		ram.update(latency+stall);
+		// M
+		FORMAT fm2;
+		fm2.data = prev;
+		prev = fm.data;
+		if(fm.J.op==FADD && fm2.J.op==FMUL && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) faddfmul++;
+		if(fm.J.op==FMUL && fm2.J.op==FADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) fmulfadd++;
+		if(fm.J.op==ADD && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addadd++;
+		if(fm.J.op==ADD && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) addsub++;
+		if(fm.J.op==SUB && fm2.J.op==ADD && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subadd++;
+		if(fm.J.op==SUB && fm2.J.op==SUB && (fm2.A.ra==fm.A.rb || fm2.A.ra==fm.A.rc)) subsub++;
+
 	}
 
 END_MAIN:
@@ -449,5 +553,16 @@ END_MAIN:
 	
 	ram.printramstatus();
 
+	//Print 
+	cerr << "fmulfadd:" << fmulfadd << endl; 
+	cerr << "faddfmul:" << faddfmul << endl; 
+	cerr << "addadd:" << addadd << endl; 
+	cerr << "addsub:" << addsub << endl; 
+	cerr << "subadd:" << subadd << endl; 
+	cerr << "subsub:" << subsub << endl; 
+	cerr << "move:" << mvcounter << endl;
+	cerr << "io_in:" << icounter << endl;
+	cerr << "io_out:" << ocounter << endl;
+	cerr << "clock:" << clock + 7 + max(*max_element(gregage.begin(), gregage.end()), *max_element(fregage.begin(), fregage.end()) )<< endl;
 	return 0;
 }

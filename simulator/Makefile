@@ -42,6 +42,9 @@ ftoi.o: ../FPU/ftoi.c
 itof.o: ../FPU/itof.c
 	$(C) ../FPU/itof.c $(CFLAGS) -c -o $@
 
+floor.o: ../FPU/floor.c
+	$(C) ../FPU/floor.c $(CFLAGS) -c -o $@
+
 fpu.o: fpu.cpp fpu.h
 	$(CC) fpu.cpp $(CCFLAGS) -c -o $@
 
@@ -56,11 +59,11 @@ $(DIR)disassembler: disassembler.cpp isa_class.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) disassembler.cpp isa_class.o $(CCFLAGS) -o $@
 
-$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram.o
+$(DIR)simulator: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram.o floor.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) $^ $(CCFLAGS) -o $@
 
-$(DIR)simulator_c: simulator.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram_c.o
+$(DIR)simulator_c: simulator_c.cpp isa_class.o fpu.o fadd.o fmul.o fabs.o fcmp.o finv.o fsqrt.o ftoi.o itof.o ram_c.o floor.o
 	@if [ ! -d $(DIR) ]; then mkdir $(DIR); fi
 	$(CC) $^ $(CCFLAGS) -o $@
 
@@ -87,6 +90,7 @@ clean:
 	$(RM) fcmp.o
 	$(RM) ram.o
 	$(RM) ram_c.o
+	$(RM) floor.o
 	$(RM) $(addprefix $(DIR), assembler)
 	$(RM) $(addprefix $(DIR), disassembler)
 	$(RM) $(addprefix $(DIR), simulator)

@@ -7,7 +7,7 @@ uint32_t getbits(uint32_t a,uint32_t x,uint32_t y){
   return a;  
 }
 
-uint32_t  myfloor(uint32_t a){
+uint32_t _floor(uint32_t a){
   uint32_t exp,sign;
   uint32_t tmp,flag,flag2,x;
   x=a;
