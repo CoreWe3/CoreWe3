@@ -121,6 +121,7 @@ int main(int argc, char* argv[]){
 			case FINV:
 			case FSQRT:
 			case FABS:
+			case FLR:
 				str += ISA::isa2name(fm.A.op);
 				str += "\t";
 				str += ISA::freg2name(fm.A.ra);

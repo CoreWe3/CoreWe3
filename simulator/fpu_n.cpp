@@ -71,3 +71,12 @@ uint32_t FPU::_itof(uint32_t x){
 	yfu.f = xfu.d;
 	return yfu.r;
 }
+
+uint32_t FPU::floor(uint32_t x){
+	FU xfu, yfu;
+	xfu.r = x;
+	yfu.f = std::floor(xfu.f);
+	return yfu.r;
+}
+
+

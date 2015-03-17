@@ -13,5 +13,6 @@ class FPU{
 		static uint32_t abs(uint32_t);
 		static uint32_t _ftoi(uint32_t);
 		static uint32_t _itof(uint32_t);
+		static uint32_t floor(uint32_t);
 
 };
